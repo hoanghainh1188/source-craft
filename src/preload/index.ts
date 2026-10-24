@@ -52,6 +52,7 @@ import type {
   VaultBackupState,
   LicenseStatus,
   ActivateLicenseResult,
+  OpenPurchasePageResult,
 } from "@shared/ipc/types";
 
 /**
@@ -408,6 +409,9 @@ const api = {
     ipcRenderer.invoke(CHANNELS.licenseActivateFile),
   deactivateLicense: (): Promise<LicenseStatus> =>
     ipcRenderer.invoke(CHANNELS.licenseDeactivate),
+  // 237 — mở trang mua (không nhận URL từ renderer)
+  openPurchasePage: (): Promise<OpenPurchasePageResult> =>
+    ipcRenderer.invoke(CHANNELS.licenseOpenPurchasePage),
   onLicenseChanged: (cb: (status: LicenseStatus) => void): (() => void) => {
     const listener = (_e: unknown, payload: LicenseStatus): void => cb(payload);
     ipcRenderer.on(CHANNELS.licenseChanged, listener);

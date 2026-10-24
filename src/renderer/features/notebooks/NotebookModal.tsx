@@ -9,6 +9,7 @@ import {
   describeIpcError,
   toParsedError,
 } from "../../shared/i18n/describe-error";
+import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 
 // Modal tạo/sửa notebook (A8): nhập tên + chọn màu từ palette. onSubmit ném lỗi → hiện message.
 // 123: lưu ParsedIpcError, dịch lúc render (đổi ngôn ngữ thì thông báo lỗi đổi theo).
@@ -101,6 +102,7 @@ export function NotebookModal({
             {describeIpcError(error, t)}
           </div>
         )}
+        <UpgradePrompt error={error} />
         <div className="nb-modal-actions">
           <button type="button" className="btn-sm" onClick={onClose}>
             {t.t("common.cancel")}

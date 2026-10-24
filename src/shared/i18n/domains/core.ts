@@ -141,6 +141,15 @@ export const coreVi = {
       errClockTampered:
         "Đồng hồ hệ thống đang lùi hơn 24 giờ so với lần kiểm tra trước. Vui lòng chỉnh lại giờ hệ thống.",
       errIo: "Không đọc được tệp bản quyền (tối đa 64 KB).",
+      // 237 — mua / nâng cấp
+      buyBtn: "Mua bản quyền Pro / Enterprise",
+      buyHint:
+        "Mở trang mua trong trình duyệt. Sau khi mua, bạn nhận tệp .sclicense để kích hoạt tại đây.",
+      upsellText:
+        "Nâng cấp lên Pro hoặc Enterprise để bỏ giới hạn này. Dữ liệu hiện có vẫn giữ nguyên.",
+      upsellBtn: "Xem các gói nâng cấp",
+      purchaseOpenFailed:
+        "Không mở được trình duyệt. Hãy truy cập trang dự án SourceCraft trên GitHub để mua bản quyền.",
     },
     lanAi: {
       title: "Máy chủ AI Mạng nội bộ (LAN)",
@@ -314,6 +323,15 @@ export const coreEn: Widen<typeof coreVi> = {
       errClockTampered:
         "System clock is more than 24 hours behind the last recorded timestamp. Please correct your system clock.",
       errIo: "Could not read license file (max 64 KB).",
+      // 237 — purchase / upgrade
+      buyBtn: "Buy a Pro / Enterprise license",
+      buyHint:
+        "Opens the purchase page in your browser. After buying, you receive a .sclicense file to activate here.",
+      upsellText:
+        "Upgrade to Pro or Enterprise to remove this limit. Your existing data stays as it is.",
+      upsellBtn: "See upgrade plans",
+      purchaseOpenFailed:
+        "Couldn't open the browser. Visit the SourceCraft project page on GitHub to buy a license.",
     },
     lanAi: {
       title: "LAN AI Server",
