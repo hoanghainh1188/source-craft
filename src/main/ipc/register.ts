@@ -74,6 +74,12 @@ import {
 } from "../services/vault-backup/ipc-input";
 import { detectKindFromPath } from "../services/ingestion/parsers";
 import type { LicenseService } from "../services/license/license-service";
+import type { PolicyService } from "../services/policy/policy-service";
+import { validateLanUrl } from "../services/ai-runtime/lan/lan-guard";
+import { createLanOllamaClient } from "../services/ai-runtime/lan/lan-ollama-client";
+import { createLanOpenAiClient } from "../services/ai-runtime/lan/lan-openai-client";
+import { setLanProviderActive } from "../services/app-shell/privacy-state";
+import type { LanAiConfig } from "@shared/ipc/types";
 
 interface RegisterDeps {
   store: StoreLike;
@@ -113,6 +119,8 @@ interface RegisterDeps {
   meetingViewer: MeetingViewerApi;
   // 226 — Enterprise License & Feature Gate.
   licenseService?: LicenseService;
+  // 228 — Enterprise IT Policy Service.
+  policyService?: PolicyService;
 }
 
 /** Số báo lỗi renderer tối đa ghi mỗi phiên (chặn vòng lặp lỗi làm phình nhật ký) — 088. */
@@ -150,6 +158,7 @@ export function registerIpc({
   meeting,
   meetingViewer,
   licenseService,
+  policyService,
 }: RegisterDeps): void {
   const safeHandle = (
     channel: string,
@@ -561,6 +570,114 @@ export function registerIpc({
     );
     safeHandle(CHANNELS.licenseDeactivate, () => licenseService.deactivate());
   }
+
+  // lan-ai-and-policy (228) — IT Policy & LAN AI Server
+  safeHandle(CHANNELS.policyGet, () => policyService?.getPolicy() ?? null);
+
+  safeHandle(CHANNELS.lanAiGetConfig, () => {
+    const raw = store.get("lanAi.config") as
+      Record<string, unknown> | undefined;
+    const policyDefault = policyService?.getPreconfiguredLanAi();
+    const config: LanAiConfig = {
+      enabled:
+        typeof raw?.["enabled"] === "boolean"
+          ? raw["enabled"]
+          : (policyDefault?.enabled ?? false),
+      provider:
+        raw?.["provider"] === "lan-openai"
+          ? "lan-openai"
+          : (policyDefault?.provider ?? "lan-ollama"),
+      baseUrl:
+        typeof raw?.["baseUrl"] === "string"
+          ? raw["baseUrl"]
+          : (policyDefault?.baseUrl ?? ""),
+      chatModel:
+        typeof raw?.["chatModel"] === "string"
+          ? raw["chatModel"]
+          : (policyDefault?.chatModel ?? null),
+      hasCustomToken: Boolean(store.get("lanAi.hasToken")),
+    };
+    return config;
+  });
+
+  safeHandle(CHANNELS.lanAiSaveConfig, async (input) => {
+    const params = (
+      typeof input === "object" && input !== null ? input : {}
+    ) as Record<string, unknown>;
+    const enabled = Boolean(params["enabled"]);
+    const provider =
+      params["provider"] === "lan-openai" ? "lan-openai" : "lan-ollama";
+    const baseUrl =
+      typeof params["baseUrl"] === "string" ? params["baseUrl"].trim() : "";
+    const chatModel =
+      typeof params["chatModel"] === "string"
+        ? params["chatModel"].trim()
+        : null;
+    const token =
+      typeof params["token"] === "string" ? params["token"].trim() : undefined;
+
+    if (enabled) {
+      if (licenseService && !licenseService.gate.hasFeature("lanAi")) {
+        throw new UserFacingError("lanAiRequireEnterprise");
+      }
+      const allowedHosts = policyService?.getAllowedLanHosts() ?? [];
+      const val = validateLanUrl(baseUrl, allowedHosts);
+      if (!val.ok) {
+        throw new UserFacingError("lanAiInvalidHost", { url: baseUrl });
+      }
+    }
+
+    store.set("lanAi.config", { enabled, provider, baseUrl, chatModel });
+    if (token !== undefined) {
+      if (token) {
+        store.set("lanAi.token", token);
+        store.set("lanAi.hasToken", true);
+      } else {
+        store.set("lanAi.token", null);
+        store.set("lanAi.hasToken", false);
+      }
+    }
+
+    setLanProviderActive(enabled);
+    return { ok: true };
+  });
+
+  safeHandle(CHANNELS.lanAiTestConnection, async (input) => {
+    const params = (
+      typeof input === "object" && input !== null ? input : {}
+    ) as Record<string, unknown>;
+    const provider =
+      params["provider"] === "lan-openai" ? "lan-openai" : "lan-ollama";
+    const baseUrl =
+      typeof params["baseUrl"] === "string" ? params["baseUrl"].trim() : "";
+    const token =
+      typeof params["token"] === "string"
+        ? params["token"].trim()
+        : (store.get("lanAi.token") as string) || undefined;
+
+    const allowedHosts = policyService?.getAllowedLanHosts() ?? [];
+    const val = validateLanUrl(baseUrl, allowedHosts);
+    if (!val.ok) {
+      return { ok: false, error: `Invalid LAN URL: ${val.error}` };
+    }
+
+    try {
+      if (provider === "lan-openai") {
+        const client = createLanOpenAiClient({ baseUrl, token });
+        const models = await client.listModels();
+        return { ok: true, models };
+      } else {
+        const client = createLanOllamaClient({ baseUrl, token });
+        const models = await client.listModels();
+        return { ok: true, models };
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  });
 
   logEvent("ipc.registered", { channels: Object.values(CHANNELS).length });
 

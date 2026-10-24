@@ -40,6 +40,9 @@ import type {
   MeetingState,
   LicenseStatus,
   ActivateLicenseResult,
+  EnterprisePolicy,
+  LanAiConfig,
+  LanAiTestResult,
 } from "./types";
 
 /**
@@ -177,6 +180,11 @@ export const CHANNELS = {
   licenseActivateFile: "license:activateFile",
   licenseDeactivate: "license:deactivate",
   licenseChanged: "license:changed", // event push main→renderer (not in ChannelResponse)
+  // lan-ai-and-policy (228) — LAN AI Server & IT Policy
+  policyGet: "policy:get",
+  lanAiGetConfig: "lanAi:getConfig",
+  lanAiSaveConfig: "lanAi:saveConfig",
+  lanAiTestConnection: "lanAi:testConnection",
 } as const;
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
@@ -290,4 +298,9 @@ export interface ChannelResponse {
   [CHANNELS.licenseGetStatus]: LicenseStatus;
   [CHANNELS.licenseActivateFile]: ActivateLicenseResult;
   [CHANNELS.licenseDeactivate]: LicenseStatus;
+  // lan-ai-and-policy (228)
+  [CHANNELS.policyGet]: EnterprisePolicy | null;
+  [CHANNELS.lanAiGetConfig]: LanAiConfig;
+  [CHANNELS.lanAiSaveConfig]: { ok: boolean; error?: string };
+  [CHANNELS.lanAiTestConnection]: LanAiTestResult;
 }

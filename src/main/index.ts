@@ -36,6 +36,8 @@ import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import { readFile, realpath } from "node:fs/promises";
 import { createLicenseService } from "./services/license/license-service";
+import { createPolicyService } from "./services/policy/policy-service";
+import { setLanProviderActive } from "./services/app-shell/privacy-state";
 import {
   app,
   BrowserWindow,
@@ -455,6 +457,24 @@ app
 
     // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
     const aiRuntime = createAiRuntime(store);
+
+    // 228 — Enterprise IT Policy Service (reads enterprise-policy.json)
+    const policyService = createPolicyService({
+      userDataPath: join(dataDir.path, "enterprise-policy.json"),
+      fileExists: (p) => existsSync(p),
+      readFileText: (p) => readFileSync(p, "utf-8"),
+      logEvent: (event, meta) =>
+        logEvent(
+          event,
+          (meta as Record<string, string | number | boolean>) ?? {},
+        ),
+    });
+
+    const lanConfigRaw = store.get("lanAi.config") as
+      Record<string, unknown> | undefined;
+    if (lanConfigRaw && Boolean(lanConfigRaw["enabled"])) {
+      setLanProviderActive(true);
+    }
 
     // 226 — Enterprise License & Feature Gate (100% offline Ed25519 signature verification).
     // E2E seam (unpackaged only): IV_E2E_LICENSE_TIER allows existing feature E2E suites (Studio, Ingestion, etc.)
@@ -1067,6 +1087,7 @@ app
       meeting,
       meetingViewer,
       licenseService,
+      policyService,
     });
 
     // 145: menu ứng dụng theo ngôn ngữ giao diện — dựng lúc khởi động và dựng lại ngay khi đổi ngôn ngữ.

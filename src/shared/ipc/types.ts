@@ -9,10 +9,10 @@ export interface UiLanguageState {
 
 /** Trạng thái riêng tư — nguồn sự thật cho privacy indicator badge. v1 luôn 'local'. */
 export interface PrivacyState {
-  /** 103: local / online (provider online đã bật, chưa gửi) / sending (đang có egress thật). */
-  mode: "local" | "online" | "sending";
-  /** 123: loại egress khi mode = sending (ai > url > model) — renderer dịch nhãn theo ngôn ngữ hiện tại. */
-  egressKind?: "ai" | "url" | "model";
+  /** 103/228: local / lan (máy chủ AI mạng nội bộ tổ chức) / online (provider online đã bật, chưa gửi) / sending (đang có egress thật). */
+  mode: "local" | "lan" | "online" | "sending";
+  /** 123/228: loại egress khi mode = sending (ai > lanAi > url > model) — renderer dịch nhãn theo ngôn ngữ hiện tại. */
+  egressKind?: "ai" | "lanAi" | "url" | "model";
 }
 
 /** Trạng thái onboarding lần đầu. Lưu bền ở OS settings store. */
@@ -852,3 +852,42 @@ export type ActivateLicenseResult =
   | { status: "ok"; license: LicenseStatus }
   | { status: "cancelled" }
   | { status: "error"; code: LicenseActivationErrorCode };
+
+// 228 — LAN AI Server & Enterprise IT Policy Types
+
+export type LanAiProviderKind = "lan-ollama" | "lan-openai";
+
+export interface PreconfiguredLanAi {
+  enabled: boolean;
+  provider: LanAiProviderKind;
+  baseUrl: string;
+  chatModel?: string;
+}
+
+export interface EnterprisePolicy {
+  schemaVersion: 1;
+  policyId: string;
+  organization: string;
+  /** When true, disables all commercial cloud AI providers (OpenAI, Anthropic, Gemini). */
+  forceLocalOnly: boolean;
+  /** Optional extra allowed domain suffixes or exact hostnames for LAN AI SSRF check. */
+  allowedLanHosts?: string[];
+  /** Optional preconfigured LAN AI server settings provided by IT admin. */
+  preconfiguredLanAi?: PreconfiguredLanAi;
+  /** Enforces password protection when creating backups. */
+  enforceBackupEncryption?: boolean;
+}
+
+export interface LanAiConfig {
+  enabled: boolean;
+  provider: LanAiProviderKind;
+  baseUrl: string;
+  chatModel: string | null;
+  hasCustomToken: boolean;
+}
+
+export interface LanAiTestResult {
+  ok: boolean;
+  error?: string;
+  models?: string[];
+}
