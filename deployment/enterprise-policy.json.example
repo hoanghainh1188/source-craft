@@ -1,0 +1,21 @@
+{
+  "$schema": "https://sourcecraft.app/schemas/enterprise-policy-v1.json",
+  "schemaVersion": 1,
+  "policyId": "POL-2026-CORP-001",
+  "organization": "Tập đoàn Công nghệ Mẫu (Example Corp)",
+  "forceLocalOnly": true,
+  "enforceBackupEncryption": true,
+  "allowedLanHosts": [
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "*.internal",
+    "*.corp.local"
+  ],
+  "preconfiguredLanAi": {
+    "enabled": true,
+    "provider": "lan-openai",
+    "baseUrl": "http://192.168.1.50:8000",
+    "chatModel": "Qwen/Qwen2.5-14B-Instruct"
+  }
+}
