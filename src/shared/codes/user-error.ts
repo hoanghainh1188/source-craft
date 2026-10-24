@@ -43,6 +43,11 @@ export const USER_ERROR_CODES = [
   "meetingInvalidInput",
   "meetingRecoverFailed", // 186 PR C1: giữ bản ghi chưa hoàn thiện không lập được nguồn — thẻ phục hồi vẫn còn để thử lại
   "meetingModelDownloadFailed", // 186 PR B: tải model nhận dạng không được (thường do không có Internet)
+  // 226 — Enterprise License & Feature Gate
+  "licenseLimitNotebooks",
+  "licenseLimitSources",
+  "licenseRequireProFormat",
+  "licenseRequireProStudio",
 ] as const;
 
 export type UserErrorCode = (typeof USER_ERROR_CODES)[number];

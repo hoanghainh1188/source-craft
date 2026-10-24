@@ -50,6 +50,8 @@ import type {
   RestoreResult,
   VaultBackupProgress,
   VaultBackupState,
+  LicenseStatus,
+  ActivateLicenseResult,
 } from "@shared/ipc/types";
 
 /**
@@ -398,6 +400,18 @@ const api = {
     const listener = (_e: unknown, payload: MeetingState): void => cb(payload);
     ipcRenderer.on(CHANNELS.meetingState, listener);
     return () => ipcRenderer.removeListener(CHANNELS.meetingState, listener);
+  },
+  // enterprise-license (226) — offline Ed25519 license & entitlements
+  getLicenseStatus: (): Promise<LicenseStatus> =>
+    ipcRenderer.invoke(CHANNELS.licenseGetStatus),
+  activateLicenseFile: (): Promise<ActivateLicenseResult> =>
+    ipcRenderer.invoke(CHANNELS.licenseActivateFile),
+  deactivateLicense: (): Promise<LicenseStatus> =>
+    ipcRenderer.invoke(CHANNELS.licenseDeactivate),
+  onLicenseChanged: (cb: (status: LicenseStatus) => void): (() => void) => {
+    const listener = (_e: unknown, payload: LicenseStatus): void => cb(payload);
+    ipcRenderer.on(CHANNELS.licenseChanged, listener);
+    return () => ipcRenderer.removeListener(CHANNELS.licenseChanged, listener);
   },
 };
 

@@ -82,6 +82,7 @@ export function harness(
     segmentSeconds?: number;
     micStatus?: "granted" | "denied";
     testFakeMic?: boolean;
+    maxDurationSec?: () => number | null;
   } = {},
 ): Harness {
   const db = openDatabase(":memory:");
@@ -306,6 +307,7 @@ export function harness(
     segmentSeconds: opts.segmentSeconds ?? 300,
     sampleRate: RATE,
     ...(opts.testFakeMic ? { testFakeMic: true } : {}),
+    ...(opts.maxDurationSec ? { maxDurationSec: opts.maxDurationSec } : {}),
   };
   const svc = createMeetingService(deps);
   svcRef.current = svc;

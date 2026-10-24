@@ -112,6 +112,8 @@ export interface MeetingServiceDeps {
   testFakeMic?: boolean;
   /** e2e soak (bản chưa đóng gói, IV_E2E_AUDIO_PUMP): cho phép pumpTestAudio. */
   testAudioPump?: boolean;
+  /** 226: optional maximum recording duration in seconds (e.g. 900s on Free tier); null = unlimited. */
+  maxDurationSec?: () => number | null;
 }
 
 export interface MachineInfo {
@@ -409,12 +411,18 @@ export function createMeetingService(deps: MeetingServiceDeps): MeetingService {
 
   const stopActive = (
     a: Active,
-    cause: "user" | "diskFull" | "quitConfirmed",
+    cause: "user" | "diskFull" | "quitConfirmed" | "limitReached",
   ): Promise<void> =>
     endSession(
       a,
-      [{ type: "stop", cause }, { type: "segmentsClosed" }],
-      cause === "diskFull" ? "diskFull" : undefined,
+      [
+        {
+          type: "stop",
+          cause: cause === "limitReached" ? "user" : cause,
+        },
+        { type: "segmentsClosed" },
+      ],
+      cause === "diskFull" || cause === "limitReached" ? cause : undefined,
     );
 
   const checkDisk = async (a: Active): Promise<void> => {
@@ -449,6 +457,12 @@ export function createMeetingService(deps: MeetingServiceDeps): MeetingService {
     const last = a.segments.length - 1;
     const samples = (a.segments[last]?.samples ?? 0) + bytes.byteLength / 2;
     a.segments = a.segments.map((s, i) => (i === last ? { ...s, samples } : s));
+    const maxSec = deps.maxDurationSec?.() ?? null;
+    if (maxSec !== null && durationSec(a) >= maxSec) {
+      log("meeting.limitReached", { maxSec });
+      void stopActive(a, "limitReached");
+      return;
+    }
     if (segmentShouldRotate(samples, segmentSamples)) {
       void closeSegment(a);
       openSegment(a);

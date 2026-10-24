@@ -227,6 +227,8 @@ export const meetingVi = {
       "Cửa sổ ghi gặp sự cố — đã kết thúc ghi. Audio đã ghi được giữ nguyên.",
     crash:
       "Không ghi được tệp âm thanh — đã kết thúc ghi. Audio đã ghi được giữ nguyên.",
+    limitReached:
+      "Đã đạt giới hạn 15 phút của gói Cộng đồng (Free) — đã tự kết thúc ghi và chốt transcript. Kích hoạt bản quyền Pro/Enterprise để ghi không giới hạn.",
   },
 } as const;
 
@@ -455,5 +457,7 @@ export const meetingEn: Widen<typeof meetingVi> = {
       "The recording window crashed — recording ended. The audio recorded so far is kept.",
     crash:
       "The audio file could not be written — recording ended. The audio recorded so far is kept.",
+    limitReached:
+      "Reached the 15-minute limit of the Community (Free) plan — recording ended automatically and is being finalized. Activate a Pro/Enterprise license for unlimited recording.",
   },
 };

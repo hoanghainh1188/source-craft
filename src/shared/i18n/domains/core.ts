@@ -69,6 +69,14 @@ export const coreVi = {
       "Chưa xử lý được bản ghi bị gián đoạn. Audio vẫn an toàn — hãy thử lại.",
     meetingModelDownloadFailed:
       "Không tải được model nhận dạng. Kiểm tra kết nối Internet rồi thử lại — bản ghi vẫn được lưu.",
+    licenseLimitNotebooks:
+      "Gói Cộng đồng (Free) giới hạn tối đa {max} sổ tay. Vui lòng kích hoạt bản quyền Pro hoặc Enterprise trong Cài đặt để tạo không giới hạn.",
+    licenseLimitSources:
+      "Gói Cộng đồng (Free) giới hạn tối đa {max} nguồn mỗi sổ tay. Vui lòng nâng cấp bản quyền Pro hoặc Enterprise để thêm nguồn.",
+    licenseRequireProFormat:
+      "Định dạng nguồn ({kind}) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt tệp .sclicense trong Cài đặt.",
+    licenseRequireProStudio:
+      "Chế độ tổng hợp Studio ({kind}) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt tệp .sclicense trong Cài đặt.",
   },
   online: {
     auth: "Khóa API không hợp lệ hoặc đã hết hạn.",
@@ -86,6 +94,41 @@ export const coreVi = {
         "Ngôn ngữ của giao diện. Câu trả lời trong Chat theo ngôn ngữ câu hỏi; Studio theo ngôn ngữ giao diện.",
       auto: "Tự động (theo hệ điều hành)",
       saveFailed: "Không đổi được ngôn ngữ. Vui lòng thử lại.",
+    },
+    license: {
+      title: "Bản quyền & Gói dịch vụ",
+      description:
+        "Xác thực chữ ký số Ed25519 hoàn toàn ngoại tuyến (không kết nối Internet).",
+      tierFree: "Cộng đồng (Free)",
+      tierPro: "Chuyên nghiệp (Pro)",
+      tierEnterprise: "Doanh nghiệp (Enterprise)",
+      badgeEnterprise: "Enterprise · {org}",
+      badgePro: "Pro",
+      orgLabel: "Tổ chức",
+      seatsLabel: "Số lượng chỗ (seats)",
+      expiresLabel: "Thời hạn",
+      perpetual: "Vĩnh viễn",
+      daysRemaining: "Còn {days} ngày ({date})",
+      expiredBadge: "Đã hết hạn ({date}) — đang áp dụng giới hạn gói Free",
+      clockTamperedBadge:
+        "Phát hiện đồng hồ hệ thống bị lùi bất thường — đang tạm khoá về gói Free",
+      invalidBadge: "Tệp bản quyền không hợp lệ — đang áp dụng gói Free",
+      freeLimitsHint:
+        "Gói Free: tối đa 3 sổ tay · 10 nguồn/sổ tay · PDF/DOCX/TXT/MD/URL · 15 phút ghi họp · 2 mẫu Studio cơ bản.",
+      proUnlockedHint:
+        "Đã mở khoá không giới hạn sổ tay/nguồn, nạp âm thanh/video/hình ảnh, ghi họp dài và toàn bộ 9 mẫu Studio.",
+      activateBtn: "Kích hoạt tệp .sclicense…",
+      activatingBtn: "Đang kiểm tra…",
+      deactivateBtn: "Gỡ bản quyền",
+      activatedSuccess: "Đã kích hoạt bản quyền thành công.",
+      deactivatedSuccess: "Đã gỡ bản quyền và chuyển về gói Cộng đồng (Free).",
+      errInvalidFormat: "Tệp .sclicense không đúng định dạng hoặc bị hỏng.",
+      errInvalidSignature:
+        "Chữ ký số Ed25519 không hợp lệ (tệp đã bị chỉnh sửa hoặc không do SourceCraft phát hành).",
+      errExpired: "Tệp bản quyền này đã hết hạn.",
+      errClockTampered:
+        "Đồng hồ hệ thống đang lùi hơn 24 giờ so với lần kiểm tra trước. Vui lòng chỉnh lại giờ hệ thống.",
+      errIo: "Không đọc được tệp bản quyền (tối đa 64 KB).",
     },
   },
 } as const;
@@ -159,6 +202,14 @@ export const coreEn: Widen<typeof coreVi> = {
       "The interrupted recording couldn't be processed yet. The audio is safe — please try again.",
     meetingModelDownloadFailed:
       "Couldn't download the speech recognition model. Check your Internet connection and try again — the recording is still saved.",
+    licenseLimitNotebooks:
+      "The Community (Free) plan is limited to {max} notebooks. Activate a Pro or Enterprise license in Settings for unlimited notebooks.",
+    licenseLimitSources:
+      "The Community (Free) plan is limited to {max} sources per notebook. Upgrade to Pro or Enterprise to add more sources.",
+    licenseRequireProFormat:
+      "Source format ({kind}) requires a Pro or Enterprise license. Please activate a .sclicense file in Settings.",
+    licenseRequireProStudio:
+      "Studio synthesis format ({kind}) requires a Pro or Enterprise license. Please activate a .sclicense file in Settings.",
   },
   online: {
     auth: "The API key is invalid or has expired.",
@@ -177,6 +228,42 @@ export const coreEn: Widen<typeof coreVi> = {
         "Interface language. Chat answers follow the language of your question; Studio follows the interface language.",
       auto: "Automatic (system language)",
       saveFailed: "Couldn't change the language. Please try again.",
+    },
+    license: {
+      title: "License & Plan",
+      description:
+        "100% offline Ed25519 digital signature verification (zero network egress).",
+      tierFree: "Community (Free)",
+      tierPro: "Professional (Pro)",
+      tierEnterprise: "Enterprise",
+      badgeEnterprise: "Enterprise · {org}",
+      badgePro: "Pro",
+      orgLabel: "Organization",
+      seatsLabel: "Licensed seats",
+      expiresLabel: "Validity",
+      perpetual: "Perpetual",
+      daysRemaining: "{days} days remaining ({date})",
+      expiredBadge: "Expired ({date}) — Free tier limits applied",
+      clockTamperedBadge:
+        "System clock rollback detected — temporarily restricted to Free tier",
+      invalidBadge: "Invalid license file — Free tier limits applied",
+      freeLimitsHint:
+        "Free plan: up to 3 notebooks · 10 sources/notebook · PDF/DOCX/TXT/MD/URL · 15m meeting capture · 2 basic Studio formats.",
+      proUnlockedHint:
+        "Unlocked unlimited notebooks/sources, audio/video/image ingestion, long meeting capture, and all 9 Studio formats.",
+      activateBtn: "Activate .sclicense file…",
+      activatingBtn: "Verifying…",
+      deactivateBtn: "Deactivate license",
+      activatedSuccess: "License activated successfully.",
+      deactivatedSuccess:
+        "License removed and reverted to Community (Free) plan.",
+      errInvalidFormat: "The .sclicense file is malformed or corrupted.",
+      errInvalidSignature:
+        "Invalid Ed25519 digital signature (file was tampered with or not issued by SourceCraft).",
+      errExpired: "This license file has expired.",
+      errClockTampered:
+        "System clock is more than 24 hours behind the last recorded timestamp. Please correct your system clock.",
+      errIo: "Could not read license file (max 64 KB).",
     },
   },
 };
