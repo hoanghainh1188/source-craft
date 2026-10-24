@@ -134,8 +134,9 @@ describe("resolveBaseUrl (Constitution I: chỉ localhost)", () => {
   it("105: numCtx ⇒ gửi options.num_ctx; không có ⇒ không gửi options", async () => {
     const bodies: Record<string, unknown>[] = [];
     const c = createOllamaClient({
-      fetchFn: fakeFetch((_u, init) => {
-        bodies.push(JSON.parse(String(init?.body)));
+      fetchFn: fakeFetch((u, init) => {
+        if (u.endsWith("/api/chat"))
+          bodies.push(JSON.parse(String(init?.body)));
         return { message: { content: "ok" } };
       }),
     });
@@ -191,8 +192,9 @@ describe("resolveBaseUrl (Constitution I: chỉ localhost)", () => {
     const seen: string[] = [];
     const c = createOllamaClient({
       chatTimeoutMs: 1,
-      fetchFn: fakeFetch((_u, init) => {
-        seen.push(String(init?.body));
+      fetchFn: fakeFetch((u, init) => {
+        if (!u.endsWith("/api/show") || seen.length > 0)
+          seen.push(String(init?.body));
         return { message: { content: "ok" } };
       }),
     });
@@ -268,5 +270,107 @@ describe("ollama-client — huỷ nhánh không-stream (149)", () => {
     });
     const err = await c.chat({ messages: [] }).catch((e: unknown) => e);
     expect(err).not.toBeInstanceOf(ChatAbortedError);
+  });
+});
+
+// Model "thinking" (qwen3.x, gpt-oss…): Ollama tự bật suy luận khi không gửi `think` — đo qwen3.5:9b: 76s/3.606 token
+// cho 1 lượt viết lại câu hỏi so với 0,55s khi tắt. Dò capabilities qua /api/show, tắt cho model có 'thinking'.
+import { thinkSettingFor } from "../../src/main/services/ai-runtime/ollama-client";
+
+describe("ollama-client — tắt thinking theo capabilities", () => {
+  const show = (capabilities: string[] | undefined, arch = "qwen3_5") => ({
+    ...(capabilities ? { capabilities } : {}),
+    model_info: { "general.architecture": arch },
+  });
+
+  /** fetch giả: /api/show trả `showBody`, /api/chat ghi body + trả lời. */
+  function recordingFetch(showBody: unknown, showOk = true) {
+    const chatBodies: Record<string, unknown>[] = [];
+    const showCalls: string[] = [];
+    const fetchFn = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/show")) {
+        showCalls.push(String(init?.body));
+        return {
+          ok: showOk,
+          status: showOk ? 200 : 404,
+          json: async () => showBody,
+        } as unknown as Response;
+      }
+      chatBodies.push(JSON.parse(String(init?.body)));
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ message: { content: "ok" } }),
+      } as unknown as Response;
+    }) as unknown as typeof fetch;
+    return { fetchFn, chatBodies, showCalls };
+  }
+
+  it("thinkSettingFor: có 'thinking' ⇒ false; gpt-oss ⇒ 'low'; không có/không rõ ⇒ undefined", () => {
+    expect(thinkSettingFor(show(["completion", "thinking"]))).toBe(false);
+    expect(thinkSettingFor(show(["completion", "thinking"], "gpt-oss"))).toBe(
+      "low",
+    );
+    expect(thinkSettingFor(show(["completion", "tools"]))).toBeUndefined();
+    expect(thinkSettingFor(show(undefined))).toBeUndefined();
+    expect(thinkSettingFor(null)).toBeUndefined();
+    expect(thinkSettingFor({ capabilities: "thinking" })).toBeUndefined();
+  });
+
+  it("model có 'thinking' ⇒ gửi think:false (không-stream)", async () => {
+    const r = recordingFetch(show(["completion", "thinking"]));
+    const c = createOllamaClient({ fetchFn: r.fetchFn });
+    await c.chat({ model: "qwen3.5:9b", messages: [] });
+    expect(r.chatBodies[0].think).toBe(false);
+  });
+
+  it("gpt-oss (không tắt hẳn được) ⇒ gửi think:'low'", async () => {
+    const r = recordingFetch(show(["completion", "thinking"], "gpt-oss"));
+    const c = createOllamaClient({ fetchFn: r.fetchFn });
+    await c.chat({ model: "gpt-oss:20b", messages: [] });
+    expect(r.chatBodies[0].think).toBe("low");
+  });
+
+  it("model không có 'thinking' ⇒ KHÔNG gửi think (giữ request cũ)", async () => {
+    const r = recordingFetch(show(["completion"]));
+    const c = createOllamaClient({ fetchFn: r.fetchFn });
+    await c.chat({ model: "qwen2.5:7b", messages: [] });
+    expect("think" in r.chatBodies[0]).toBe(false);
+  });
+
+  it("dò capabilities 1 lần mỗi model (nhớ theo tên)", async () => {
+    const r = recordingFetch(show(["thinking"]));
+    const c = createOllamaClient({ fetchFn: r.fetchFn });
+    await c.chat({ model: "a", messages: [] });
+    await c.chat({ model: "a", messages: [] });
+    await c.chat({ model: "b", messages: [] });
+    expect(r.showCalls.map((b) => JSON.parse(b).model)).toEqual(["a", "b"]);
+  });
+
+  it("/api/show lỗi ⇒ không gửi think, không nhớ lỗi (lần sau dò lại)", async () => {
+    const r = recordingFetch({}, false);
+    const c = createOllamaClient({ fetchFn: r.fetchFn });
+    await c.chat({ model: "a", messages: [] });
+    await c.chat({ model: "a", messages: [] });
+    expect("think" in r.chatBodies[0]).toBe(false);
+    expect(r.showCalls).toHaveLength(2);
+  });
+
+  it("nhánh stream cũng gửi think:false", async () => {
+    let streamBody: Record<string, unknown> | null = null;
+    const fetchFn = (async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/api/show"))
+        return new Response(JSON.stringify(show(["thinking"])), {
+          status: 200,
+        });
+      streamBody = JSON.parse(String(init?.body));
+      return new Response(
+        JSON.stringify({ message: { content: "x" }, done: true }) + "\n",
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+    const c = createOllamaClient({ fetchFn });
+    await c.chat({ model: "q", messages: [] }, { onToken: () => {} });
+    expect(streamBody!.think).toBe(false);
   });
 });

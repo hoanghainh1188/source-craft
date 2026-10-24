@@ -87,6 +87,30 @@ interface RawTag {
 const ctxOptions = (req: ChatRequest): { options?: { num_ctx: number } } =>
   req.numCtx ? { options: { num_ctx: req.numCtx } } : {};
 
+/** Giá trị `think` gửi Ollama: false = tắt suy luận; "low" = mức thấp nhất (gpt-oss bỏ qua false). */
+export type ThinkSetting = false | "low";
+
+/**
+ * Model "thinking" (qwen3.x, gpt-oss…): Ollama TỰ BẬT suy luận khi request không gửi `think` — đo qwen3.5:9b: 76s /
+ * 3.606 token cho 1 lượt viết lại câu hỏi (0,55s khi tắt), dễ vượt timeout chat và ăn num_ctx. Đọc `capabilities`
+ * từ `/api/show`: có "thinking" ⇒ tắt; gpt-oss không tắt hẳn được (think:false bị bỏ qua) ⇒ "low".
+ * Không có/không rõ (Ollama bản cũ, model thường) ⇒ undefined: KHÔNG gửi `think`, giữ request như cũ.
+ */
+export function thinkSettingFor(show: unknown): ThinkSetting | undefined {
+  if (show === null || typeof show !== "object") return undefined;
+  const { capabilities, model_info: info } = show as {
+    capabilities?: unknown;
+    model_info?: unknown;
+  };
+  if (!Array.isArray(capabilities) || !capabilities.includes("thinking"))
+    return undefined;
+  const arch =
+    info && typeof info === "object"
+      ? (info as Record<string, unknown>)["general.architecture"]
+      : undefined;
+  return arch === "gpt-oss" || arch === "gptoss" ? "low" : false;
+}
+
 export function createOllamaClient(
   opts: OllamaClientOptions = {},
 ): OllamaClient {
@@ -99,6 +123,8 @@ export function createOllamaClient(
   const timeoutMs = opts.timeoutMs ?? 5000;
   const chatTimeoutMs = opts.chatTimeoutMs ?? DEFAULT_CHAT_TIMEOUT_MS;
   const embedTimeoutMs = opts.embedTimeoutMs ?? DEFAULT_EMBED_TIMEOUT_MS;
+  // Nhớ `think` theo tên model — dò /api/show 1 lần. KHÔNG nhớ khi dò lỗi (Ollama chưa chạy) ⇒ lần sau dò lại.
+  const thinkCache = new Map<string, ThinkSetting | undefined>();
 
   async function call(
     path: string,
@@ -115,6 +141,33 @@ export function createOllamaClient(
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  async function showModel(model: string): Promise<unknown> {
+    const res = await call("/api/show", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // gửi cả `name` cho Ollama bản cũ
+      body: JSON.stringify({ model, name: model }),
+    });
+    return res.ok ? res.json() : null;
+  }
+
+  async function thinkOptions(
+    model: string | undefined,
+  ): Promise<{ think?: ThinkSetting }> {
+    if (!model) return {};
+    if (!thinkCache.has(model)) {
+      try {
+        const show = await showModel(model);
+        if (show === null) return {};
+        thinkCache.set(model, thinkSettingFor(show));
+      } catch {
+        return {};
+      }
+    }
+    const think = thinkCache.get(model);
+    return think === undefined ? {} : { think };
   }
 
   return {
@@ -145,6 +198,7 @@ export function createOllamaClient(
     async chat(req: ChatRequest, opts?: ChatStreamOpts): Promise<ChatResult> {
       // Stream (039): NDJSON stream:true → nối delta qua onToken; giữ phần đã nhận khi huỷ (signal).
       if (opts?.onToken) {
+        const think = await thinkOptions(req.model);
         let acc = "";
         await streamLines(
           {
@@ -154,6 +208,7 @@ export function createOllamaClient(
               model: req.model,
               messages: req.messages,
               stream: true,
+              ...think,
               ...ctxOptions(req),
             },
             fetchFn,
@@ -175,6 +230,8 @@ export function createOllamaClient(
       // 149: nhánh không-stream (Studio) tôn trọng signal ngoài — phạm vi gồm cả đọc body; huỷ ⇒ ChatAbortedError (≠ timeout).
       const signal = opts?.signal;
       assertNotAborted(signal);
+      const think = await thinkOptions(req.model);
+      assertNotAborted(signal);
       const controller = new AbortController();
       const unlink = linkAbort(signal, controller);
       const timer = setTimeout(
@@ -191,6 +248,7 @@ export function createOllamaClient(
             model: req.model,
             messages: req.messages,
             stream: false,
+            ...think,
             ...ctxOptions(req),
           }),
           signal: controller.signal,
@@ -210,14 +268,8 @@ export function createOllamaClient(
 
     async contextLength(model: string): Promise<number | null> {
       try {
-        const res = await call("/api/show", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // gửi cả `name` cho Ollama bản cũ
-          body: JSON.stringify({ model, name: model }),
-        });
-        if (!res.ok) return null;
-        return parseOllamaContextLength(await res.json());
+        const show = await showModel(model);
+        return show === null ? null : parseOllamaContextLength(show);
       } catch {
         return null;
       }
