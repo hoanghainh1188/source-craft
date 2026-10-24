@@ -80,7 +80,7 @@ jobs:
       - name: Tạo GitHub pre-release + đính kèm dmg/exe
         uses: softprops/action-gh-release@v2
         with:
-          prerelease: true
+          prerelease: false
           name: SourceCraft ${{ github.ref_name }} (pre-release)
           files: artifacts/**/*
           fail_on_unmatched_files: true
