@@ -14,21 +14,28 @@ import type { PrivacyState } from "@shared/ipc/types";
  */
 export type EgressKind = NonNullable<PrivacyState["egressKind"]>;
 
-const KIND_PRIORITY: EgressKind[] = ["ai", "url", "model"];
+const KIND_PRIORITY: EgressKind[] = ["ai", "lanAi", "url", "model"];
 
 // Đếm số hoạt động egress đang diễn ra theo loại (refcount — nhiều hoạt động chồng nhau an toàn).
-const egressDepth: Record<EgressKind, number> = { ai: 0, url: 0, model: 0 };
-// Có provider AI online đang active không (031).
+const egressDepth: Record<EgressKind, number> = {
+  ai: 0,
+  lanAi: 0,
+  url: 0,
+  model: 0,
+};
+// Có provider AI online hoặc LAN AI đang active không.
 let onlineProviderActive = false;
+let lanProviderActive = false;
 
 type Listener = (state: PrivacyState) => void;
 const listeners = new Set<Listener>();
 let lastKey = "local|";
 
-/** Trạng thái riêng tư hiện tại: sending > online > local. */
+/** Trạng thái riêng tư hiện tại: sending > lan > online > local. */
 export function getPrivacyState(): PrivacyState {
   const active = KIND_PRIORITY.find((k) => egressDepth[k] > 0);
   if (active) return { mode: "sending", egressKind: active };
+  if (lanProviderActive) return { mode: "lan" };
   return { mode: onlineProviderActive ? "online" : "local" };
 }
 
@@ -70,6 +77,12 @@ export function setEgressActive(
 /** Đặt cờ có provider AI online đang active (031). */
 export function setOnlineProviderActive(active: boolean): void {
   onlineProviderActive = active;
+  notifyIfChanged();
+}
+
+/** 228: Đặt cờ có provider LAN AI đang active. */
+export function setLanProviderActive(active: boolean): void {
+  lanProviderActive = active;
   notifyIfChanged();
 }
 

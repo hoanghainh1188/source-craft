@@ -48,6 +48,10 @@ export const USER_ERROR_CODES = [
   "licenseLimitSources",
   "licenseRequireProFormat",
   "licenseRequireProStudio",
+  // 228 — LAN AI Server & Enterprise IT Policy
+  "lanAiInvalidHost",
+  "lanAiRequireEnterprise",
+  "policyCloudDisabled",
 ] as const;
 
 export type UserErrorCode = (typeof USER_ERROR_CODES)[number];

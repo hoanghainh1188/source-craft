@@ -413,6 +413,13 @@ const api = {
     ipcRenderer.on(CHANNELS.licenseChanged, listener);
     return () => ipcRenderer.removeListener(CHANNELS.licenseChanged, listener);
   },
+  // lan-ai-and-policy (228) — LAN AI Server & IT Policy
+  getPolicy: () => ipcRenderer.invoke(CHANNELS.policyGet),
+  getLanAiConfig: () => ipcRenderer.invoke(CHANNELS.lanAiGetConfig),
+  saveLanAiConfig: (config: unknown) =>
+    ipcRenderer.invoke(CHANNELS.lanAiSaveConfig, config),
+  testLanAiConnection: (params: unknown) =>
+    ipcRenderer.invoke(CHANNELS.lanAiTestConnection, params),
 };
 
 export type Api = typeof api;

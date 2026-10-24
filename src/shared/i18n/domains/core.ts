@@ -77,6 +77,12 @@ export const coreVi = {
       "Định dạng nguồn ({kind}) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt tệp .sclicense trong Cài đặt.",
     licenseRequireProStudio:
       "Chế độ tổng hợp Studio ({kind}) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt tệp .sclicense trong Cài đặt.",
+    lanAiInvalidHost:
+      "Địa chỉ máy chủ AI ({url}) không thuộc dải mạng nội bộ hợp lệ (RFC1918) hoặc tên miền nội bộ được phép.",
+    lanAiRequireEnterprise:
+      "Tính năng kết nối Máy chủ AI Mạng nội bộ (LAN) yêu cầu bản quyền Enterprise. Vui lòng nâng cấp bản quyền.",
+    policyCloudDisabled:
+      "Tính năng AI Đám mây công cộng đã bị khoá bởi Chính sách Quản trị IT của Tổ chức ({org}).",
   },
   online: {
     auth: "Khóa API không hợp lệ hoặc đã hết hạn.",
@@ -129,6 +135,32 @@ export const coreVi = {
       errClockTampered:
         "Đồng hồ hệ thống đang lùi hơn 24 giờ so với lần kiểm tra trước. Vui lòng chỉnh lại giờ hệ thống.",
       errIo: "Không đọc được tệp bản quyền (tối đa 64 KB).",
+    },
+    lanAi: {
+      title: "Máy chủ AI Mạng nội bộ (LAN)",
+      description:
+        "Kết nối cụm GPU nội bộ của tổ chức (Ollama hoặc vLLM/OpenAI-compatible) hoàn toàn bảo mật trong mạng LAN.",
+      requireEnterpriseBadge: "Chỉ dành cho gói Enterprise",
+      enabledLabel: "Bật kết nối Máy chủ AI Mạng nội bộ",
+      providerLabel: "Chuẩn giao thức",
+      providerOllama: "Ollama Nội bộ (cổng 11434)",
+      providerOpenAi: "OpenAI-compatible (vLLM / LiteLLM / LocalAI)",
+      baseUrlLabel: "Địa chỉ máy chủ (URL)",
+      baseUrlPlaceholder:
+        "http://192.168.1.100:11434 hoặc http://ai.corp.local:8000",
+      tokenLabel: "Mã token / API key (tuỳ chọn)",
+      tokenPlaceholder: "Để trống nếu không yêu cầu xác thực",
+      tokenSavedPlaceholder: "•••••••• (Đã lưu token bí mật)",
+      modelLabel: "Tên mô hình Chat",
+      modelPlaceholder: "qwen2.5:14b hoặc meta-llama/Llama-3.1-8B-Instruct",
+      testBtn: "Kiểm tra kết nối",
+      testingBtn: "Đang kiểm tra…",
+      testSuccess: "Kết nối thành công! Tìm thấy {modelCount} mô hình.",
+      testFailed: "Kết nối thất bại: {error}",
+      saveBtn: "Lưu cấu hình",
+      savedSuccess: "Đã lưu cấu hình Máy chủ AI Mạng nội bộ.",
+      policyLocked:
+        "Cấu hình này đang được quản trị bởi Chính sách IT của Tổ chức.",
     },
   },
 } as const;
@@ -210,6 +242,12 @@ export const coreEn: Widen<typeof coreVi> = {
       "Source format ({kind}) requires a Pro or Enterprise license. Please activate a .sclicense file in Settings.",
     licenseRequireProStudio:
       "Studio synthesis format ({kind}) requires a Pro or Enterprise license. Please activate a .sclicense file in Settings.",
+    lanAiInvalidHost:
+      "The AI server address ({url}) is not a valid private network (RFC1918) or allowed internal domain.",
+    lanAiRequireEnterprise:
+      "Connecting to a Local Area Network (LAN) AI Server requires an Enterprise license. Please upgrade your license.",
+    policyCloudDisabled:
+      "Public Cloud AI features have been disabled by your Organization's IT Policy ({org}).",
   },
   online: {
     auth: "The API key is invalid or has expired.",
@@ -264,6 +302,32 @@ export const coreEn: Widen<typeof coreVi> = {
       errClockTampered:
         "System clock is more than 24 hours behind the last recorded timestamp. Please correct your system clock.",
       errIo: "Could not read license file (max 64 KB).",
+    },
+    lanAi: {
+      title: "LAN AI Server",
+      description:
+        "Connect to your organization's internal GPU server (Ollama or vLLM/OpenAI-compatible) securely within your LAN.",
+      requireEnterpriseBadge: "Enterprise Plan Only",
+      enabledLabel: "Enable LAN AI Server connection",
+      providerLabel: "Protocol format",
+      providerOllama: "Internal Ollama (port 11434)",
+      providerOpenAi: "OpenAI-compatible (vLLM / LiteLLM / LocalAI)",
+      baseUrlLabel: "Server address (URL)",
+      baseUrlPlaceholder:
+        "http://192.168.1.100:11434 or http://ai.corp.local:8000",
+      tokenLabel: "Bearer token / API key (optional)",
+      tokenPlaceholder: "Leave empty if no auth is required",
+      tokenSavedPlaceholder: "•••••••• (Secret token saved)",
+      modelLabel: "Chat model name",
+      modelPlaceholder: "qwen2.5:14b or meta-llama/Llama-3.1-8B-Instruct",
+      testBtn: "Test connection",
+      testingBtn: "Testing…",
+      testSuccess: "Connection successful! Found {modelCount} models.",
+      testFailed: "Connection failed: {error}",
+      saveBtn: "Save configuration",
+      savedSuccess: "LAN AI Server configuration saved.",
+      policyLocked:
+        "This configuration is managed by your Organization's IT Policy.",
     },
   },
 };
