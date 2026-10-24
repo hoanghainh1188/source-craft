@@ -1,15 +1,24 @@
 import type { RagSearchScope } from "@shared/ipc/types";
 import { useT } from "../../shared/i18n/i18n-context";
 
+// 231 — chọn phạm vi hỏi đáp: sổ tay hiện tại hoặc toàn bộ kho (Pro/Enterprise). locked = bản quyền không có
+// crossNotebookSearch ⇒ nút "Toàn bộ" vẫn bấm được (để mời nâng cấp qua onLockedClick) nhưng KHÔNG đổi phạm vi.
+
+interface ScopeToggleProps {
+  scope: RagSearchScope;
+  onChange: (s: RagSearchScope) => void;
+  disabled?: boolean;
+  locked?: boolean;
+  onLockedClick?: () => void;
+}
+
 export function ScopeToggle({
   scope,
   onChange,
   disabled,
-}: {
-  scope: RagSearchScope;
-  onChange: (s: RagSearchScope) => void;
-  disabled?: boolean;
-}): JSX.Element {
+  locked = false,
+  onLockedClick,
+}: ScopeToggleProps): JSX.Element {
   const t = useT();
 
   return (
@@ -31,26 +40,22 @@ export function ScopeToggle({
       </button>
       <button
         type="button"
-        className={scope === "all" ? "seg active" : "seg"}
-        onClick={() => onChange("all")}
+        className={
+          scope === "all" ? "seg active" : locked ? "seg locked" : "seg"
+        }
+        onClick={() => (locked ? onLockedClick?.() : onChange("all"))}
         disabled={disabled}
         aria-pressed={scope === "all"}
+        aria-disabled={locked || undefined}
         data-testid="scope-all"
-        title={t.t("chat.scope.proTooltip")}
+        title={
+          locked
+            ? t.t("chat.scope.lockedTooltip")
+            : t.t("chat.scope.proTooltip")
+        }
       >
         <span>{t.t("chat.scope.all")}</span>
-        <span
-          className="badge-pro"
-          style={{
-            marginLeft: "4px",
-            fontSize: "10px",
-            padding: "1px 4px",
-            borderRadius: "4px",
-            backgroundColor: "var(--color-primary-subtle, #e0e7ff)",
-            color: "var(--color-primary, #3b82f6)",
-            fontWeight: "bold",
-          }}
-        >
+        <span className="scope-pro-badge" data-testid="scope-pro-badge">
           {t.t("chat.scope.proBadge")}
         </span>
       </button>

@@ -4,6 +4,8 @@ import { describeChatError, useChat } from "./useChat";
 import { MessageBubble } from "./MessageBubble";
 import { ModeToggle, MODE_HINTS } from "./ModeToggle";
 import { ScopeToggle } from "./ScopeToggle";
+import { CROSS_SEARCH_UPSELL, useScopeGate } from "./useScopeGate";
+import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 import { IconSend } from "../../shared/icons";
 import { useT } from "../../shared/i18n/i18n-context";
 
@@ -35,6 +37,8 @@ export function ChatColumn({
     stop,
     clearHistory,
   } = useChat(notebookId);
+  // 231: gói Free ⇒ khoá "Toàn bộ kho" + mời nâng cấp ngay tại composer.
+  const scopeGate = useScopeGate(scope, setScope);
   const t = useT();
   const [draft, setDraft] = useState("");
   // 098: khối lỗi (chứa nút vừa bấm) biến mất khi hỏi lại ⇒ đưa focus về vùng hội thoại, không để rơi ra <body>.
@@ -113,6 +117,8 @@ export function ChatColumn({
       {error && (
         <div className="form-error chat-error">
           <p role="alert">{describeChatError(error, t)}</p>
+          {/* 237/231: main từ chối vì bản quyền (vd gửi "all" khi trạng thái chưa kịp đọc) ⇒ mời nâng cấp. */}
+          {error.kind === "ipc" && <UpgradePrompt error={error.error} />}
           {/* 098 (ADR online-fallback-clarify): lỗi AI online ⇒ người dùng CHỌN trả lời lượt này bằng AI cục bộ
               hoặc thử lại — không tự đổi provider. */}
           {failedTurn && (
@@ -168,8 +174,10 @@ export function ChatColumn({
                 <ModeToggle mode={mode} onChange={setMode} disabled={loading} />
                 <ScopeToggle
                   scope={scope}
-                  onChange={setScope}
+                  onChange={scopeGate.changeScope}
                   disabled={loading}
+                  locked={scopeGate.locked}
+                  onLockedClick={scopeGate.showUpsell}
                 />
                 <span
                   className="model-chip"
@@ -204,6 +212,9 @@ export function ChatColumn({
                 )}
               </div>
             </div>
+            {scopeGate.upsellVisible && (
+              <UpgradePrompt error={CROSS_SEARCH_UPSELL} />
+            )}
             <p className="modehint" data-testid="mode-hint">
               {t.t(MODE_HINTS[mode])}
             </p>

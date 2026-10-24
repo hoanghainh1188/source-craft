@@ -45,6 +45,7 @@ import type { VectorStore } from "../services/ingestion/vector-store";
 import type { UiLanguageService } from "../services/ui-language";
 import type { RagService } from "../services/rag/rag-service";
 import type { ChatRepo } from "../services/rag/chat-repo";
+import { assertRagScopeAllowed } from "../services/rag/scope-gate";
 import type { StudioService } from "../services/studio/studio-service";
 import type { ContentSearch } from "../services/search/content-search";
 import { exportFormattedDocument } from "../services/studio/export";
@@ -375,13 +376,7 @@ export function registerIpc({
   safeHandle(CHANNELS.ragAsk, async (input) => {
     const target = parseAiTarget(input);
     const askInput = input as RagAskInput;
-    if (
-      askInput?.scope === "all" &&
-      licenseService &&
-      !licenseService.gate.hasFeature("crossNotebookSearch")
-    ) {
-      throw new UserFacingError("licenseRequireProCrossSearch");
-    }
+    assertRagScopeAllowed(askInput, licenseService?.gate);
     try {
       return await ragServices[target].ask(askInput);
     } catch (e) {
@@ -403,13 +398,7 @@ export function registerIpc({
       throw new Error("Invalid streamId.");
     }
     const askInput = input as RagAskStreamInput;
-    if (
-      askInput?.scope === "all" &&
-      licenseService &&
-      !licenseService.gate.hasFeature("crossNotebookSearch")
-    ) {
-      throw new UserFacingError("licenseRequireProCrossSearch");
-    }
+    assertRagScopeAllowed(askInput, licenseService?.gate);
     // Kiểm đích AI TRƯỚC khi giữ controller — ném ở đây không để lại entry mồ côi trong streamControllers.
     const target = parseAiTarget(input);
     const controller = new AbortController();
