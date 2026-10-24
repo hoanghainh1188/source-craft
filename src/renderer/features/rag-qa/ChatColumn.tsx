@@ -3,6 +3,7 @@ import type { Citation } from "@shared/ipc/types";
 import { describeChatError, useChat } from "./useChat";
 import { MessageBubble } from "./MessageBubble";
 import { ModeToggle, MODE_HINTS } from "./ModeToggle";
+import { ScopeToggle } from "./ScopeToggle";
 import { IconSend } from "../../shared/icons";
 import { useT } from "../../shared/i18n/i18n-context";
 
@@ -20,6 +21,8 @@ export function ChatColumn({
     messages,
     mode,
     setMode,
+    scope,
+    setScope,
     loading,
     error,
     failedTurn,
@@ -163,6 +166,11 @@ export function ChatColumn({
               />
               <div className="cbar">
                 <ModeToggle mode={mode} onChange={setMode} disabled={loading} />
+                <ScopeToggle
+                  scope={scope}
+                  onChange={setScope}
+                  disabled={loading}
+                />
                 <span
                   className="model-chip"
                   title={t.t("chat.modelChipTitle")}

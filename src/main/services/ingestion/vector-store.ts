@@ -47,10 +47,10 @@ export interface VectorStore {
   countBySource(sourceId: string): Promise<number>;
   /** 059: đếm vector theo notebook (so với số chunk để biết notebook đã nhúng lại xong chưa). */
   countByNotebook(notebookId: string): Promise<number>;
-  /** Tìm topK chunk gần nhất trong phạm vi notebook (013). Bảng chưa tồn tại → []. */
+  /** Tìm topK chunk gần nhất trong phạm vi notebook (hoặc toàn cục nếu notebookId là null/rỗng) (013, 231). Bảng chưa tồn tại → []. */
   search(
     queryVector: number[],
-    notebookId: string,
+    notebookId: string | null | undefined,
     topK: number,
   ): Promise<VectorSearchHit[]>;
   /** 055: lấy vector của các chunk theo id (cho MMR). Id không có vector → bỏ khỏi Map. */
@@ -146,19 +146,18 @@ export async function createLanceVectorStore(
 
   const searchRows = async (
     queryVector: number[],
-    notebookId: string,
+    notebookId: string | null | undefined,
     topK: number,
   ): Promise<VectorSearchHit[]> => {
     const t = await getTable();
     if (!t) return []; // chưa nạp nguồn nào
     // Cosine distance (bị chặn [0,2], chuẩn cho text embedding) thay vì L2 mặc định — vector
     // embedding (vd nomic-embed-text) KHÔNG chuẩn hoá nên L2 không có ngưỡng ổn định (issue #15).
-    const rows = await t
-      .search(queryVector)
-      .distanceType("cosine")
-      .where(`notebook_id = '${q(notebookId)}'`)
-      .limit(topK)
-      .toArray();
+    let query = t.search(queryVector).distanceType("cosine");
+    if (notebookId && notebookId.trim() !== "") {
+      query = query.where(`notebook_id = '${q(notebookId)}'`);
+    }
+    const rows = await query.limit(topK).toArray();
     return rows.map((r) => ({
       id: String(r["id"]),
       sourceId: String(r["source_id"]),

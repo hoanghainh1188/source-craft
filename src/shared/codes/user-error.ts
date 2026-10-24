@@ -54,6 +54,7 @@ export const USER_ERROR_CODES = [
   "policyCloudDisabled",
   // 229 — Shared Team Notebooks (.scnb)
   "licenseRequireProSharedNotebooks",
+  "licenseRequireProCrossSearch",
   "packageCorrupted",
   "notebookReadOnly",
 ] as const;

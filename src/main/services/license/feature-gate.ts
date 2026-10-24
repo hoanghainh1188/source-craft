@@ -43,6 +43,7 @@ export const DEFAULT_PRO_FEATURES: readonly LicenseFeature[] = [
   "studioPro",
   "meetingLong",
   "sharedNotebooks",
+  "crossNotebookSearch",
 ];
 
 export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
@@ -52,6 +53,7 @@ export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
   "lanAi",
   "sharedNotebooks",
   "itPolicy",
+  "crossNotebookSearch",
 ];
 
 /**

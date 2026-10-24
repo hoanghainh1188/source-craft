@@ -19,15 +19,18 @@ export interface RetrievalDeps {
   embed: (text: string) => Promise<number[]>;
   search: (
     vector: number[],
-    notebookId: string,
+    notebookId: string | null | undefined,
     topK: number,
   ) => Promise<VectorSearchHit[]>;
   getChunksByIds: (ids: string[]) => import("@shared/ipc/types").Chunk[];
   sourceTitle: (sourceId: string) => string;
+  sourceNotebook?: (
+    sourceId: string,
+  ) => { notebookId?: string; notebookName?: string } | null;
   // 055 (tuỳ chọn — thiếu thì lùi về hành vi 013 chỉ-vector, không rewrite):
   rewrite?: (question: string, history: RagTurn[]) => Promise<string>;
   searchBm25?: (
-    notebookId: string,
+    notebookId: string | null | undefined,
     query: string,
     topK: number,
   ) => { id: string; score: number }[];
@@ -78,7 +81,7 @@ async function scoreWithin(
 
 export async function retrieve(
   question: string,
-  notebookId: string,
+  notebookId: string | null | undefined,
   deps: RetrievalDeps,
   history: RagTurn[] = [],
   // 108: cấu hình bộ lọc độ liên quan; công cụ đo (tests/eval) truyền vào để quét. Mặc định = bản ghi hiệu chuẩn.

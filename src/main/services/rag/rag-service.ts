@@ -72,9 +72,15 @@ export function createRagService(deps: RagServiceDeps) {
     const mode = validateMode(input.mode);
     const history = validateHistory(input.history);
 
+    const isAllScope = input.scope === "all";
+
     // 059: notebook này đang tái lập chỉ mục → vector chưa đầy đủ → báo thay vì trả sai/thiếu (FR-010).
-    // Per-notebook: notebook khác đã xong vẫn hỏi đáp bình thường.
-    if (deps.reindexing && (await deps.reindexing(input.notebookId))) {
+    // Per-notebook: notebook khác đã xong vẫn hỏi đáp bình thường. Không chặn khi tìm kiếm toàn cục (231).
+    if (
+      !isAllScope &&
+      deps.reindexing &&
+      (await deps.reindexing(input.notebookId))
+    ) {
       return {
         answer: REINDEXING_CONTENT,
         citations: [],
@@ -84,10 +90,10 @@ export function createRagService(deps: RagServiceDeps) {
       };
     }
 
-    // 055: truyền history cho query rewriting (giải tham chiếu hội thoại).
+    // 055, 231: truyền history cho query rewriting và notebookId (null nếu tìm kiếm toàn cục đa sổ tay).
     const scored = await retrieve(
       question,
-      input.notebookId,
+      isAllScope ? null : input.notebookId,
       deps,
       history,
       deps.relevanceConfig,
@@ -112,6 +118,17 @@ export function createRagService(deps: RagServiceDeps) {
 
     const raw = await chatFn(messages);
     const { answer, citations } = postprocessCitations(raw, built.map);
+
+    // 231: gán tên sổ tay và notebookId cho các citations nếu có
+    if (deps.sourceNotebook) {
+      for (const c of citations) {
+        const nbInfo = deps.sourceNotebook(c.sourceId);
+        if (nbInfo) {
+          if (nbInfo.notebookId) c.notebookId = nbInfo.notebookId;
+          if (nbInfo.notebookName) c.notebookName = nbInfo.notebookName;
+        }
+      }
+    }
 
     if (mode === "open") {
       return { answer, citations, notFound: false, modeUsed: "open" };

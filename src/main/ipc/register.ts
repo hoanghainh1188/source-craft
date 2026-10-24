@@ -370,10 +370,19 @@ export function registerIpc({
 
   // rag-qa (013) — embed/search/chat CHỈ ở đây (main). KHÔNG log payload (câu hỏi/nội dung — Constitution III).
   // 098: đích AI theo lượt (input.target) + lỗi provider online gắn thẻ để renderer hiện nút "AI cục bộ".
+  // 231: tìm kiếm toàn cục đa sổ tay (scope === 'all') yêu cầu bản quyền Pro/Enterprise.
   safeHandle(CHANNELS.ragAsk, async (input) => {
     const target = parseAiTarget(input);
+    const askInput = input as RagAskInput;
+    if (
+      askInput?.scope === "all" &&
+      licenseService &&
+      !licenseService.gate.hasFeature("crossNotebookSearch")
+    ) {
+      throw new UserFacingError("licenseRequireProCrossSearch");
+    }
     try {
-      return await ragServices[target].ask(input as RagAskInput);
+      return await ragServices[target].ask(askInput);
     } catch (e) {
       return rethrowForIpc(e);
     }
@@ -392,12 +401,20 @@ export function registerIpc({
     if (typeof streamId !== "string" || streamId === "") {
       throw new Error("Invalid streamId.");
     }
+    const askInput = input as RagAskStreamInput;
+    if (
+      askInput?.scope === "all" &&
+      licenseService &&
+      !licenseService.gate.hasFeature("crossNotebookSearch")
+    ) {
+      throw new UserFacingError("licenseRequireProCrossSearch");
+    }
     // Kiểm đích AI TRƯỚC khi giữ controller — ném ở đây không để lại entry mồ côi trong streamControllers.
     const target = parseAiTarget(input);
     const controller = new AbortController();
     streamControllers.set(streamId, controller);
     try {
-      return await ragServices[target].askStream(input as RagAskStreamInput, {
+      return await ragServices[target].askStream(askInput, {
         onToken: (delta) => emitToken({ streamId, delta }),
         signal: controller.signal,
       });

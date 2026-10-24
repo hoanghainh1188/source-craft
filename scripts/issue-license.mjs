@@ -14,6 +14,7 @@ const DEFAULT_PRO_FEATURES = [
   "studioPro",
   "meetingLong",
   "sharedNotebooks",
+  "crossNotebookSearch",
 ];
 const DEFAULT_ENTERPRISE_FEATURES = [
   "multimedia",
@@ -22,6 +23,7 @@ const DEFAULT_ENTERPRISE_FEATURES = [
   "lanAi",
   "sharedNotebooks",
   "itPolicy",
+  "crossNotebookSearch",
 ];
 
 /**

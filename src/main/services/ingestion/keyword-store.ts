@@ -10,8 +10,12 @@ export interface KeywordHit {
 }
 
 export interface KeywordStore {
-  /** Tìm topK chunk khớp keyword trong notebook. [] nếu query rỗng token. Ném nếu FTS chưa tồn tại. */
-  searchBm25(notebookId: string, query: string, topK: number): KeywordHit[];
+  /** Tìm topK chunk khớp keyword trong notebook (hoặc toàn cục nếu notebookId là null/rỗng) (055, 231). [] nếu query rỗng token. Ném nếu FTS chưa tồn tại. */
+  searchBm25(
+    notebookId: string | null | undefined,
+    query: string,
+    topK: number,
+  ): KeywordHit[];
 }
 
 export function createKeywordStore(db: Db): KeywordStore {
@@ -19,17 +23,31 @@ export function createKeywordStore(db: Db): KeywordStore {
     searchBm25(notebookId, query, topK) {
       const match = buildFtsMatch(query);
       if (match === "") return [];
-      const rows = db
-        .prepare(
-          `SELECT c.id AS id, bm25(chunk_fts) AS score
+
+      const isSpecificNotebook = Boolean(
+        notebookId && notebookId.trim() !== "",
+      );
+      const sql = isSpecificNotebook
+        ? `SELECT c.id AS id, bm25(chunk_fts) AS score
              FROM chunk_fts
              JOIN chunk c ON c.rowid = chunk_fts.rowid
              JOIN source s ON s.id = c.source_id
             WHERE chunk_fts MATCH ? AND s.notebook_id = ?
             ORDER BY score
-            LIMIT ?`,
-        )
-        .all(match, notebookId, topK) as unknown as KeywordHit[];
+            LIMIT ?`
+        : `SELECT c.id AS id, bm25(chunk_fts) AS score
+             FROM chunk_fts
+             JOIN chunk c ON c.rowid = chunk_fts.rowid
+             JOIN source s ON s.id = c.source_id
+            WHERE chunk_fts MATCH ?
+            ORDER BY score
+            LIMIT ?`;
+
+      const params = isSpecificNotebook
+        ? [match, notebookId!, topK]
+        : [match, topK];
+
+      const rows = db.prepare(sql).all(...params) as unknown as KeywordHit[];
       return rows;
     },
   };

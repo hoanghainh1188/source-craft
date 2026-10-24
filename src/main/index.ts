@@ -836,6 +836,15 @@ app
         getChunksByIds: (ids) => ingestion.sourceRepo.getChunksByIds(ids),
         sourceTitle: (sid) =>
           ingestion.sourceRepo.getById(sid)?.title ?? "Source",
+        sourceNotebook: (sid) => {
+          const src = ingestion.sourceRepo.getById(sid);
+          if (!src) return null;
+          const nb = notebookRepo.list().find((n) => n.id === src.notebookId);
+          return {
+            notebookId: src.notebookId,
+            notebookName: nb?.name,
+          };
+        },
         // 055 hybrid: BM25 keyword (FTS5) + vector cho MMR. rewrite qua provider active (badge egress 031).
         searchBm25: (nb, query, k) => keywordStore.searchBm25(nb, query, k),
         getVectorsByIds: (ids) => ingestion.vectorStore.getVectorsByIds(ids),

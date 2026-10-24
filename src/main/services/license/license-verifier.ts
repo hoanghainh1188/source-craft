@@ -24,6 +24,7 @@ const VALID_FEATURES: ReadonlySet<LicenseFeature> = new Set<LicenseFeature>([
   "lanAi",
   "sharedNotebooks",
   "itPolicy",
+  "crossNotebookSearch",
 ]);
 
 const MAX_ORG_NAME_LEN = 120;
