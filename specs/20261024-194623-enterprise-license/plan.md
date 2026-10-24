@@ -1,6 +1,6 @@
 # Implementation Plan: Enterprise Offline License & Feature Gate (`enterprise-license`)
 
-**Branch**: `226-enterprise-license` | **Date**: 2026-10-24 | **Spec**: [spec.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/spec.md)
+**Branch**: `226-enterprise-license` | **Date**: 2026-10-24 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/20261024-194623-enterprise-license/spec.md`
 

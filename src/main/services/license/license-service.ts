@@ -3,6 +3,7 @@ import type {
   LicenseFile,
   LicensePayload,
   LicenseStatus,
+  LicenseTier,
 } from "@shared/ipc/types";
 import type { StoreLike } from "../app-shell/onboarding";
 import {
@@ -33,6 +34,8 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 export interface LicenseServiceDeps {
   store: StoreLike;
   publicKeyPem?: string;
+  /** Optional fallback tier when no .sclicense file is stored (e.g. E2E test seam on unpackaged builds). */
+  defaultTier?: LicenseTier;
   now?: () => number;
   /** Opens native file picker in main process and returns selected path or null if cancelled. */
   pickFile?: () => Promise<string | null>;
@@ -55,7 +58,19 @@ export interface LicenseService {
   gate: FeatureGate;
 }
 
-function buildFreeStatus(): LicenseStatus {
+function buildDefaultStatus(tier: LicenseTier = "free"): LicenseStatus {
+  if (tier === "pro" || tier === "enterprise") {
+    return {
+      state: "valid",
+      tier,
+      orgName: tier === "enterprise" ? "E2E Enterprise" : null,
+      seats: tier === "enterprise" ? 100 : 1,
+      issuedAt: null,
+      expiresAt: null,
+      daysRemaining: null,
+      entitlements: entitlementsFor(tier),
+    };
+  }
   return {
     state: "free",
     tier: "free",
@@ -149,6 +164,7 @@ export function createLicenseService(deps: LicenseServiceDeps): LicenseService {
   const {
     store,
     publicKeyPem = DEFAULT_PUBLIC_KEY_PEM,
+    defaultTier = "free",
     now = () => Date.now(),
     pickFile,
     readFileBytes,
@@ -170,7 +186,7 @@ export function createLicenseService(deps: LicenseServiceDeps): LicenseService {
   const getStatus = (): LicenseStatus => {
     const stored = store.get(STORE_KEY_LICENSE_FILE);
     if (!stored) {
-      return buildFreeStatus();
+      return buildDefaultStatus(defaultTier);
     }
     const verified = verifyLicenseFile(stored, publicKeyPem);
     if (!verified.ok) {
@@ -269,7 +285,7 @@ export function createLicenseService(deps: LicenseServiceDeps): LicenseService {
 
   const deactivate = (): LicenseStatus => {
     store.set(STORE_KEY_LICENSE_FILE, null);
-    const status = buildFreeStatus();
+    const status = buildDefaultStatus("free");
     logEvent?.("license.deactivated", {});
     broadcast?.(status);
     return status;

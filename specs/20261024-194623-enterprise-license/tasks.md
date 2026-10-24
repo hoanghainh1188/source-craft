@@ -1,7 +1,7 @@
 # Tasks: Enterprise Offline License & Feature Gate (`enterprise-license`)
 
 **Input**: Design documents from `/specs/20261024-194623-enterprise-license/`
-**Prerequisites**: [plan.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/plan.md), [spec.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/spec.md), [research.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/research.md), [data-model.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/data-model.md), [contracts/license-ipc.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/contracts/license-ipc.md)
+**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/license-ipc.md](./contracts/license-ipc.md)
 
 **Tests**: Required per Constitution Principle IV (Test-First & Coverage Discipline ≥ 80% on business logic).
 

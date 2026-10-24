@@ -457,8 +457,20 @@ app
     const aiRuntime = createAiRuntime(store);
 
     // 226 — Enterprise License & Feature Gate (100% offline Ed25519 signature verification).
+    // E2E seam (unpackaged only): IV_E2E_LICENSE_TIER allows existing feature E2E suites (Studio, Ingestion, etc.)
+    // to run with unlocked capabilities unless specifically testing Free-tier restrictions.
+    const e2eTierEnv = !app.isPackaged
+      ? process.env["IV_E2E_LICENSE_TIER"]
+      : undefined;
+    const defaultTier =
+      e2eTierEnv === "enterprise" ||
+      e2eTierEnv === "pro" ||
+      e2eTierEnv === "free"
+        ? e2eTierEnv
+        : "free";
     const licenseService = createLicenseService({
       store,
+      defaultTier,
       ...(!app.isPackaged && process.env["SC_LICENSE_PUBKEY_PEM"]
         ? { publicKeyPem: process.env["SC_LICENSE_PUBKEY_PEM"] }
         : {}),

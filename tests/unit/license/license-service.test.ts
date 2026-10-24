@@ -207,4 +207,19 @@ describe("LicenseService", () => {
     expect(afterDeactivate.tier).toBe("free");
     expect(afterDeactivate.orgName).toBeNull();
   });
+
+  it("supports defaultTier override when store is empty (for E2E test seam)", () => {
+    const { publicKey } = makeKeyPair();
+    const service = createLicenseService({
+      store: makeMemoryStore(),
+      publicKeyPem: publicKey,
+      defaultTier: "enterprise",
+    });
+
+    const st = service.getStatus();
+    expect(st.state).toBe("valid");
+    expect(st.tier).toBe("enterprise");
+    expect(st.entitlements.maxNotebooks).toBeNull();
+    expect(st.entitlements.allowedStudioKinds).toContain("faq");
+  });
 });

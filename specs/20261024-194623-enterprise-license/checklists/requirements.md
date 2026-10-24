@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-10-24
-**Feature**: [spec.md](file:///Users/hoanghainh/Projects/source-craft/specs/20261024-194623-enterprise-license/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

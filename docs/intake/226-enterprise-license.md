@@ -7,12 +7,12 @@
 
 ## Input sources
 
-- [`docs/01-basic-design/enterprise-license/basic-design.md`](file:///Users/hoanghainh/Projects/source-craft/docs/01-basic-design/enterprise-license/basic-design.md) — **nguồn chính** (6 mục: mục tiêu, 3 tầng sản phẩm & quyền lợi, cấu trúc tệp `.sclicense` & xác thực Ed25519, điểm chặn giới hạn ở main process, trải nghiệm người dùng & UI, ràng buộc bảo mật/riêng tư/i18n).
-- [`docs/OVERVIEW.md`](file:///Users/hoanghainh/Projects/source-craft/docs/OVERVIEW.md) — mục 4 "Nền tảng": *"Hướng tới cộng đồng trước (miễn phí), freemium sau — nên kiến trúc cần 'sẵn sàng thu phí' (tách tầng license/đồng bộ)"* · mục 6 ràng buộc bất biến 1, 5 (local-first không egress, cách ly renderer).
-- [`docs/03-ui/prototype.html`](file:///Users/hoanghainh/Projects/source-craft/docs/03-ui/prototype.html) — tham chiếu bố cục màn Cài đặt (`/settings`) và Header ứng dụng.
-- [`.specify/memory/constitution.md`](file:///Users/hoanghainh/Projects/source-craft/.specify/memory/constitution.md) — I (Local-first & No Default Egress — xác thực bản quyền 100% offline), III (Desktop Security Boundary — kiểm tra hạn mức và mở hộp thoại chọn tệp `.sclicense` ở main process, không tin cậy renderer), IV (TDD & coverage ≥ 80%).
-- [`docs/00-glossary.md`](file:///Users/hoanghainh/Projects/source-craft/docs/00-glossary.md) — đã tra cứu thuật ngữ hiện có; các thuật ngữ mới của hệ thống bản quyền được liệt kê ở mục "Thuật ngữ mới" bên dưới.
-- [`docs/04-decisions/INDEX.md`](file:///Users/hoanghainh/Projects/source-craft/docs/04-decisions/INDEX.md) — kế thừa các quyết định về `UserFacingError` và i18n (`123-i18n`), hộp thoại chọn tệp ở main (`085-vault-backup`, `101-relink`), và cơ chế tự dừng phiên ghi cuộc họp (`186-meeting-capture`).
+- [`docs/01-basic-design/enterprise-license/basic-design.md`](../01-basic-design/enterprise-license/basic-design.md) — **nguồn chính** (6 mục: mục tiêu, 3 tầng sản phẩm & quyền lợi, cấu trúc tệp `.sclicense` & xác thực Ed25519, điểm chặn giới hạn ở main process, trải nghiệm người dùng & UI, ràng buộc bảo mật/riêng tư/i18n).
+- [`docs/OVERVIEW.md`](../OVERVIEW.md) — mục 4 "Nền tảng": *"Hướng tới cộng đồng trước (miễn phí), freemium sau — nên kiến trúc cần 'sẵn sàng thu phí' (tách tầng license/đồng bộ)"* · mục 6 ràng buộc bất biến 1, 5 (local-first không egress, cách ly renderer).
+- [`docs/03-ui/prototype.html`](../03-ui/prototype.html) — tham chiếu bố cục màn Cài đặt (`/settings`) và Header ứng dụng.
+- [`.specify/memory/constitution.md`](../../.specify/memory/constitution.md) — I (Local-first & No Default Egress — xác thực bản quyền 100% offline), III (Desktop Security Boundary — kiểm tra hạn mức và mở hộp thoại chọn tệp `.sclicense` ở main process, không tin cậy renderer), IV (TDD & coverage ≥ 80%).
+- [`docs/00-glossary.md`](../00-glossary.md) — đã tra cứu thuật ngữ hiện có; các thuật ngữ mới của hệ thống bản quyền được liệt kê ở mục "Thuật ngữ mới" bên dưới.
+- [`docs/04-decisions/INDEX.md`](../04-decisions/INDEX.md) — kế thừa các quyết định về `UserFacingError` và i18n (`123-i18n`), hộp thoại chọn tệp ở main (`085-vault-backup`, `101-relink`), và cơ chế tự dừng phiên ghi cuộc họp (`186-meeting-capture`).
 
 ## Prompt for /speckit-specify
 

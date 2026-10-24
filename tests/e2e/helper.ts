@@ -36,6 +36,9 @@ export async function launchFreshAt(
       // 109: bộ chấm độ liên quan giả tất định — KHÔNG tải model ~119 MB trong e2e (nguồn ready ⇒ prefetch).
       IV_RERANK_FAKE: "1",
       IV_UI_LANG: "vi",
+      // 226: mở khoá tầng enterprise mặc định cho các bài test tính năng E2E (Studio 9 loại, đa phương tiện, >3 notebooks).
+      // Các bài test kiểm tra giới hạn gói Free có thể truyền { IV_E2E_LICENSE_TIER: "free" } để ghi đè.
+      IV_E2E_LICENSE_TIER: "enterprise",
       ...(env ?? {}),
     } as Record<string, string>,
   });
