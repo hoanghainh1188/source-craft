@@ -72,6 +72,8 @@ import {
   parseBackupCreateInput,
   parseRestoreTokenInput,
 } from "../services/vault-backup/ipc-input";
+import { detectKindFromPath } from "../services/ingestion/parsers";
+import type { LicenseService } from "../services/license/license-service";
 
 interface RegisterDeps {
   store: StoreLike;
@@ -109,6 +111,8 @@ interface RegisterDeps {
   // 186 — Ghi cuộc họp.
   meeting: MeetingService;
   meetingViewer: MeetingViewerApi;
+  // 226 — Enterprise License & Feature Gate.
+  licenseService?: LicenseService;
 }
 
 /** Số báo lỗi renderer tối đa ghi mỗi phiên (chặn vòng lặp lỗi làm phình nhật ký) — 088. */
@@ -145,6 +149,7 @@ export function registerIpc({
   uiLanguage,
   meeting,
   meetingViewer,
+  licenseService,
 }: RegisterDeps): void {
   const safeHandle = (
     channel: string,
@@ -249,9 +254,10 @@ export function registerIpc({
 
   // notebooks (009) — SQLite gọi CHỈ ở đây (main, qua repo). KHÔNG log tên notebook (args không vào logEvent).
   safeHandle(CHANNELS.notebookList, () => notebookRepo.list());
-  safeHandle(CHANNELS.notebookCreate, (input) =>
-    notebookRepo.create(input as CreateNotebookInput),
-  );
+  safeHandle(CHANNELS.notebookCreate, (input) => {
+    licenseService?.gate.assertCanCreateNotebook(notebookRepo.list().length);
+    return notebookRepo.create(input as CreateNotebookInput);
+  });
   safeHandle(CHANNELS.notebookRename, (input) =>
     notebookRepo.rename(input as RenameNotebookInput),
   );
@@ -283,7 +289,24 @@ export function registerIpc({
   // ingestion (011) — FS/parse/embed/LanceDB CHỈ ở main (Constitution III). KHÔNG log nội dung tài liệu.
   safeHandle(CHANNELS.sourceAdd, (input) => {
     assertVaultWritable();
-    return pipeline.add(input as AddSourceInput);
+    const addInput = input as AddSourceInput;
+    if (
+      licenseService &&
+      addInput &&
+      typeof addInput.notebookId === "string" &&
+      addInput.notebookId !== ""
+    ) {
+      const kind =
+        addInput.kind === "url"
+          ? "url"
+          : typeof addInput.filePath === "string" &&
+              addInput.filePath.trim() !== ""
+            ? detectKindFromPath(addInput.filePath)
+            : addInput.kind;
+      const count = sourceRepo.listByNotebook(addInput.notebookId).length;
+      licenseService.gate.assertCanAddSource(count, kind);
+    }
+    return pipeline.add(addInput);
   });
   safeHandle(CHANNELS.sourceListByNotebook, (id) =>
     sourceRepo.listByNotebook(id as string),
@@ -405,6 +428,9 @@ export function registerIpc({
   safeHandleWithSender(CHANNELS.studioGenerate, async (sender, input) => {
     const target = parseAiTarget(input);
     const studioInput = input as StudioGenerateInput;
+    if (licenseService && studioInput && typeof studioInput.kind === "string") {
+      licenseService.gate.assertCanGenerateStudio(studioInput.kind);
+    }
     const emitStudioProgress = (e: StudioProgressEvent): void => {
       if (!sender.isDestroyed()) sender.send(CHANNELS.studioProgress, e);
     };
@@ -526,6 +552,15 @@ export function registerIpc({
     return req ? backupService.cancelRestore(req) : { ok: true };
   });
   safeHandle(CHANNELS.getRestoreResult, () => backupService.getRestoreResult());
+
+  // enterprise-license (226) — offline Ed25519 license & entitlements
+  if (licenseService) {
+    safeHandle(CHANNELS.licenseGetStatus, () => licenseService.getStatus());
+    safeHandle(CHANNELS.licenseActivateFile, () =>
+      licenseService.activateFromDialog(),
+    );
+    safeHandle(CHANNELS.licenseDeactivate, () => licenseService.deactivate());
+  }
 
   logEvent("ipc.registered", { channels: Object.values(CHANNELS).length });
 

@@ -34,7 +34,8 @@ import {
 import type { MicStatus } from "@shared/ipc/types";
 import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
-import { realpath } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
+import { createLicenseService } from "./services/license/license-service";
 import {
   app,
   BrowserWindow,
@@ -455,6 +456,47 @@ app
     // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
     const aiRuntime = createAiRuntime(store);
 
+    // 226 — Enterprise License & Feature Gate (100% offline Ed25519 signature verification).
+    // E2E seam (unpackaged only): IV_E2E_LICENSE_TIER allows existing feature E2E suites (Studio, Ingestion, etc.)
+    // to run with unlocked capabilities unless specifically testing Free-tier restrictions.
+    const e2eTierEnv = !app.isPackaged
+      ? process.env["IV_E2E_LICENSE_TIER"]
+      : undefined;
+    const defaultTier =
+      e2eTierEnv === "enterprise" ||
+      e2eTierEnv === "pro" ||
+      e2eTierEnv === "free"
+        ? e2eTierEnv
+        : "free";
+    const licenseService = createLicenseService({
+      store,
+      defaultTier,
+      ...(!app.isPackaged && process.env["SC_LICENSE_PUBKEY_PEM"]
+        ? { publicKeyPem: process.env["SC_LICENSE_PUBKEY_PEM"] }
+        : {}),
+      pickFile: async () => {
+        const parent = BrowserWindow.getFocusedWindow();
+        const opts = {
+          properties: ["openFile" as const],
+          filters: [{ name: "SourceCraft License", extensions: ["sclicense"] }],
+        };
+        const res = parent
+          ? await dialog.showOpenDialog(parent, opts)
+          : await dialog.showOpenDialog(opts);
+        if (res.canceled || res.filePaths.length === 0) return null;
+        return res.filePaths[0] ?? null;
+      },
+      readFileBytes: async (filePath) =>
+        new Uint8Array(await readFile(filePath)),
+      broadcast: (status) => {
+        for (const w of BrowserWindow.getAllWindows()) {
+          if (!w.isDestroyed())
+            w.webContents.send(CHANNELS.licenseChanged, status);
+        }
+      },
+      logEvent: (event, meta) => logEvent(event, meta ?? {}),
+    });
+
     // ingestion (011): LanceDB + pipeline. Progress push tới mọi cửa sổ qua source:progress.
     // 109: bộ chấm độ liên quan (cross-encoder in-process) — chỉ khi bản ghi hiệu chuẩn bật. Tải nền một lần vào data dir
     // (badge egress "model"); chưa sẵn sàng/lỗi ⇒ retrieve() bỏ qua bước chấm (fail-open).
@@ -648,6 +690,8 @@ app
       // e2e (R15, spike S1): tín hiệu thử thay micro / giả lập bị từ chối — CHỈ bản chưa đóng gói.
       testFakeMic: process.env["IV_E2E_FAKE_MIC"] === "1" && !app.isPackaged,
       testAudioPump: audioPumpSpeed > 0,
+      maxDurationSec: () =>
+        licenseService.gate.getEntitlements().maxMeetingSeconds,
     });
     const meeting = meetingService;
     quitGuard = createQuitGuard({
@@ -1022,6 +1066,7 @@ app
       }),
       meeting,
       meetingViewer,
+      licenseService,
     });
 
     // 145: menu ứng dụng theo ngôn ngữ giao diện — dựng lúc khởi động và dựng lại ngay khi đổi ngôn ngữ.

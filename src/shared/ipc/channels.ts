@@ -38,6 +38,8 @@ import type {
   MeetingTranscript,
   MeetingStartResult,
   MeetingState,
+  LicenseStatus,
+  ActivateLicenseResult,
 } from "./types";
 
 /**
@@ -170,6 +172,11 @@ export const CHANNELS = {
   meetingUpdateMarker: "meeting:updateMarker",
   meetingDeleteMarker: "meeting:deleteMarker",
   meetingExportMarkdown: "meeting:exportMarkdown",
+  // enterprise-license (226) — offline Ed25519 license & entitlements
+  licenseGetStatus: "license:getStatus",
+  licenseActivateFile: "license:activateFile",
+  licenseDeactivate: "license:deactivate",
+  licenseChanged: "license:changed", // event push main→renderer (not in ChannelResponse)
 } as const;
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
@@ -279,4 +286,8 @@ export interface ChannelResponse {
   [CHANNELS.meetingUpdateMarker]: { ok: true };
   [CHANNELS.meetingDeleteMarker]: { ok: true };
   [CHANNELS.meetingExportMarkdown]: StudioExportResult;
+  // enterprise-license (226)
+  [CHANNELS.licenseGetStatus]: LicenseStatus;
+  [CHANNELS.licenseActivateFile]: ActivateLicenseResult;
+  [CHANNELS.licenseDeactivate]: LicenseStatus;
 }

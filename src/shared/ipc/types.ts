@@ -693,7 +693,8 @@ export interface MeetingState {
   segments: CaptureSegmentInfo[];
   pauseReason?: "user" | "deviceLost";
   /** Main tự kết thúc phiên (review B1): renderer tắt micro + hiện lý do. Không có ⇒ người dùng kết thúc. */
-  endReason?: "diskFull" | "noAudio" | "rendererGone" | "crash";
+  endReason?:
+    "diskFull" | "noAudio" | "rendererGone" | "crash" | "limitReached";
   diskLevel: Exclude<DiskLevel, "stop">;
   minutesRemaining: number;
   /** PR B. */
@@ -764,3 +765,90 @@ export interface MeetingAudioBatch {
   seq: number;
   pcm: ArrayBuffer;
 }
+
+// ===== enterprise-license (226) — nguồn: specs/20261024-194623-enterprise-license/{data-model,contracts/license-ipc}.md =====
+
+/** Commercial tier of the application. */
+export type LicenseTier = "free" | "pro" | "enterprise";
+
+/** B2B feature flags unlocked by a license payload. */
+export type LicenseFeature =
+  | "multimedia"
+  | "studioPro"
+  | "meetingLong"
+  | "lanAi"
+  | "sharedNotebooks"
+  | "itPolicy";
+
+/** Signed payload inside a `.sclicense` file. */
+export interface LicensePayload {
+  schemaVersion: 1;
+  /** Unique license identifier (UUID v4). */
+  licenseId: string;
+  /** Organization or customer display name (1..120 chars). */
+  orgName: string;
+  /** Target tier (`pro` or `enterprise`). */
+  tier: Exclude<LicenseTier, "free">;
+  /** Number of licensed seats (integer >= 1). */
+  seats: number;
+  /** ISO-8601 UTC timestamp when the license was issued. */
+  issuedAt: string;
+  /** ISO-8601 UTC timestamp when the license expires, or `null` for perpetual. */
+  expiresAt: string | null;
+  /** Explicit feature flags enabled for this license. */
+  features: LicenseFeature[];
+}
+
+/** Structure of a `.sclicense` JSON file on disk. */
+export interface LicenseFile {
+  payload: LicensePayload;
+  /** Base64url-encoded 64-byte Ed25519 signature over canonical JSON of `payload`. */
+  sig: string;
+}
+
+/** Effective entitlements computed from the active license state. */
+export interface Entitlements {
+  tier: LicenseTier;
+  /** Max notebooks allowed (`3` for free, `null` for unlimited). */
+  maxNotebooks: number | null;
+  /** Max sources per notebook (`10` for free, `null` for unlimited). */
+  maxSourcesPerNotebook: number | null;
+  /** Max seconds per meeting recording (`900` for free, `null` for unlimited). */
+  maxMeetingSeconds: number | null;
+  /** Allowed source kinds for `source:add`. */
+  allowedSourceKinds: SourceKind[];
+  /** Allowed Studio synthesis kinds for `studio:generate`. */
+  allowedStudioKinds: StudioKind[];
+  /** Enabled B2B feature flags. */
+  features: LicenseFeature[];
+}
+
+/** Validation state of the stored license. */
+export type LicenseState =
+  "free" | "valid" | "expired" | "invalid" | "clockTampered";
+
+/** Full license status returned to the renderer (`license:getStatus` / `license:changed`). */
+export interface LicenseStatus {
+  state: LicenseState;
+  tier: LicenseTier;
+  orgName: string | null;
+  seats: number | null;
+  issuedAt: string | null;
+  expiresAt: string | null;
+  daysRemaining: number | null;
+  entitlements: Entitlements;
+}
+
+/** Error codes specific to `.sclicense` file activation. */
+export type LicenseActivationErrorCode =
+  | "invalidFormat"
+  | "invalidSignature"
+  | "expired"
+  | "clockTampered"
+  | "ioError";
+
+/** Result of `license:activateFile` IPC call. */
+export type ActivateLicenseResult =
+  | { status: "ok"; license: LicenseStatus }
+  | { status: "cancelled" }
+  | { status: "error"; code: LicenseActivationErrorCode };

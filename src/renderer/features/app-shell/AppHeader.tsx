@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AppInfo } from "@shared/ipc/types";
+import type { AppInfo, LicenseStatus } from "@shared/ipc/types";
 import { PrivacyBadge } from "./PrivacyBadge";
 import { AboutDialog } from "./AboutDialog";
 import { useT } from "../../shared/i18n/i18n-context";
@@ -8,6 +8,7 @@ import { useT } from "../../shared/i18n/i18n-context";
 export function AppHeader(): JSX.Element {
   const t = useT();
   const [info, setInfo] = useState<AppInfo | null>(null);
+  const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
@@ -20,8 +21,23 @@ export function AppHeader(): JSX.Element {
       .catch(() => {
         // Giữ fallback tên app mặc định trong render (không kẹt, không unhandled rejection).
       });
+    if (typeof window.api?.getLicenseStatus === "function") {
+      window.api
+        .getLicenseStatus()
+        .then((st) => {
+          if (alive) setLicense(st);
+        })
+        .catch(() => {});
+    }
+    const unsubLicense =
+      typeof window.api?.onLicenseChanged === "function"
+        ? window.api.onLicenseChanged((st) => {
+            if (alive) setLicense(st);
+          })
+        : () => {};
     return () => {
       alive = false;
+      unsubLicense();
     };
   }, []);
 
@@ -38,6 +54,22 @@ export function AppHeader(): JSX.Element {
           {info?.name ?? "SourceCraft"}
         </span>
       </button>
+      {license?.state === "valid" && license.tier === "enterprise" && (
+        <span
+          className="privacy-badge"
+          data-testid="header-license-badge"
+          title={license.orgName ?? ""}
+        >
+          {t.t("settings.license.badgeEnterprise", {
+            org: license.orgName ?? "",
+          })}
+        </span>
+      )}
+      {license?.state === "valid" && license.tier === "pro" && (
+        <span className="privacy-badge" data-testid="header-license-badge">
+          {t.t("settings.license.badgePro")}
+        </span>
+      )}
       <span className="app-tagline">{t.t("app.header.tagline")}</span>
       <PrivacyBadge />
       {showAbout && (
