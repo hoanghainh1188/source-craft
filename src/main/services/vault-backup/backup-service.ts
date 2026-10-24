@@ -86,7 +86,7 @@ const pad = (n: number): string => String(n).padStart(2, "0");
 
 export function suggestedBackupName(d: Date): string {
   const date = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
-  return `Quillhold-${date}-${pad(d.getHours())}${pad(d.getMinutes())}.ivbackup`;
+  return `SourceCraft-${date}-${pad(d.getHours())}${pad(d.getMinutes())}.ivbackup`;
 }
 
 const fail = (code: VaultBackupError["code"]): VaultBackupError => ({

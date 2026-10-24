@@ -5,23 +5,23 @@ import type { Widen } from "../translate";
 
 export const dialogsVi = {
   schemaNewer: {
-    title: "Cần cập nhật Quillhold",
+    title: "Cần cập nhật SourceCraft",
     detail:
-      "Dữ liệu trên máy được tạo bởi một phiên bản Quillhold mới hơn (schema v{dbVersion}), trong khi bản đang chạy chỉ hỗ trợ tới v{appVersion}.\n\nVui lòng cập nhật Quillhold lên phiên bản mới nhất rồi mở lại. Dữ liệu của bạn vẫn an toàn — ứng dụng cố ý không hạ cấp để tránh mất dữ liệu.",
+      "Dữ liệu trên máy được tạo bởi một phiên bản SourceCraft mới hơn (schema v{dbVersion}), trong khi bản đang chạy chỉ hỗ trợ tới v{appVersion}.\n\nVui lòng cập nhật SourceCraft lên phiên bản mới nhất rồi mở lại. Dữ liệu của bạn vẫn an toàn — ứng dụng cố ý không hạ cấp để tránh mất dữ liệu.",
   },
   startupError: {
-    title: "Quillhold gặp lỗi khi khởi động",
+    title: "SourceCraft gặp lỗi khi khởi động",
     detail:
       "Ứng dụng không thể khởi động (loại lỗi: {errorType}).\n\nVui lòng mở lại ứng dụng. Nếu vẫn lỗi, hãy cập nhật lên phiên bản mới nhất.",
   },
   dataDir: {
     title: "Không tạo được thư mục dữ liệu",
     detail:
-      "Quillhold không thể tạo thư mục dữ liệu tại:\n{path}\n\nKiểm tra quyền truy cập hoặc dung lượng ổ đĩa rồi mở lại ứng dụng.",
+      "SourceCraft không thể tạo thư mục dữ liệu tại:\n{path}\n\nKiểm tra quyền truy cập hoặc dung lượng ổ đĩa rồi mở lại ứng dụng.",
   },
   backup: {
     title: "Sao lưu vault",
-    filter: "Bản sao lưu Quillhold",
+    filter: "Bản sao lưu SourceCraft",
   },
   restore: {
     title: "Khôi phục vault",
@@ -37,23 +37,23 @@ export const dialogsVi = {
 
 export const dialogsEn: Widen<typeof dialogsVi> = {
   schemaNewer: {
-    title: "Please update Quillhold",
+    title: "Please update SourceCraft",
     detail:
-      "The data on this computer was created by a newer version of Quillhold (schema v{dbVersion}), but this version only supports up to v{appVersion}.\n\nPlease update Quillhold to the latest version and open it again. Your data is safe — the app deliberately doesn't downgrade to avoid data loss.",
+      "The data on this computer was created by a newer version of SourceCraft (schema v{dbVersion}), but this version only supports up to v{appVersion}.\n\nPlease update SourceCraft to the latest version and open it again. Your data is safe — the app deliberately doesn't downgrade to avoid data loss.",
   },
   startupError: {
-    title: "Quillhold failed to start",
+    title: "SourceCraft failed to start",
     detail:
       "The app couldn't start (error type: {errorType}).\n\nPlease reopen the app. If the error persists, update to the latest version.",
   },
   dataDir: {
     title: "Couldn't create the data folder",
     detail:
-      "Quillhold couldn't create its data folder at:\n{path}\n\nCheck the folder permissions or free disk space, then reopen the app.",
+      "SourceCraft couldn't create its data folder at:\n{path}\n\nCheck the folder permissions or free disk space, then reopen the app.",
   },
   backup: {
     title: "Back up vault",
-    filter: "Quillhold backup",
+    filter: "SourceCraft backup",
   },
   restore: {
     title: "Restore vault",

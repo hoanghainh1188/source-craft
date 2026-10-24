@@ -190,7 +190,7 @@ export function RestoreDialog({
                 )}
               </dd>
               <dt>{t.t("backup.restore.version")}</dt>
-              <dd>Quillhold {phase.summary.appVersion}</dd>
+              <dd>SourceCraft {phase.summary.appVersion}</dd>
               <dt>{t.t("backup.restore.encryption")}</dt>
               <dd>
                 {phase.summary.encrypted

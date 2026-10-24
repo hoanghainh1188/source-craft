@@ -9,7 +9,7 @@ export const crashVi = {
     loadFailed:
       "Không soạn được báo cáo. Bạn vẫn có thể mở thư mục nhật ký ở Cài đặt → Lưu trữ và gửi tệp main.log.",
     descBefore:
-      "Nội dung dưới đây được soạn từ nhật ký trên máy — không chứa nội dung tài liệu, câu hỏi hay câu trả lời. Bạn có thể sửa trước khi gửi. Quillhold",
+      "Nội dung dưới đây được soạn từ nhật ký trên máy — không chứa nội dung tài liệu, câu hỏi hay câu trả lời. Bạn có thể sửa trước khi gửi. SourceCraft",
     descStrong: "không tự gửi",
     descAfter:
       ": bấm “Mở GitHub” để mở trình duyệt với báo cáo điền sẵn rồi tự bấm gửi ở đó.",
@@ -26,15 +26,15 @@ export const crashVi = {
     copy: "Không sao chép được. Hãy chọn nội dung trong ô và sao chép thủ công.",
   },
   notice: {
-    abnormal: "Lần trước Quillhold đóng bất thường.",
+    abnormal: "Lần trước SourceCraft đóng bất thường.",
     crashes: {
-      one: "Quillhold đã gặp sự cố {count} lần.",
-      other: "Quillhold đã gặp sự cố {count} lần.",
+      one: "SourceCraft đã gặp sự cố {count} lần.",
+      other: "SourceCraft đã gặp sự cố {count} lần.",
     },
     abnormalWithCrashes: {
-      one: "Lần trước Quillhold đóng bất thường (insightvault đã gặp sự cố {count} lần).",
+      one: "Lần trước SourceCraft đóng bất thường (SourceCraft đã gặp sự cố {count} lần).",
       other:
-        "Lần trước Quillhold đóng bất thường (insightvault đã gặp sự cố {count} lần).",
+        "Lần trước SourceCraft đóng bất thường (SourceCraft đã gặp sự cố {count} lần).",
     },
     invite:
       "Bạn có muốn gửi báo cáo lỗi (không chứa nội dung tài liệu) để giúp sửa không?",
@@ -50,7 +50,7 @@ export const crashEn: Widen<typeof crashVi> = {
     loadFailed:
       "Couldn't prepare the report. You can still open the log folder in Settings → Storage and send the main.log file.",
     descBefore:
-      "The content below is prepared from the logs on this computer — it contains no document content, questions or answers. You can edit it before sending. Quillhold",
+      "The content below is prepared from the logs on this computer — it contains no document content, questions or answers. You can edit it before sending. SourceCraft",
     descStrong: "does not send anything by itself",
     descAfter:
       ": click “Open GitHub” to open your browser with the report pre-filled, then submit it there yourself.",
@@ -68,15 +68,15 @@ export const crashEn: Widen<typeof crashVi> = {
     copy: "Couldn't copy. Select the content in the box and copy it manually.",
   },
   notice: {
-    abnormal: "Quillhold closed unexpectedly last time.",
+    abnormal: "SourceCraft closed unexpectedly last time.",
     crashes: {
-      one: "Quillhold crashed {count} time.",
-      other: "Quillhold crashed {count} times.",
+      one: "SourceCraft crashed {count} time.",
+      other: "SourceCraft crashed {count} times.",
     },
     abnormalWithCrashes: {
-      one: "Quillhold closed unexpectedly last time (it crashed {count} time).",
+      one: "SourceCraft closed unexpectedly last time (it crashed {count} time).",
       other:
-        "Quillhold closed unexpectedly last time (it crashed {count} times).",
+        "SourceCraft closed unexpectedly last time (it crashed {count} times).",
     },
     invite:
       "Would you like to send an error report (with no document content) to help fix it?",

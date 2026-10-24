@@ -7,13 +7,13 @@ export const backupVi = {
   error: {
     busy: "Đang bận xử lý — thử lại khi xong.",
     passwordTooShort: "Mật khẩu cần tối thiểu 8 ký tự.",
-    notBackup: "Không phải file sao lưu Quillhold.",
+    notBackup: "Không phải file sao lưu SourceCraft.",
     unsupportedFormat:
-      "File sao lưu dùng định dạng mà phiên bản này chưa hỗ trợ — hãy cập nhật Quillhold.",
+      "File sao lưu dùng định dạng mà phiên bản này chưa hỗ trợ — hãy cập nhật SourceCraft.",
     badPasswordOrCorrupt: "Sai mật khẩu hoặc file sao lưu bị hỏng.",
     passwordRequired: "File sao lưu này được bảo vệ bằng mật khẩu.",
     newerSchema:
-      "Bản sao lưu được tạo từ phiên bản Quillhold mới hơn — hãy cập nhật ứng dụng rồi thử lại.",
+      "Bản sao lưu được tạo từ phiên bản SourceCraft mới hơn — hãy cập nhật ứng dụng rồi thử lại.",
     diskFull: "Ổ đĩa không đủ dung lượng trống.",
     tokenInvalid: "Phiên khôi phục đã hết hạn — hãy chọn lại file.",
     ioError:
@@ -92,13 +92,13 @@ export const backupEn: Widen<typeof backupVi> = {
   error: {
     busy: "Busy processing — try again when it's done.",
     passwordTooShort: "The password must be at least 8 characters.",
-    notBackup: "This isn't an Quillhold backup file.",
+    notBackup: "This isn't a SourceCraft backup file.",
     unsupportedFormat:
-      "This backup file uses a format this version doesn't support yet — please update Quillhold.",
+      "This backup file uses a format this version doesn't support yet — please update SourceCraft.",
     badPasswordOrCorrupt: "Wrong password, or the backup file is damaged.",
     passwordRequired: "This backup file is password-protected.",
     newerSchema:
-      "This backup was created by a newer version of Quillhold — update the app, then try again.",
+      "This backup was created by a newer version of SourceCraft — update the app, then try again.",
     diskFull: "Not enough free disk space.",
     tokenInvalid:
       "The restore session has expired — please choose the file again.",

@@ -44,7 +44,7 @@ describe("createCrashService", () => {
   it("bản nháp: tiêu đề + nội dung từ nhật ký + mọi crash native trên máy", () => {
     const { svc } = setup();
     const d = svc.getReport();
-    expect(d.title).toBe("Bug report: Quillhold 0.2.4 (win32 x64)");
+    expect(d.title).toBe("Bug report: SourceCraft 0.2.4 (win32 x64)");
     expect(d.text).toContain("runtime.uncaught errorType=RangeError");
     expect(d.text).toContain("Native crashes on this computer: 2");
   });

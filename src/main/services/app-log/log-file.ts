@@ -129,7 +129,7 @@ export interface LogsDirInput {
 }
 
 /**
- * Bản đóng gói ghi vào thư mục log chuẩn HĐH (macOS ~/Library/Logs/Quillhold, Windows <userData>\logs).
+ * Bản đóng gói ghi vào thư mục log chuẩn HĐH (macOS ~/Library/Logs/SourceCraft, Windows <userData>\logs).
  * Dev/E2E (chưa đóng gói) ghi vào <userData>/logs để không lẫn với log của bản cài thật và mỗi E2E có
  * userData tạm riêng.
  */

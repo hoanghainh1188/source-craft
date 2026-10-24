@@ -1,11 +1,12 @@
 import { join } from "node:path";
 
-// Đổi tên sản phẩm InsightVault → Quillhold: Electron suy userData từ tên app, nên bản cài mới sẽ nhìn vào thư mục
+// Đổi tên sản phẩm InsightVault → Quillhold → SourceCraft: Electron suy userData từ tên app, nên bản cài mới sẽ nhìn vào thư mục
 // MỚI và người dùng cũ mất dữ liệu (DB, vector, backup, cấu hình). Hàm thuần: nếu thư mục cũ tồn tại → trả path để
 // main ghim lại userData vào đó. Cài mới (chưa có thư mục cũ) dùng thư mục mặc định theo tên mới.
 
-/** Tên thư mục dữ liệu của app dưới tên cũ (appData/InsightVault). */
-export const LEGACY_USER_DATA_DIR = "InsightVault";
+/** Danh sách thư mục dữ liệu cũ cần hỗ trợ (ưu tiên Quillhold, sau đó tới InsightVault). */
+export const LEGACY_USER_DATA_DIRS = ["Quillhold", "InsightVault"] as const;
+export const LEGACY_USER_DATA_DIR = "Quillhold";
 
 export interface LegacyUserDataInput {
   isPackaged: boolean;
@@ -20,6 +21,9 @@ export function resolveLegacyUserDataPath(
   input: LegacyUserDataInput,
 ): string | null {
   if (!input.isPackaged || input.hasUserDataSwitch) return null;
-  const legacy = join(input.appData, LEGACY_USER_DATA_DIR);
-  return input.exists(legacy) ? legacy : null;
+  for (const dir of LEGACY_USER_DATA_DIRS) {
+    const legacy = join(input.appData, dir);
+    if (input.exists(legacy)) return legacy;
+  }
+  return null;
 }

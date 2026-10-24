@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dựng FFmpeg bản LGPL TỐI GIẢN (chỉ tách audio → wav 16kHz mono) cho Quillhold.
+# Dựng FFmpeg bản LGPL TỐI GIẢN (chỉ tách audio → wav 16kHz mono) cho SourceCraft.
 # Vì sao tự dựng: binary dựng sẵn của `ffmpeg-static` bật cờ GPL và nonfree ⇒ KHÔNG phân phối lại được.
 # Bản này: --disable-gpl --disable-nonfree, không thư viện ngoài (chỉ codec native của FFmpeg) ⇒ LGPL-2.1+.
 # Đầu ra: build/ffmpeg/ffmpeg[.exe]  (+ build/ffmpeg/FFMPEG-BUILD.txt để audit cấu hình).

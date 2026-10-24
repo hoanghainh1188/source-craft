@@ -6,7 +6,7 @@ import { trEn } from "./helpers/t-vi";
 describe("startupErrorDialog", () => {
   it("SchemaVersionError → thông báo cập nhật, kèm số schema, không xoá dữ liệu", () => {
     const r = startupErrorDialog(new SchemaVersionError(7, 4));
-    expect(r.title).toBe("Cần cập nhật Quillhold");
+    expect(r.title).toBe("Cần cập nhật SourceCraft");
     expect(r.detail).toContain("v7");
     expect(r.detail).toContain("v4");
     expect(r.detail).toMatch(/an toàn/i);
@@ -19,7 +19,7 @@ describe("startupErrorDialog", () => {
       "open /Users/secret/insightvault.db failed: 'nội dung nhạy cảm'",
     );
     const r = startupErrorDialog(leaky);
-    expect(r.title).toBe("Quillhold gặp lỗi khi khởi động");
+    expect(r.title).toBe("SourceCraft gặp lỗi khi khởi động");
     expect(r.errorType).toBe("Error");
     // Không được lộ đường dẫn hay nội dung message gốc.
     expect(r.detail).not.toContain("/Users/secret");
@@ -31,7 +31,7 @@ describe("startupErrorDialog", () => {
     expect(startupErrorDialog("boom").errorType).toBe("string");
     expect(startupErrorDialog(undefined).errorType).toBe("undefined");
     expect(startupErrorDialog(undefined).title).toBe(
-      "Quillhold gặp lỗi khi khởi động",
+      "SourceCraft gặp lỗi khi khởi động",
     );
   });
 
@@ -49,11 +49,11 @@ describe("startupErrorDialog", () => {
 describe("123: startupErrorDialog theo ngôn ngữ", () => {
   it("English khi translator English; vẫn không rò message thô", () => {
     const r = startupErrorDialog(new SchemaVersionError(12, 10), trEn);
-    expect(r.title).toBe("Please update Quillhold");
+    expect(r.title).toBe("Please update SourceCraft");
     expect(r.detail).toContain("schema v12");
     expect(r.detail).toContain("v10");
     const g = startupErrorDialog(new Error("/Users/secret x"), trEn);
-    expect(g.title).toBe("Quillhold failed to start");
+    expect(g.title).toBe("SourceCraft failed to start");
     expect(g.detail).toContain("error type: Error");
     expect(g.detail).not.toContain("/Users/secret");
   });

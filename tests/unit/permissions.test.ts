@@ -9,7 +9,7 @@ import {
 // dùng; mọi quyền khác vẫn từ chối như trước. Hàm thuần.
 
 const FILE_URL =
-  "file:///Applications/Quillhold.app/Contents/Resources/app.asar/out/renderer/index.html#/workspace/nb1";
+  "file:///Applications/SourceCraft.app/Contents/Resources/app.asar/out/renderer/index.html#/workspace/nb1";
 const PROD = { devUrl: undefined };
 const base = {
   permission: "media",
@@ -121,14 +121,14 @@ describe("createMicGate", () => {
 
 describe("isAppOrigin — bản đóng gói chỉ nhận đúng index.html của app (review L1)", () => {
   const INDEX =
-    "file:///Applications/Quillhold.app/Contents/Resources/app.asar/out/renderer/index.html";
+    "file:///Applications/SourceCraft.app/Contents/Resources/app.asar/out/renderer/index.html";
   it("đúng tệp index (bỏ qua hash/query) ⇒ true; tệp file:// khác ⇒ false", () => {
     expect(isAppOrigin(`${INDEX}#/workspace/nb1`, undefined, INDEX)).toBe(true);
     expect(isAppOrigin(`${INDEX}?x=1`, undefined, INDEX)).toBe(true);
     expect(isAppOrigin("file:///tmp/evil.html", undefined, INDEX)).toBe(false);
     expect(
       isAppOrigin(
-        "file:///Applications/Quillhold.app/Contents/Resources/app.asar/out/renderer/other.html",
+        "file:///Applications/SourceCraft.app/Contents/Resources/app.asar/out/renderer/other.html",
         undefined,
         INDEX,
       ),

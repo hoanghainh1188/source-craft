@@ -75,7 +75,7 @@ export function MessageBubble({
       aria-busy={message.streaming ? true : undefined}
     >
       <span className="who" data-testid="bubble-who">
-        {isUser ? t.t("chat.you") : "Quillhold"}
+        {isUser ? t.t("chat.you") : "SourceCraft"}
       </span>
       {/* 071: chế độ Mở rộng có thể chứa nội dung ngoài nguồn → badge cảnh báo (kiểm chứng được). */}
       {!isUser && message.modeUsed === "open" && (

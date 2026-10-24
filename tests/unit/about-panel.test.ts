@@ -27,13 +27,13 @@ const base = {
     { name: "react", version: "18.3.1", license: "MIT" },
     { name: "mystery", version: "0.0.1", license: null },
   ],
-  iconPath: "/Applications/Quillhold.app/Contents/Resources/icon.png",
+  iconPath: "/Applications/SourceCraft.app/Contents/Resources/icon.png",
 };
 
 describe("buildAboutPanelOptions", () => {
   it("trường chuẩn: tên, phiên bản, kiến trúc (version), bản quyền, icon", () => {
     const o = buildAboutPanelOptions({ ...base, t: createTranslator("vi") });
-    expect(o.applicationName).toBe("Quillhold");
+    expect(o.applicationName).toBe("SourceCraft");
     expect(o.applicationVersion).toBe("0.2.22");
     expect(o.version).toBe("arm64");
     expect(o.copyright).toBe("© 2026 hoanghainh1188");
@@ -45,6 +45,7 @@ describe("buildAboutPanelOptions", () => {
       ...base,
       t: createTranslator("vi"),
     }).credits!;
+    expect(c).toContain("_____");
     expect(c).toContain("không rời khỏi máy");
     expect(c).toContain("MIT");
     expect(c).toContain("hoanghainh1188");

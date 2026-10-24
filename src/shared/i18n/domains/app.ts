@@ -24,7 +24,7 @@ export const appVi = {
     },
   },
   onboarding: {
-    title: "Chào mừng đến Quillhold",
+    title: "Chào mừng đến SourceCraft",
     bodyBefore: "Trợ lý tri thức ",
     bodyStrong: "chạy cục bộ",
     bodyAfter:
@@ -93,7 +93,7 @@ export const appEn: Widen<typeof appVi> = {
     },
   },
   onboarding: {
-    title: "Welcome to Quillhold",
+    title: "Welcome to SourceCraft",
     bodyBefore: "A knowledge assistant that ",
     bodyStrong: "runs locally",
     bodyAfter:

@@ -1,8 +1,8 @@
-# Cấu hình đóng gói Quillhold (v0.1 pre-release). CHƯA code-sign/notarize/auto-update (pha sau — cần
+# Cấu hình đóng gói SourceCraft (v0.1 pre-release). CHƯA code-sign/notarize/auto-update (pha sau — cần
 # Apple Developer ID + Windows cert). Native module (@lancedb/lancedb, keytar) dùng prebuilt N-API
 # (ABI ổn định qua Node/Electron) → npmRebuild:false, chỉ unpack .node khỏi asar.
 appId: com.insightvault.app
-productName: Quillhold
+productName: SourceCraft
 copyright: © 2026 hoanghainh1188
 
 # N-API prebuilt → KHÔNG rebuild (tránh cần Rust/toolchain build lại @lancedb trên CI).
@@ -65,7 +65,7 @@ mac:
   artifactName: ${productName}-${version}-${arch}.${ext}
   # 186: Ghi cuộc họp — macOS hiện câu này trong hộp xin quyền micro (bắt buộc từ Mojave, kể cả bản chưa ký).
   extendInfo:
-    NSMicrophoneUsageDescription: "Quillhold records meetings you start, and processes the audio on this computer."
+    NSMicrophoneUsageDescription: "SourceCraft records meetings you start, and processes the audio on this computer."
   # 186: sẵn sàng cho lúc bật ký/hardened runtime (pha sau) — vô hại khi identity: null.
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist

@@ -82,9 +82,9 @@ for (const e of entries)
 
 const header = `# Thông báo bên thứ ba / Third-Party Notices
 
-Quillhold được phát hành theo giấy phép MIT (xem \`LICENSE\`). Ứng dụng bao gồm và/hoặc tải về các thành phần của
+SourceCraft được phát hành theo giấy phép MIT (xem \`LICENSE\`). Ứng dụng bao gồm và/hoặc tải về các thành phần của
 bên thứ ba bên dưới; mỗi thành phần thuộc quyền của chủ sở hữu và giữ giấy phép riêng.
-Quillhold is MIT-licensed (see \`LICENSE\`). It bundles or downloads the third-party components below, each under its own license.
+SourceCraft is MIT-licensed (see \`LICENSE\`). It bundles or downloads the third-party components below, each under its own license.
 
 > Tệp này SINH TỰ ĐỘNG bởi \`npm run licenses\` từ \`package-lock.json\` — đừng sửa tay (trừ mục 1–3).
 

@@ -1,6 +1,6 @@
 # Quy trình làm việc nhóm
 
-Tài liệu này mô tả cách **nhiều người cùng làm dự án Quillhold** mà **không gây git
+Tài liệu này mô tả cách **nhiều người cùng làm dự án SourceCraft** mà **không gây git
 conflict** và **không lệch ngữ cảnh** (glossary, constitution, design gốc). Đọc kèm `CLAUDE.md`
 (quy ước bắt buộc) và `README.md` (workflow 1 feature).
 

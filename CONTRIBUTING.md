@@ -1,11 +1,11 @@
-# Contributing to Quillhold
+# Contributing to SourceCraft
 
 Thanks for your interest! Issues and pull requests can be written in **English or Vietnamese**.
 
 ## Reporting bugs and ideas
 
 - **Bug:** open an issue with the _Bug report_ template. Include your OS, the app version (the installer file
-  name, e.g. `Quillhold-0.2.8-arm64.dmg`) and, if possible, the log file — open it from
+  name, e.g. `SourceCraft-0.2.8-arm64.dmg`) and, if possible, the log file — open it from
   **Cài đặt (Settings) → Lưu trữ cục bộ (Local storage) → Nhật ký lỗi (Error log)**. Logs are redacted (no
   document text or API keys), but please check before attaching. The same row can pre-fill a bug report for you
   to review and submit.

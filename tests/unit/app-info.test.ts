@@ -5,9 +5,9 @@ import {
 } from "../../src/main/services/app-shell/app-info";
 
 describe("app-info", () => {
-  it("tên app là Quillhold", () => {
+  it("tên app là SourceCraft", () => {
     expect(buildAppInfo("1.2.3").name).toBe(APP_NAME);
-    expect(APP_NAME).toBe("Quillhold");
+    expect(APP_NAME).toBe("SourceCraft");
   });
 
   it("version truyền qua nguyên vẹn", () => {

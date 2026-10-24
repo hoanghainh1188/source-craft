@@ -17,7 +17,7 @@ labels: bug
 
 ## Environment / Môi trường
 
-- Quillhold version (installer file name, e.g. `Quillhold-0.2.8-arm64.dmg`):
+- SourceCraft version (installer file name, e.g. `SourceCraft-0.2.8-arm64.dmg`):
 - OS (macOS / Windows + version):
 - AI: local Ollama model (name) / online provider (Claude · Gemini · OpenAI):
 - Source type involved (PDF, docx, URL, audio, video, image…):

@@ -81,19 +81,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: true
-          name: Quillhold ${{ github.ref_name }} (pre-release)
+          name: SourceCraft ${{ github.ref_name }} (pre-release)
           files: artifacts/**/*
           fail_on_unmatched_files: true
           body: |
-            ## Quillhold ${{ github.ref_name }} — bản tiền phát hành
+            ## SourceCraft ${{ github.ref_name }} — bản tiền phát hành
 
             Trợ lý tri thức **cục bộ (local-first)** kiểu NotebookLM chạy offline — hỏi đáp tài liệu với
             trích dẫn kiểm chứng được, tổng hợp Studio, AI local (Ollama) hoặc online (Claude/Gemini/OpenAI
             bằng API key riêng).
 
             ### Tải về
-            - **macOS (Apple Silicon):** `Quillhold-*-arm64.dmg`
-            - **Windows (x64):** `Quillhold-*-Setup.exe`
+            - **macOS (Apple Silicon):** `SourceCraft-*-arm64.dmg`
+            - **Windows (x64):** `SourceCraft-*-Setup.exe`
 
             ### Lưu ý (bản tiền phát hành)
             - **Chưa code-sign/notarize** → lần đầu mở sẽ có cảnh báo hệ điều hành:

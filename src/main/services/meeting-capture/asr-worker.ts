@@ -12,7 +12,7 @@ import { pickLanguage, type DetectedLanguage } from "./language-detect";
 import { SAMPLE_RATE } from "./meeting-constants";
 import { WAV_HEADER_BYTES } from "./wav";
 
-// 186 — entry utilityProcess "Quillhold ASR" (research R5). Nhận lệnh từ main qua parentPort (đã kiểm bằng
+// 186 — entry utilityProcess "SourceCraft ASR" (research R5). Nhận lệnh từ main qua parentPort (đã kiểm bằng
 // parseMainMessage, đường dẫn bắt buộc nằm trong <userData>/meetings/ — argv[2]). Chạy Whisper (transformers.js) TUẦN TỰ;
 // lỗi ở đây không ảnh hưởng việc ghi audio ở main. Không log nội dung. Kết quả: thời gian TƯƠNG ĐỐI đầu phân đoạn hiện
 // tại (vùng ngữ cảnh lấy từ cuối phân đoạn trước có giá trị âm).

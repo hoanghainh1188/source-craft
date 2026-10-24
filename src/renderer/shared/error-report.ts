@@ -19,7 +19,7 @@ export function reportRendererError(
   // Báo lỗi thất bại (preload hỏng, IPC đóng) thì không còn kênh nào để báo tiếp — để lại dấu ở console. Bắt cả
   // lỗi ĐỒNG BỘ: ném từ componentDidCatch sẽ biến lỗi báo cáo thành lỗi của chính boundary ⇒ trắng trang.
   const warn = (): void =>
-    console.warn("[Quillhold] renderer.error.reportFailed");
+    console.warn("[SourceCraft] renderer.error.reportFailed");
   try {
     window.api.reportRendererError(input).catch(warn);
   } catch {

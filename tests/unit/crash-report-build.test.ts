@@ -62,7 +62,7 @@ describe("buildReport", () => {
       ]),
       nativeCrashes: { count: 2, latestAt: "2026-10-05T10:00:00.000Z" },
     });
-    expect(text).toContain("Quillhold 0.2.4");
+    expect(text).toContain("SourceCraft 0.2.4");
     expect(text).toContain("Electron 43.1.0");
     expect(text).toContain("darwin 25.0.0 (arm64)");
     expect(text).toContain(
@@ -152,7 +152,9 @@ describe("summarizeNativeCrashes", () => {
 
 describe("reportTitle / buildIssueUrl", () => {
   it("tiêu đề có phiên bản + HĐH", () => {
-    expect(reportTitle(ENV)).toBe("Bug report: Quillhold 0.2.4 (darwin arm64)");
+    expect(reportTitle(ENV)).toBe(
+      "Bug report: SourceCraft 0.2.4 (darwin arm64)",
+    );
   });
 
   it("URL đích cố định của repo, tiêu đề + nội dung được mã hoá", () => {
