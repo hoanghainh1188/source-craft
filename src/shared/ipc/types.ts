@@ -389,7 +389,6 @@ export interface Citation {
 export interface ContentSearchInput {
   notebookId: string;
   query: string;
-  scope?: RagSearchScope;
 }
 
 /** 1 kết quả tìm: mở rộng Citation (bấm → openCitation mở Source Viewer + highlight) + đoạn trích. */

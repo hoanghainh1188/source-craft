@@ -72,6 +72,7 @@ describe("isUpsellCode", () => {
     "licenseRequireProStudio",
     "licenseRequireProSharedNotebooks",
     "lanAiRequireEnterprise",
+    "licenseRequireProCrossSearch",
   ])("%s là lỗi hạn mức ⇒ có lời mời nâng cấp", (code) => {
     expect(isUpsellCode(code)).toBe(true);
   });

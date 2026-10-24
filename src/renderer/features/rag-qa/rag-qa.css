@@ -261,6 +261,31 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* 231 — phạm vi "Toàn bộ kho": huy hiệu PRO (token, không style inline); khoá với gói Free = mờ nhưng vẫn bấm
+   được để mở lời mời nâng cấp. */
+.segscope .seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.scope-pro-badge {
+  padding: 1px 4px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.seg.locked {
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+.seg.locked:hover {
+  opacity: 1;
+}
 .modehint {
   font-size: 11px;
   line-height: 1.5;
