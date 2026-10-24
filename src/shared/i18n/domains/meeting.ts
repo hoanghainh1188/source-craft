@@ -34,9 +34,9 @@ export const meetingVi = {
   },
   permission: {
     deniedMac:
-      "Quillhold chưa được phép dùng microphone. Mở Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Microphone, bật Quillhold rồi thử lại.",
+      "SourceCraft chưa được phép dùng microphone. Mở Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Microphone, bật SourceCraft rồi thử lại.",
     deniedWin:
-      "Quillhold chưa được phép dùng microphone. Mở Settings → Privacy & security → Microphone, cho phép ứng dụng dùng microphone rồi thử lại.",
+      "SourceCraft chưa được phép dùng microphone. Mở Settings → Privacy & security → Microphone, cho phép ứng dụng dùng microphone rồi thử lại.",
   },
   recording: {
     recording: "Đang ghi",
@@ -262,9 +262,9 @@ export const meetingEn: Widen<typeof meetingVi> = {
   },
   permission: {
     deniedMac:
-      "Quillhold is not allowed to use the microphone. Open System Settings → Privacy & Security → Microphone, turn on Quillhold, then try again.",
+      "SourceCraft is not allowed to use the microphone. Open System Settings → Privacy & Security → Microphone, turn on SourceCraft, then try again.",
     deniedWin:
-      "Quillhold is not allowed to use the microphone. Open Settings → Privacy & security → Microphone, allow apps to use the microphone, then try again.",
+      "SourceCraft is not allowed to use the microphone. Open Settings → Privacy & security → Microphone, allow apps to use the microphone, then try again.",
   },
   recording: {
     recording: "Recording",

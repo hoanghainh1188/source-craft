@@ -7,10 +7,10 @@ tags: Electron RAG Ollama TypeScript LLM
 
 社外秘の契約書、取材メモ、未発表の研究データ……。「AI に読ませて質問したいけど、クラウドにはアップロードしたくない」という資料は意外と多いのではないでしょうか。
 
-そこで、**資料を一切外に出さずに、手元の PC だけで NotebookLM のような体験ができるデスクトップアプリ** **Quillhold** を作りました。MIT ライセンスのオープンソースで、macOS（Apple Silicon）と Windows に対応しています。
+そこで、**資料を一切外に出さずに、手元の PC だけで NotebookLM のような体験ができるデスクトップアプリ** **SourceCraft** を作りました。MIT ライセンスのオープンソースで、macOS（Apple Silicon）と Windows に対応しています。
 
-- GitHub: https://github.com/hoanghainh1188/quillhold
-- ダウンロード: https://github.com/hoanghainh1188/quillhold/releases/latest
+- GitHub: https://github.com/hoanghainh1188/source-craft
+- ダウンロード: https://github.com/hoanghainh1188/source-craft/releases/latest
 
 この記事の前半ではアプリの紹介を、後半では次のような実装上の工夫を紹介します。
 
@@ -93,7 +93,7 @@ tags: Electron RAG Ollama TypeScript LLM
 
 # 使い方（3 ステップ）
 
-1. [Releases](https://github.com/hoanghainh1188/quillhold/releases/latest) からインストーラーをダウンロードします。macOS は `.dmg`、Windows は `Setup.exe` です。
+1. [Releases](https://github.com/hoanghainh1188/source-craft/releases/latest) からインストーラーをダウンロードします。macOS は `.dmg`、Windows は `Setup.exe` です。
 2. [Ollama](https://ollama.com) をインストールし、チャット用モデルを取得します。アプリが RAM に合ったモデルを提案してくれます。
 
    ```bash
@@ -262,7 +262,7 @@ RAG でよくある悩みが、**資料に答えがないのに、それっぽ�
 
 ## 5. PDF のレイアウト解析：表・回転ページ・行末ハイフン
 
-PDF から取り出せるのは「座標つきの文字片」の集まりだけです。素朴に連結すると、2 段組みは左右が交互に混ざり、表はセルがばらばらの 1 行になります。Quillhold では pdf.js の文字片から、次の順でページを組み立て直しています。すべて純粋関数で、自前で生成したテスト用 PDF（期待テキストつき）で検証しています。
+PDF から取り出せるのは「座標つきの文字片」の集まりだけです。素朴に連結すると、2 段組みは左右が交互に混ざり、表はセルがばらばらの 1 行になります。SourceCraft では pdf.js の文字片から、次の順でページを組み立て直しています。すべて純粋関数で、自前で生成したテスト用 PDF（期待テキストつき）で検証しています。
 
 ```mermaid
 flowchart LR
@@ -312,8 +312,8 @@ i18n は自前の小さな仕組みです。
 
 「AI に資料を読ませたいけど、外には出したくない」という人のためのツールです。率直な感想、バグ報告、機能の提案を歓迎します（Issue は英語でも大丈夫です）。
 
-- ⭐ GitHub: https://github.com/hoanghainh1188/quillhold
-- 📦 ダウンロード: https://github.com/hoanghainh1188/quillhold/releases/latest
+- ⭐ GitHub: https://github.com/hoanghainh1188/source-craft
+- 📦 ダウンロード: https://github.com/hoanghainh1188/source-craft/releases/latest
 
 ---
 

@@ -78,13 +78,13 @@ function emit(
   try {
     const redacted = redact(meta);
     const safe = HOME.length > 1 ? maskHome(redacted, HOME) : redacted;
-    if (level === "error") console.error(`[Quillhold] ${event}`, safe);
-    else console.log(`[Quillhold] ${event}`, safe);
+    if (level === "error") console.error(`[SourceCraft] ${event}`, safe);
+    else console.log(`[SourceCraft] ${event}`, safe);
     sink?.write(
       formatLogLine({ ts: new Date().toISOString(), level, event, meta: safe }),
     );
   } catch (e) {
-    console.error("[Quillhold] log.emitFailed", {
+    console.error("[SourceCraft] log.emitFailed", {
       errorType: e instanceof Error ? e.constructor.name : typeof e,
     });
   }

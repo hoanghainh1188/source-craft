@@ -24,7 +24,7 @@ async function safeFetch(rawUrl: string): Promise<Response> {
     }
     const res = await fetch(u, {
       redirect: "manual",
-      headers: { "user-agent": "Quillhold/1.0 (local)" },
+      headers: { "user-agent": "SourceCraft/1.0 (local)" },
     });
     if (res.status >= 300 && res.status < 400) {
       const loc = res.headers.get("location");

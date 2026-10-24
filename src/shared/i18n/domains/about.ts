@@ -3,8 +3,9 @@ import type { Widen } from "../translate";
 // 213 — nội dung hộp "Giới thiệu" mặc định của hệ điều hành (credits): riêng tư, giấy phép, bản dựng, model AI, thư viện mã nguồn mở.
 
 export const aboutVi = {
+  dialogTitle: "Giới thiệu SourceCraft",
   privacy:
-    "Dữ liệu của bạn không rời khỏi máy ở chế độ mặc định. Quillhold chạy đầy đủ khi không có Internet; AI online chỉ dùng khi bạn tự bật, bằng khoá API của bạn.",
+    "Dữ liệu của bạn không rời khỏi máy ở chế độ mặc định. SourceCraft chạy đầy đủ khi không có Internet; AI online chỉ dùng khi bạn tự bật, bằng khoá API của bạn.",
   license: "Giấy phép {license} · Tác giả {author}",
   build: "Bản dựng",
   packaged: "Bản đóng gói",
@@ -22,8 +23,9 @@ export const aboutVi = {
 } as const;
 
 export const aboutEn: Widen<typeof aboutVi> = {
+  dialogTitle: "About SourceCraft",
   privacy:
-    "Your data does not leave this computer by default. Quillhold works fully offline; online AI is used only when you turn it on, with your own API key.",
+    "Your data does not leave this computer by default. SourceCraft works fully offline; online AI is used only when you turn it on, with your own API key.",
   license: "{license} license · Author {author}",
   build: "Build",
   packaged: "Packaged build",

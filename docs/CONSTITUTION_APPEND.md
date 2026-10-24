@@ -1,7 +1,7 @@
 # Gợi ý bổ sung cho .specify/memory/constitution.md
 
 > ✅ **Đã áp dụng vào `.specify/memory/constitution.md` v1.0.0 (2026-07-10)** — các nguyên tắc dưới đây
-> đã được đưa vào constitution của Quillhold (Terminology fidelity, Source-of-truth precedence,
+> đã được đưa vào constitution của SourceCraft (Terminology fidelity, Source-of-truth precedence,
 > Intake artifact requirement, Test coverage ≥80%). File này giữ lại làm tham chiếu gốc từ template.
 
 Các điều dưới đây (giữ nguyên từ template) cân nhắc thêm vào `.specify/memory/constitution.md` khi làm

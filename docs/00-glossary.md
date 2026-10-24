@@ -3,7 +3,7 @@
 Mọi agent PHẢI tra bảng này trước khi đặt tên biến/field liên quan nghiệp vụ.
 Bổ sung ngay khi gặp thuật ngữ mới — không tự dịch rồi bỏ qua.
 
-> Dự án Quillhold (trước đây InsightVault) **không có tài liệu nguồn tiếng Nhật** → cột 日本語 để `—`.
+> Dự án SourceCraft (trước đây InsightVault) **không có tài liệu nguồn tiếng Nhật** → cột 日本語 để `—`.
 > Cột "English (dùng trong code)" là **tên chuẩn** cho biến/field/type/IPC channel.
 
 | 日本語 | Tiếng Việt                                                           | English (dùng trong code)                                                                                                                             | Ghi chú                                                                                                                                                                                                                                                                                                                                                                                                         |

@@ -16,7 +16,7 @@ function cspPlugin(): Plugin {
   const PROD =
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' iv-media:; img-src 'self' data: iv-media:; font-src 'self'; object-src 'none'; base-uri 'self'";
   return {
-    name: "quillhold-csp",
+    name: "sourcecraft-csp",
     transformIndexHtml(html, ctx) {
       const csp = ctx.server ? DEV : PROD;
       return html.replace(

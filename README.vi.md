@@ -1,108 +1,185 @@
-# Quillhold — Trợ lý tri thức cục bộ (local-first)
-
-[English](README.md) · **Tiếng Việt**
-
-Quillhold là **ứng dụng desktop (macOS + Windows)** để hỏi đáp tài liệu của chính bạn bằng AI — kiểu
-NotebookLM nhưng **chạy hoàn toàn trên máy**. Nạp tài liệu vào notebook; Quillhold phân tích và lập chỉ mục
-ngay trên máy, rồi trả lời câu hỏi và viết tóm tắt bằng LLM cục bộ. Mọi câu trả lời kèm **trích dẫn kiểm chứng
-được**: bấm chip `[n]` là nguồn mở ra đúng trang, đoạn hoặc mốc thời gian, có tô sáng.
-
-> Dành cho người xử lý nhiều tài liệu và coi trọng quyền riêng tư — nhà nghiên cứu, luật sư, nhà báo,
-> sinh viên, kỹ sư — đặc biệt với dữ liệu nhạy cảm không muốn tải lên máy chủ bên thứ ba.
-
-## Điểm khác biệt cốt lõi (bất biến)
-
-- **Local-first** — dữ liệu không rời máy ở chế độ mặc định.
-- **Kiểm chứng được** — mọi câu trả lời trích dẫn đúng đoạn nguồn (trang / mốc thời gian / đoạn văn), và mô hình
-  không được bịa trích dẫn: nguồn không có câu trả lời thì nói "Không tìm thấy trong nguồn".
-- **Offline & tự chủ** — chạy không cần Internet; người dùng kiểm soát mô hình và chi phí.
-
-## Tính năng
-
-- **Nguồn:** PDF (giữ thứ tự đọc, bảng biểu, trang nhiều cột), `.docx`, `.txt`, `.md`, trang web (URL),
-  **audio** (`.wav` `.mp3` `.flac` `.ogg` `.m4a` `.aac` — bóc băng cục bộ bằng Whisper, tự nhận tiếng Việt hoặc
-  tiếng Anh),
-  **video** (`.mp4` `.mov` `.webm` `.mkv`), **ảnh** (`.png` `.jpg` `.webp` `.bmp` `.tiff` — OCR cục bộ, Việt + Anh).
-- **Hỏi đáp có trích dẫn** — trả lời dạng stream, truy xuất lai (vector + toàn văn), chế độ "theo nguồn" từ chối
-  trả lời ngoài tài liệu, hoặc chế độ "mở rộng" có gắn nhãn rõ.
-- **Bộ chấm độ liên quan** — một mô hình nhỏ chạy cục bộ kiểm tra đoạn tìm được có thật sự trả lời câu hỏi không, nên câu
-  hỏi mà nguồn không có được báo "Không tìm thấy trong nguồn" ngay thay vì đoán (tải một lần ~120 MB; trong lúc chưa sẵn
-  sàng hỏi đáp vẫn chạy như trước).
-- **Ghi cuộc họp** _(thử nghiệm)_ — ghi âm từ micro thẳng vào notebook. Trong lúc ghi có **transcript nháp** kèm mốc
-  thời gian (bấm để nghe lại), chỉ báo mức âm thanh, tự nhận ngôn ngữ và đổi được sang Tiếng Việt / English, cùng
-  **đánh dấu** (Quyết định, Việc cần làm, Câu hỏi). Khi kết thúc, bản ghi được bóc băng lại trên máy và thành một nguồn để
-  tìm kiếm, hỏi đáp, dùng trong Studio, với trích dẫn tua đúng thời điểm. **Trình xem cuộc họp** tô câu đang phát, bấm câu
-  để tua, tìm trong transcript, xem đánh dấu, sao chép hoặc xuất Markdown. Bản ghi bị gián đoạn do sự cố có thẻ phục hồi;
-  thoát app khi đang ghi sẽ được hỏi trước; phím tắt ⌘/Ctrl+Shift+P (tạm dừng), M (đánh dấu), E (kết thúc). Chưa được thử
-  với micro thật trên Windows — gặp lỗi xin báo lại.
-- **Trình xem nguồn** — mở đoạn được trích có tô sáng; audio/video tua tới mốc được trích; ảnh hiện vùng chữ.
-- **Studio** — 8 loại tổng hợp cho cả notebook: tóm tắt, ý chính, FAQ, dàn ý, hướng dẫn học, bản tóm lược, dòng thời
-  gian, bảng thuật ngữ — cùng ô **yêu cầu tuỳ chỉnh** (tự gõ yêu cầu, tối đa 500 ký tự). Chọn **một vài nguồn** làm
-  phạm vi, xem chữ hiện dần khi AI đang viết (huỷ được bất cứ lúc nào), mỗi loại giữ **10 phiên bản** gần nhất để xem
-  lại hoặc xoá. Notebook lớn được xử lý theo phần mà vẫn giữ trích dẫn chính xác. Sao chép hoặc xuất Markdown.
-- **AI online tuỳ chọn** — dùng Claude, Gemini hoặc OpenAI bằng **API key của chính bạn** (lưu trong keychain hệ
-  điều hành). Huy hiệu riêng tư hiện mỗi khi có dữ liệu gửi ra ngoài; một chạm để quay về mô hình cục bộ.
-- **Sao lưu & khôi phục** — **Cài đặt → Lưu trữ cục bộ** xuất toàn bộ vault ra 1 file `.ivbackup`, tuỳ chọn mã
-  hoá bằng mật khẩu (AES-256-GCM). Bản sao lưu không gồm file gốc, mô hình đã tải và khoá API.
-- **Giao diện Tiếng Việt và English** — lần đầu theo ngôn ngữ hệ điều hành; đổi bất cứ lúc nào ở **Cài đặt › Ngôn ngữ**
-  (áp dụng ngay). Chat trả lời theo ngôn ngữ câu hỏi; Studio viết theo ngôn ngữ giao diện.
-- Tìm toàn văn trong nguồn, lịch sử chat, phím tắt, thông báo cho trình đọc màn hình.
-
-## Cài đặt
-
-1. Tải bản cài mới nhất ở [Releases](https://github.com/hoanghainh1188/quillhold/releases/latest):
-   `Quillhold-<version>-arm64.dmg` (macOS, Apple Silicon) hoặc `Quillhold-<version>-Setup.exe` (Windows x64).
-2. Cài [Ollama](https://ollama.com) và tải một mô hình chat, ví dụ `ollama pull qwen2.5:7b` (app gợi ý mô hình
-   hợp với RAM). Nhúng, bộ chấm độ liên quan, bóc băng và OCR chạy ngay trong app — mô hình của chúng tải một lần khi dùng lần đầu.
-3. Bản cài **chưa ký số**:
-   - macOS: chuột phải vào app → **Open**, hoặc `xattr -dr com.apple.quarantine /Applications/Quillhold.app`.
-   - Windows: SmartScreen → **More info → Run anyway**.
-
-## Giới hạn đã biết
-
-- **Câu hỏi cùng chủ đề nhưng tài liệu không trả lời** (ví dụ hỏi về thang máy trong tài liệu về một tuyến đường sắt): bộ chấm độ liên quan vẫn có thể cho qua một đoạn gần chủ đề. Bước trả lời thường vẫn đáp "Không tìm thấy trong nguồn" (216/216 lần trong phép đo với một model chat cục bộ), nhưng model nhỏ hơn có thể kém hơn. Chi tiết: [#187](https://github.com/hoanghainh1188/quillhold/issues/187).
-- **Đáp án nằm trong bảng hoặc hộp thông tin phức tạp của PDF** có thể bị bỏ sót khi văn bản trích ra bị trộn (ví dụ hộp thông tin Wikipedia). Trích tốt hơn một mình chưa đủ với bộ chấm hiện tại ([#206](https://github.com/hoanghainh1188/quillhold/issues/206)).
-- **Ghi cuộc họp còn thử nghiệm**: chưa thử trên nhiều micro, tai nghe Bluetooth và máy Windows ([#186](https://github.com/hoanghainh1188/quillhold/issues/186)).
-- **Bản chưa ký số, không tự cập nhật**: macOS và Windows cảnh báo ở lần mở đầu (xem Cài đặt); bản mới cài thủ công từ Releases.
-
-## Phát triển
-
-```bash
-npm install
-npm run dev        # mở cửa sổ Electron (HMR renderer)
+```ansi
+[1;36m   _____ ____  __  ______  ____________  [1;35m__________  ___    ____________ [0m
+[1;36m  / ___// __ \/ / / / __ \/ ____/ ____/ [1;35m/ ____/ __ \/   |  / ____/_  __/ [0m
+[1;36m  \__ \/ / / / / / / /_/ / /   / __/   [1;35m/ /   / /_/ / /| | / /_    / /    [0m
+[1;36m ___/ / /_/ / /_/ / _, _/ /___/ /___  [1;35m/ /___/ _, _/ ___ |/ __/   / /     [0m
+[1;36m/____/\____/\____/_/ |_|\____/_____/  [1;35m\____/_/ |_/_/  |_/_/     /_/      [0m
 ```
 
-| Lệnh                     | Việc                                                    |
-| ------------------------ | ------------------------------------------------------- |
-| `npm run lint`           | prettier --check + eslint + tsc                         |
-| `npm test`               | Vitest unit + coverage (≥ 80% business logic)           |
-| `npm run build`          | lint + electron-vite build (main/preload/renderer)      |
-| `npm run test:e2e`       | Playwright `_electron` (cần bản build + display)        |
-| `npm run eval:retrieval` | đánh giá chất lượng truy xuất trên bộ dữ liệu công khai |
-| `npm run dist`           | đóng gói bản cài bằng electron-builder                  |
+# SourceCraft — Trợ lý Tri thức Cục bộ & Bảo mật Cao với AI
 
-Tech stack và ranh giới bảo mật: xem [README tiếng Anh](README.md#tech-stack) và
-[`docs/04-decisions/2026-07-10-tech-stack.md`](docs/04-decisions/2026-07-10-tech-stack.md).
-Yêu cầu sản phẩm: [`docs/OVERVIEW.md`](docs/OVERVIEW.md). Nguyên tắc bất di bất dịch:
-[`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+<p align="center">
+  <strong>Biến tài liệu, tệp ghi âm và cuộc họp thành kho tri thức có thể kiểm chứng — chạy 100% trên máy tính của bạn.</strong>
+</p>
 
-## Cách làm việc (spec-driven)
+<p align="center">
+  <a href="https://github.com/hoanghainh1188/source-craft/releases/latest"><img src="https://img.shields.io/badge/N%E1%BB%81n%20t%E1%BA%A3ng-macOS%20%7C%20Windows-blue?style=flat-square" alt="Nền tảng" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Gi%E1%BA%A5y%20ph%C3%A9p-MIT-green?style=flat-square" alt="Giấy phép MIT" /></a>
+  <img src="https://img.shields.io/badge/Ri%C3%AAng%20t%C6%B0-100%25%20Local--First-brightgreen?style=flat-square" alt="Local First" />
+  <img src="https://img.shields.io/badge/Thu%20th%E1%BA%ADp%20d%E1%BB%AF%20li%E1%BB%87u-Kh%C3%B4ng%20g%E1%BB%ADi%20ra%20ngo%C3%A0i-blueviolet?style=flat-square" alt="Zero Telemetry" />
+  <a href="https://github.com/hoanghainh1188/source-craft/releases/latest"><img src="https://img.shields.io/github/v/release/hoanghainh1188/source-craft?style=flat-square&color=orange" alt="Phiên bản phát hành" /></a>
+</p>
 
-Dự án dùng **[GitHub Spec Kit](https://github.com/github/spec-kit)** + runbook `/design-to-code` (Claude Code)
-để đi từ tài liệu thiết kế → spec → plan → tasks → code, kèm subagent `design-intake`, `code-reviewer`,
-`glossary-steward`, `security-reviewer`. Mỗi feature = 1 GitHub issue → branch `NNN-<slug>` (`NNN` = số issue).
-Quy ước: [`CLAUDE.md`](CLAUDE.md). Làm việc nhóm: [`docs/TEAM-WORKFLOW.md`](docs/TEAM-WORKFLOW.md).
+<p align="center">
+  <a href="README.md">English</a> · <strong>Tiếng Việt</strong>
+</p>
 
-## Đóng góp
+---
 
-Hoan nghênh báo lỗi và đề xuất — issue viết bằng tiếng Việt hoặc tiếng Anh đều được.
-Xem [CONTRIBUTING.md](CONTRIBUTING.md).
+## ⚡ SourceCraft là gì?
 
-## Giấy phép
+**SourceCraft** là ứng dụng desktop nguồn mở (macOS và Windows) hỗ trợ nghiên cứu, hỏi đáp và tổng hợp tài liệu chuyên sâu bằng trí tuệ nhân tạo. Tương tự như **Google NotebookLM**, nhưng **chạy hoàn toàn cục bộ trên máy tính của bạn** mà không gửi bất kỳ dữ liệu nào lên đám mây.
 
-MIT — xem [`LICENSE`](LICENSE).
+Bạn chỉ cần đưa tài liệu PDF, Word, bài viết web, tệp âm thanh, video, hình ảnh hoặc ghi âm cuộc họp trực tiếp từ micro vào notebook. SourceCraft sẽ tự động bóc tách, lập chỉ mục và trả lời câu hỏi kèm **trích dẫn kiểm chứng được**: bấm vào chip `[n]` là tài liệu gốc sẽ mở ra đúng trang, đoạn văn hoặc thời điểm phát âm thanh được tô sáng.
 
-**Bên thứ ba:** danh sách đầy đủ thư viện, mô hình và giấy phép nằm ở [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
-(sinh lại bằng `npm run licenses`; cũng được đóng gói kèm app). Tách audio khỏi video dùng bản **LGPL** tối giản của
-FFmpeg 7.1.1 (`--disable-gpl --disable-nonfree`), dựng từ mã nguồn bởi [`scripts/build-ffmpeg-lgpl.sh`](scripts/build-ffmpeg-lgpl.sh)
-(`npm run ffmpeg:build`) — chạy một lần trước `npm run dev` / `dist` nếu cần hỗ trợ video. Không phân phối mã GPL/nonfree..
+> **Thiết kế dành cho những ai coi trọng bảo mật dữ liệu:** Nhà nghiên cứu, luật sư, chuyên gia pháp lý, nhà báo, kỹ sư và sinh viên làm việc với các tài liệu nội bộ, hợp đồng, hồ sơ mật không được phép tải lên dịch vụ của bên thứ ba.
+
+---
+
+## 🌟 Vì sao chọn SourceCraft?
+
+| Tiêu chí so sánh | AI Đám mây (NotebookLM / Chat Web) | **SourceCraft** |
+| :--- | :--- | :--- |
+| **Bảo mật dữ liệu** | Tải lên máy chủ công ty bên thứ ba | 🔒 **100% cục bộ; dữ liệu không rời ổ cứng máy tính** |
+| **Trích dẫn nguồn** | Dễ bịa trích dẫn (ảo giác), chung chung | 🎯 **Chip trích dẫn `[n]` mở thẳng đoạn văn bản hoặc giây phát âm thanh** |
+| **Khả năng Offline** | Bắt buộc phải có mạng Internet liên tục | ✈️ **Chạy mượt mà offline khi đi máy bay, tàu xe, nơi không có mạng** |
+| **Ghi âm cuộc họp** | Gửi tệp âm thanh lên API bên ngoài | 🎙️ **Thu âm trực tiếp + bóc băng chữ bằng Whisper chạy trên máy** |
+| **Chi phí sử dụng** | Thu phí thuê bao tháng, giới hạn token | 💡 **Miễn phí trọn đời, mã nguồn mở (MIT), dùng không giới hạn** |
+| **Tuỳ biến mô hình** | Bị khoá trong mô hình của nhà cung cấp | 🧩 **Tự do chọn model Ollama (Qwen, Llama, Mistral) hoặc dùng API key riêng** |
+
+---
+
+## ✨ Tính năng nổi bật
+
+### 🎯 1. Hỏi đáp có trích dẫn chính xác tuyệt đối
+- **Nói không với bịa đặt nguồn:** Mọi câu trả lời đều gắn kèm trích dẫn tới đúng vị trí trong tài liệu gốc. Nhấp vào chip `[n]`, tài liệu tương ứng sẽ mở ra ngay đoạn văn, bảng dữ liệu hoặc thời gian âm thanh được tô sáng.
+- **Chế độ theo nguồn nghiêm ngặt:** Nếu tài liệu không chứa câu trả lời, SourceCraft sẽ thẳng thắn thông báo *"Không tìm thấy trong nguồn"* thay vì tự đoán mò.
+- **Truy xuất lai (Hybrid Search):** Kết hợp tìm kiếm ngữ nghĩa bằng vector (LanceDB) cùng tìm kiếm từ khoá toàn văn (SQLite FTS5) để mang lại độ chính xác cao nhất.
+- **Bộ chấm độ liên quan (Reranker):** Mô hình Cross-Encoder chạy cục bộ kiểm định lại độ liên quan của các đoạn văn bản trước khi đưa vào câu trả lời.
+
+### 📚 2. Nạp tri thức đa định dạng
+- **Văn bản & Tài liệu:** PDF (giữ nguyên thứ tự đọc, nhận diện bảng số liệu, trang nhiều cột, trang xoay ngang), `.docx`, `.txt`, `.md`.
+- **Trang web:** Trích xuất nội dung bài viết sạch sẽ trực tiếp từ đường link URL.
+- **Âm thanh & Video:** `.wav`, `.mp3`, `.flac`, `.ogg`, `.m4a`, `.aac`, `.mp4`, `.mov`, `.webm`, `.mkv` — bóc băng tự động bằng Whisper (tự động nhận diện Tiếng Việt và Tiếng Anh).
+- **Hình ảnh:** `.png`, `.jpg`, `.webp`, `.bmp`, `.tiff` — OCR chữ tiếng Việt và tiếng Anh bằng Tesseract.
+
+### 🎙️ 3. Ghi âm & Bóc băng cuộc họp *(Thử nghiệm)*
+- Ghi âm trực tiếp từ micro thẳng vào notebook đang làm việc.
+- Hiển thị transcript nháp thời gian thực kèm mốc thời gian và thước đo âm lượng lúc đang thu âm.
+- Đánh dấu nhanh các mốc quan trọng trong cuộc họp: **Quyết định**, **Việc cần làm**, **Câu hỏi** (`⌘/Ctrl+M`).
+- Trình phát lại sau cuộc họp: bấm vào bất kỳ câu nào để tua âm thanh tới đúng giây đó, tìm kiếm văn bản và xuất Markdown.
+- Cơ chế khôi phục thông minh: nếu máy tính bị sập nguồn hoặc app tắt đột ngột, bản ghi sẽ tự động được phục hồi khi mở lại.
+
+### 💡 4. AI Studio — 8 mẫu tổng hợp chuyên sâu
+Biến kho tài liệu của notebook thành các sản phẩm hoàn chỉnh chỉ với 1 cú click:
+- 📝 **Tóm tắt tổng quan** & 📌 **Các ý chính cốt lõi**
+- ❓ **Bộ câu hỏi thường gặp (FAQ)** & 📖 **Tài liệu hướng dẫn học tập**
+- 🗂️ **Dàn ý chi tiết** & ⏱️ **Dòng thời gian sự kiện (Timeline)**
+- 👔 **Bản tóm lược cho lãnh đạo (Executive Briefing)** & 📖 **Bảng thuật ngữ chuyên ngành**
+- ✍️ **Yêu cầu tuỳ chỉnh:** Tự nhập bất kỳ chỉ dẫn nào (tối đa 500 ký tự) cho một nhóm tài liệu đã chọn.
+- Tự động lưu 10 phiên bản gần nhất và hỗ trợ xuất Markdown tức thì.
+
+### 🔒 5. Bảo mật tối đa & Sao lưu mã hoá
+- **Không thu thập dữ liệu:** Hoàn toàn không có telemetry, theo dõi hành vi hay kết nối ngầm.
+- **Tuỳ chọn AI Online linh hoạt:** Khi cần sức mạnh của các siêu mô hình, bạn có thể kết nối Claude, Gemini hoặc OpenAI bằng **API key của chính bạn** (lưu an toàn trong OS Keychain). Huy hiệu bảo mật sẽ sáng lên để bạn luôn biết khi nào có dữ liệu ra ngoài.
+- **Sao lưu mã hoá tiện lợi:** Đóng gói toàn bộ notebook thành một tệp duy nhất `.ivbackup`, hỗ trợ mã hoá bảo vệ bằng mật khẩu (AES-256-GCM).
+
+### 🌐 6. Giao diện song ngữ mượt mà
+- Hỗ trợ đầy đủ **Tiếng Việt** và **English** (chuyển đổi tức thì trong Cài đặt).
+- AI thông minh tự động trả lời theo ngôn ngữ của câu hỏi mà bạn đặt.
+
+---
+
+## 🚀 Hướng dẫn Cài đặt & Sử dụng Nhanh
+
+### Bước 1: Tải bộ cài SourceCraft
+Tải bản cài đặt phù hợp với hệ điều hành của bạn từ mục [Releases](https://github.com/hoanghainh1188/source-craft/releases/latest):
+
+- **macOS (Apple Silicon M1/M2/M3/M4):** `SourceCraft-<version>-arm64.dmg`
+- **Windows (x64):** `SourceCraft-<version>-Setup.exe`
+
+> [!NOTE]
+> **Lưu ý khi mở ứng dụng lần đầu:** Do bản dựng hiện chưa mua chứng chỉ ký số thương mại:
+> - **macOS:** Chuột phải vào ứng dụng trong `/Applications` $\rightarrow$ chọn **Open**, hoặc chạy lệnh Terminal:
+>   ```bash
+>   xattr -dr com.apple.quarantine /Applications/SourceCraft.app
+>   ```
+> - **Windows:** Nếu màn hình SmartScreen hiện lên, bấm **More info** (Thông tin khác) $\rightarrow$ **Run anyway** (Vẫn chạy).
+
+### Bước 2: Cài đặt Ollama (Engine AI Cục bộ)
+1. Tải và cài đặt [Ollama](https://ollama.com).
+2. Tải mô hình chat phù hợp với RAM máy tính (khuyến nghị Qwen 2.5 7B hoặc Llama 3.1 8B):
+   ```bash
+   ollama pull qwen2.5:7b
+   ```
+*(Các mô hình nhúng văn bản, bóc băng giọng nói, OCR và chấm điểm liên quan sẽ được ứng dụng tự động tải về một lần duy nhất trong lần dùng đầu tiên).*
+
+### Bước 3: Bắt đầu khai thác tri thức
+Khởi động SourceCraft, tạo notebook đầu tiên, kéo thả tài liệu vào và bắt đầu đặt câu hỏi!
+
+---
+
+## 👥 Đối tượng sử dụng phù hợp
+
+- 🔬 **Nhà nghiên cứu & Học giả:** Đọc hiểu hàng trăm tài liệu nghiên cứu, so sánh kết quả và trích dẫn chuẩn xác từng trang.
+- ⚖️ **Luật sư & Chuyên gia Pháp lý:** Thẩm định hợp đồng, rà soát văn bản tố tụng với cam kết bảo mật tuyệt đối.
+- 💼 **Nhà quản lý & Trưởng nhóm:** Lưu trữ biên bản cuộc họp, biến bản ghi âm thành danh sách hành động và bản tóm tắt điều hành.
+- 📰 **Nhà báo & Tác giả:** Xử lý hồ sơ tài liệu lớn, phỏng vấn thực địa và kiểm chứng thông tin nguồn ngoại tuyến.
+- 🎓 **Sinh viên:** Tổng hợp slide bài giảng, giáo trình và bài thu âm thành tài liệu ôn tập và bộ câu hỏi trắc nghiệm.
+
+---
+
+## 🛠️ Dành cho Lập trình viên
+
+### Kiến trúc Công nghệ
+- **Vỏ ứng dụng Desktop:** Electron + electron-vite
+- **Giao diện người dùng:** React 18, TypeScript, Vite, Zustand, TanStack Query
+- **Cơ sở dữ liệu cục bộ & FTS:** SQLite (FTS5) trong main process
+- **Kho Vector nhúng:** LanceDB (kho lưu trữ vector serverless nhúng cục bộ)
+- **AI Pipelines nội bộ:** `@huggingface/transformers` (multilingual-e5-small, Whisper) + `tesseract.js` + Ollama
+- **Xử lý Audio/Video:** Bản dựng FFmpeg 7.1.1 LGPL tối giản tự biên dịch
+
+### Thiết lập Môi trường Phát triển
+```bash
+# Clone mã nguồn
+git clone git@github.com:hoanghainh1188/source-craft.git
+cd source-craft
+
+# Cài đặt thư viện phụ thuộc
+npm install
+
+# Khởi chạy chế độ phát triển (HMR)
+npm run dev
+
+# Chạy toàn bộ kiểm thử tự động (Vitest + Playwright e2e)
+npm test
+npm run test:e2e
+
+# Đóng gói bản cài đặt
+npm run build
+npm run dist
+```
+
+---
+
+## ⚠️ Giới hạn đã biết
+
+- **Câu hỏi gần chủ đề nhưng tài liệu không trả lời:** Bộ chấm độ liên quan đôi khi có thể cho qua một đoạn văn gần chủ đề (ví dụ hỏi thang máy trong tài liệu đường sắt). Mô hình chat thường vẫn sẽ từ chối *"Không tìm thấy trong nguồn"* (xem issue [#187](https://github.com/hoanghainh1188/source-craft/issues/187)).
+- **Bảng biểu / Hộp thông tin PDF phức tạp:** Các bảng biểu không kẻ viền hoặc hộp thông tin Wikipedia phức tạp có thể bị trộn dòng văn bản khi trích xuất ([#206](https://github.com/hoanghainh1188/source-craft/issues/206)).
+- **Ghi âm thử nghiệm trên Windows:** Đang tiếp tục thử nghiệm khả năng tương thích với nhiều dòng micro và tai nghe Bluetooth trên Windows ([#186](https://github.com/hoanghainh1188/source-craft/issues/186)).
+
+---
+
+## 🤝 Đóng góp & Cộng đồng
+
+Chúng tôi rất hoan nghênh các đóng góp, báo cáo lỗi và đề xuất tính năng mới!
+- Xem hướng dẫn đóng góp tại [CONTRIBUTING.md](CONTRIBUTING.md).
+- Mở issue hoặc thảo luận tại [GitHub Issues](https://github.com/hoanghainh1188/source-craft/issues).
+- Mọi trao đổi bằng **Tiếng Việt** hoặc **English** đều được tiếp nhận nhiệt tình.
+
+---
+
+## 📄 Giấy phép
+
+- SourceCraft được phát hành dưới [Giấy phép mã nguồn mở MIT](LICENSE).
+- Bản quyền và thông báo của các thư viện bên thứ ba được ghi nhận chi tiết tại [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

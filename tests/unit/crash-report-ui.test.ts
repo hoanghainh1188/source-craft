@@ -35,7 +35,7 @@ beforeEach(() => {
   api = {
     crashGetReport: vi.fn(() =>
       Promise.resolve({
-        title: "Báo lỗi: Quillhold 0.2.4",
+        title: "Báo lỗi: SourceCraft 0.2.4",
         text: "### Môi trường",
       }),
     ),
@@ -69,7 +69,7 @@ describe("CrashReportDialog", () => {
     act(() => setValue(text, "### Môi trường\nĐã sửa"));
     await act(async () => btn("Mở GitHub").click());
     expect(api.crashOpenIssue).toHaveBeenCalledWith({
-      title: "Báo lỗi: Quillhold 0.2.4",
+      title: "Báo lỗi: SourceCraft 0.2.4",
       text: "### Môi trường\nĐã sửa",
     });
     expect(q("[data-testid=crash-sent]").textContent).toContain(
@@ -100,7 +100,7 @@ describe("CrashReportDialog", () => {
     await flush();
     await act(async () => btn("Sao chép").click());
     expect(api.clipboardWrite).toHaveBeenCalledWith(
-      "Báo lỗi: Quillhold 0.2.4\n\n### Môi trường",
+      "Báo lỗi: SourceCraft 0.2.4\n\n### Môi trường",
     );
   });
 

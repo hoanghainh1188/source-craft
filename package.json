@@ -1,7 +1,7 @@
 {
-  "name": "quillhold",
+  "name": "source-craft",
   "version": "0.3.0",
-  "description": "Quillhold — trợ lý tri thức cục bộ (local-first) trên desktop",
+  "description": "SourceCraft — trợ lý tri thức cục bộ (local-first) trên desktop",
   "author": "hoanghainh1188",
   "license": "MIT",
   "main": "./out/main/index.js",

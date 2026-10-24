@@ -2,7 +2,7 @@
 
 ## Tổng quan
 
-**Quillhold** — ứng dụng desktop tổng hợp tri thức bằng AI **chạy cục bộ** (kiểu NotebookLM nhưng
+**SourceCraft** — ứng dụng desktop tổng hợp tri thức bằng AI **chạy cục bộ** (kiểu NotebookLM nhưng
 offline/local-first). Người dùng nạp tài liệu vào các "notebook", app xử lý & lập chỉ mục ngay trên máy,
 rồi hỏi đáp / tóm tắt bằng LLM local với **trích dẫn nguồn kiểm chứng được** (chip `[n]` → mở nguồn,
 cuộn tới đúng đoạn highlight). Có tùy chọn dùng AI online bằng API key của chính người dùng.

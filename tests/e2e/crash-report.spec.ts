@@ -66,7 +66,7 @@ test("Cài đặt → Báo lỗi… hiện bản nháp đã làm sạch, sửa �
   const dialog = win.getByTestId("crash-dialog");
   await expect(dialog).toBeVisible();
   const text = win.getByTestId("crash-text");
-  await expect(text).toHaveValue(/Quillhold \d+\.\d+\.\d+ · Electron/);
+  await expect(text).toHaveValue(/SourceCraft \d+\.\d+\.\d+ · Electron/);
   await expect(text).toHaveValue(/Native crashes/); // 123: khung báo cáo English cố định
   await expect(text).not.toHaveValue(/iv-e2e-crash-/); // không lộ đường dẫn userData
   await text.fill("Đã sửa bởi người dùng");

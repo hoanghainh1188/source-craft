@@ -173,10 +173,10 @@ describe("resolveLogsDir", () => {
     expect(
       resolveLogsDir({
         packaged: true,
-        osLogsPath: "/Users/a/Library/Logs/Quillhold",
+        osLogsPath: "/Users/a/Library/Logs/SourceCraft",
         userDataPath: "/ud",
       }),
-    ).toBe("/Users/a/Library/Logs/Quillhold");
+    ).toBe("/Users/a/Library/Logs/SourceCraft");
   });
 
   it("chưa đóng gói (dev/E2E) ⇒ <userData>/logs, không lẫn với log bản thật", () => {
