@@ -25,6 +25,7 @@ const VALID_FEATURES: ReadonlySet<LicenseFeature> = new Set<LicenseFeature>([
   "sharedNotebooks",
   "itPolicy",
   "crossNotebookSearch",
+  "brandedExport",
 ]);
 
 const MAX_ORG_NAME_LEN = 120;

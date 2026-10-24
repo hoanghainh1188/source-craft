@@ -530,10 +530,27 @@ export interface StudioStreamTokenEvent {
   delta: string;
 }
 
-/** Input xuất kết quả Studio ra tệp .md (025). */
+/** Định dạng xuất kết quả Studio (025, 232). */
+export type ExportFormat = "md" | "docx" | "pdf";
+
+/** Tùy chọn xuất báo cáo chuyên nghiệp (232). */
+export interface BrandedExportOptions {
+  title?: string;
+  subtitle?: string;
+  author?: string;
+  organization?: string;
+  includeCoverPage?: boolean;
+  includeTableOfContents?: boolean;
+  headerText?: string;
+  footerText?: string;
+}
+
+/** Input xuất kết quả Studio ra tệp .md, .docx hoặc .pdf (025, 232). */
 export interface StudioExportInput {
   content: string;
   suggestedName: string;
+  format?: ExportFormat;
+  options?: BrandedExportOptions;
 }
 
 /** Kết quả xuất tệp: saved=false khi người dùng huỷ hộp thoại. */
@@ -787,7 +804,8 @@ export type LicenseFeature =
   | "lanAi"
   | "sharedNotebooks"
   | "itPolicy"
-  | "crossNotebookSearch";
+  | "crossNotebookSearch"
+  | "brandedExport";
 
 /** Signed payload inside a `.sclicense` file. */
 export interface LicensePayload {

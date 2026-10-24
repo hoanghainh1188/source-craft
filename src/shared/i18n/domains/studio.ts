@@ -65,6 +65,12 @@ export const studioVi = {
   truncated:
     "Tài liệu quá dài nên phần cuối chưa được tổng hợp — hãy lọc theo từng nguồn để tổng hợp đầy đủ.",
   exportName: "{kind} — {date}",
+  exportFormats: {
+    md: "Markdown (.md)",
+    docx: "Word (.docx)",
+    pdf: "PDF (.pdf)",
+    proBadge: "PRO",
+  },
   // 149: Huỷ (nhãn hiển thị dùng common.cancel)
   cancelAria: "Huỷ tạo {kind}",
   cancelling: "Đang huỷ…",
@@ -148,6 +154,12 @@ export const studioEn: Widen<typeof studioVi> = {
   truncated:
     "The document is too long, so the last part wasn't summarized — filter by individual source for a complete summary.",
   exportName: "{kind} — {date}",
+  exportFormats: {
+    md: "Markdown (.md)",
+    docx: "Word (.docx)",
+    pdf: "PDF (.pdf)",
+    proBadge: "PRO",
+  },
   cancelAria: "Cancel creating {kind}",
   cancelling: "Cancelling…",
   versions: {

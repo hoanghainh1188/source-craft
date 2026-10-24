@@ -15,6 +15,7 @@ const DEFAULT_PRO_FEATURES = [
   "meetingLong",
   "sharedNotebooks",
   "crossNotebookSearch",
+  "brandedExport",
 ];
 const DEFAULT_ENTERPRISE_FEATURES = [
   "multimedia",
@@ -24,6 +25,7 @@ const DEFAULT_ENTERPRISE_FEATURES = [
   "sharedNotebooks",
   "itPolicy",
   "crossNotebookSearch",
+  "brandedExport",
 ];
 
 /**
