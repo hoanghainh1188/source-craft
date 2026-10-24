@@ -55,6 +55,7 @@ export const USER_ERROR_CODES = [
   // 229 — Shared Team Notebooks (.scnb)
   "licenseRequireProSharedNotebooks",
   "licenseRequireProCrossSearch",
+  "licenseRequireProExport",
   "packageCorrupted",
   "notebookReadOnly",
 ] as const;

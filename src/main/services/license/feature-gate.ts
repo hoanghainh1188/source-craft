@@ -44,6 +44,7 @@ export const DEFAULT_PRO_FEATURES: readonly LicenseFeature[] = [
   "meetingLong",
   "sharedNotebooks",
   "crossNotebookSearch",
+  "brandedExport",
 ];
 
 export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
@@ -54,6 +55,7 @@ export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
   "sharedNotebooks",
   "itPolicy",
   "crossNotebookSearch",
+  "brandedExport",
 ];
 
 /**

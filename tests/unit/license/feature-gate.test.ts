@@ -41,6 +41,7 @@ describe("feature-gate & entitlements matrix", () => {
       "meetingLong",
       "sharedNotebooks",
       "crossNotebookSearch",
+      "brandedExport",
     ]);
   });
 
@@ -56,6 +57,7 @@ describe("feature-gate & entitlements matrix", () => {
       "sharedNotebooks",
       "itPolicy",
       "crossNotebookSearch",
+      "brandedExport",
     ]);
   });
 
