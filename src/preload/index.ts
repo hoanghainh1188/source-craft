@@ -420,6 +420,11 @@ const api = {
     ipcRenderer.invoke(CHANNELS.lanAiSaveConfig, config),
   testLanAiConnection: (params: unknown) =>
     ipcRenderer.invoke(CHANNELS.lanAiTestConnection, params),
+  // shared-team-notebooks (229) — export & import .scnb package
+  exportNotebookPackage: (notebookId: string) =>
+    ipcRenderer.invoke(CHANNELS.notebookExportPackage, { notebookId }),
+  importNotebookPackage: (opts?: { readOnly?: boolean }) =>
+    ipcRenderer.invoke(CHANNELS.notebookImportPackage, opts),
 };
 
 export type Api = typeof api;

@@ -43,6 +43,8 @@ import type {
   EnterprisePolicy,
   LanAiConfig,
   LanAiTestResult,
+  ExportPackageResult,
+  ImportPackageResult,
 } from "./types";
 
 /**
@@ -185,6 +187,9 @@ export const CHANNELS = {
   lanAiGetConfig: "lanAi:getConfig",
   lanAiSaveConfig: "lanAi:saveConfig",
   lanAiTestConnection: "lanAi:testConnection",
+  // shared-team-notebooks (229)
+  notebookExportPackage: "notebook:exportPackage",
+  notebookImportPackage: "notebook:importPackage",
 } as const;
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
@@ -303,4 +308,7 @@ export interface ChannelResponse {
   [CHANNELS.lanAiGetConfig]: LanAiConfig;
   [CHANNELS.lanAiSaveConfig]: { ok: boolean; error?: string };
   [CHANNELS.lanAiTestConnection]: LanAiTestResult;
+  // shared-team-notebooks (229)
+  [CHANNELS.notebookExportPackage]: ExportPackageResult;
+  [CHANNELS.notebookImportPackage]: ImportPackageResult;
 }

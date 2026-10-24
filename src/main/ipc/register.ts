@@ -80,6 +80,7 @@ import { createLanOllamaClient } from "../services/ai-runtime/lan/lan-ollama-cli
 import { createLanOpenAiClient } from "../services/ai-runtime/lan/lan-openai-client";
 import { setLanProviderActive } from "../services/app-shell/privacy-state";
 import type { LanAiConfig } from "@shared/ipc/types";
+import type { PackageService } from "../services/notebooks/package/package-service";
 
 interface RegisterDeps {
   store: StoreLike;
@@ -121,6 +122,8 @@ interface RegisterDeps {
   licenseService?: LicenseService;
   // 228 — Enterprise IT Policy Service.
   policyService?: PolicyService;
+  // 229 — Shared Team Notebooks Package Service.
+  packageService?: PackageService;
 }
 
 /** Số báo lỗi renderer tối đa ghi mỗi phiên (chặn vòng lặp lỗi làm phình nhật ký) — 088. */
@@ -159,6 +162,7 @@ export function registerIpc({
   meetingViewer,
   licenseService,
   policyService,
+  packageService,
 }: RegisterDeps): void {
   const safeHandle = (
     channel: string,
@@ -677,6 +681,36 @@ export function registerIpc({
         error: err instanceof Error ? err.message : String(err),
       };
     }
+  });
+
+  // shared-team-notebooks (229) — export & import .scnb package
+  safeHandle(CHANNELS.notebookExportPackage, async (input) => {
+    if (licenseService && !licenseService.gate.hasFeature("sharedNotebooks")) {
+      throw new UserFacingError("licenseRequireProSharedNotebooks");
+    }
+    if (!packageService) {
+      return { ok: false, error: "Package service unavailable" };
+    }
+    const params = (
+      typeof input === "object" && input !== null ? input : {}
+    ) as Record<string, unknown>;
+    const notebookId = String(params["notebookId"] ?? "");
+    return packageService.exportPackage(notebookId);
+  });
+
+  safeHandle(CHANNELS.notebookImportPackage, async (input) => {
+    if (licenseService && !licenseService.gate.hasFeature("sharedNotebooks")) {
+      throw new UserFacingError("licenseRequireProSharedNotebooks");
+    }
+    if (!packageService) {
+      return { ok: false, error: "Package service unavailable" };
+    }
+    const params = (
+      typeof input === "object" && input !== null ? input : {}
+    ) as Record<string, unknown>;
+    return packageService.importPackage({
+      readOnly: Boolean(params["readOnly"]),
+    });
   });
 
   logEvent("ipc.registered", { channels: Object.values(CHANNELS).length });

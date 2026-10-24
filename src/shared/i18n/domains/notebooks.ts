@@ -15,6 +15,9 @@ export const notebooksVi = {
     emptySub: "Tạo notebook đầu tiên để bắt đầu nạp nguồn và hỏi đáp.",
     noResultTitle: "Không tìm thấy notebook",
     noResultSub: "Không có notebook nào khớp “{query}”. Thử từ khoá khác.",
+    exportPackage: "Xuất gói sổ tay (.scnb)…",
+    importPackage: "Nhập từ gói (.scnb)…",
+    readOnlyBadge: "Dùng chung (Chỉ đọc)",
   },
   card: {
     sources: { one: "{count} nguồn", other: "{count} nguồn" },
@@ -48,6 +51,9 @@ export const notebooksEn: Widen<typeof notebooksVi> = {
       "Create your first notebook to start adding sources and asking questions.",
     noResultTitle: "No notebooks found",
     noResultSub: "No notebook matches “{query}”. Try a different keyword.",
+    exportPackage: "Export notebook package (.scnb)…",
+    importPackage: "Import from package (.scnb)…",
+    readOnlyBadge: "Shared (Read-Only)",
   },
   card: {
     sources: { one: "{count} source", other: "{count} sources" },
