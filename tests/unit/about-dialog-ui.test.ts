@@ -27,7 +27,7 @@ describe("AboutDialog UI component", () => {
     act(() => {
       root.render(
         createElement(AboutDialog, {
-          appInfo: { name: "SourceCraft", version: "1.0.0" },
+          appInfo: { name: "SourceCraft", version: "1.0.1" },
           onClose,
         }),
       );
@@ -44,7 +44,7 @@ describe("AboutDialog UI component", () => {
 
     const title = container.querySelector(".about-app-title");
     expect(title?.textContent).toContain("SourceCraft");
-    expect(title?.textContent).toContain("v1.0.0");
+    expect(title?.textContent).toContain("v1.0.1");
 
     const closeBtn = container.querySelector<HTMLButtonElement>(
       "[data-testid=about-modal-close]",

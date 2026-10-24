@@ -54,7 +54,7 @@ export function AboutDialog({
           <h3 className="about-app-title">
             {appInfo?.name ?? "SourceCraft"}{" "}
             <span className="about-version-tag">
-              v{appInfo?.version ?? "1.0.0"}
+              v{appInfo?.version ?? "1.0.1"}
             </span>
           </h3>
           <p className="about-tagline">{t.t("app.header.tagline")}</p>
