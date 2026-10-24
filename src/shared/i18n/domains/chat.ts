@@ -26,6 +26,13 @@ export const chatVi = {
     openHint:
       "Mở rộng: dùng thêm kiến thức chung, phần ngoài nguồn được gắn nhãn.",
   },
+  scope: {
+    groupLabel: "Phạm vi tìm kiếm",
+    current: "Sổ tay này",
+    all: "Toàn bộ kho tri thức",
+    proBadge: "PRO",
+    proTooltip: "Tìm kiếm toàn cục đa sổ tay (Bản quyền Pro/Enterprise)",
+  },
   ungroundedBadge: "Mở rộng · có thể ngoài nguồn",
   ungroundedTitle:
     "Câu trả lời ở chế độ Mở rộng có thể chứa kiến thức ngoài tài liệu nguồn.",
@@ -76,6 +83,14 @@ export const chatEn: Widen<typeof chatVi> = {
       "Sources only: answers only from your added documents, no making things up.",
     openHint:
       "Extended: also uses general knowledge; content beyond your sources is labeled.",
+  },
+  scope: {
+    groupLabel: "Search scope",
+    current: "Current notebook",
+    all: "All notebooks",
+    proBadge: "PRO",
+    proTooltip:
+      "Cross-notebook search across all notebooks (Pro/Enterprise license)",
   },
   ungroundedBadge: "Extended · may go beyond sources",
   ungroundedTitle:

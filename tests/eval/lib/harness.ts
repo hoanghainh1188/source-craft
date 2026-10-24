@@ -81,8 +81,9 @@ function memo<K, V>(fn: (k: K) => Promise<V>, keyOf: (k: K) => string) {
 function cachedDeps(raw: RetrievalDeps): RetrievalDeps {
   const embed = memo(raw.embed, (t) => t);
   const search = memo(
-    (a: { v: number[]; nb: string; k: number }) => raw.search(a.v, a.nb, a.k),
-    (a) => `${a.nb}|${a.k}|${a.v.join(",")}`,
+    (a: { v: number[]; nb: string | null | undefined; k: number }) =>
+      raw.search(a.v, a.nb, a.k),
+    (a) => `${a.nb ?? "all"}|${a.k}|${a.v.join(",")}`,
   );
   const bm25 = new Map<string, { id: string; score: number }[]>();
   const vecCache = new Map<string, number[]>();
@@ -92,7 +93,7 @@ function cachedDeps(raw: RetrievalDeps): RetrievalDeps {
     search: (v, nb, k) => search({ v, nb, k }),
     searchBm25: raw.searchBm25
       ? (nb, q, k) => {
-          const key = `${nb}|${k}|${q}`;
+          const key = `${nb ?? "all"}|${k}|${q}`;
           const hit = bm25.get(key);
           if (hit) return hit;
           const r = raw.searchBm25!(nb, q, k);

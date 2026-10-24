@@ -11,9 +11,10 @@ export function pageSuffix(page: number | null, tr: Translator = VI): string {
   return page != null ? ` · ${tr.t("chat.page", { page })}` : "";
 }
 
-/** Nhãn 1 trích dẫn: "[n] Tên nguồn · trang X" (bỏ phần trang nếu không có). */
+/** Nhãn 1 trích dẫn: "[n] Tên sổ tay › Tên nguồn · trang X" (hoặc "[n] Tên nguồn · trang X"). */
 export function formatCitationLabel(c: Citation, tr: Translator = VI): string {
-  return `[${c.n}] ${c.sourceTitle}${pageSuffix(c.locator.page, tr)}`;
+  const nbPrefix = c.notebookName ? `${c.notebookName} › ` : "";
+  return `[${c.n}] ${nbPrefix}${c.sourceTitle}${pageSuffix(c.locator.page, tr)}`;
 }
 
 /** Danh sách nhãn nguồn (dedup theo n, sắp tăng dần — citations vốn đã dedup/sort ở main). */

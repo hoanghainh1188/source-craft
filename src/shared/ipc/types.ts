@@ -361,12 +361,15 @@ export interface RagTurn {
 /** Đích AI của 1 lượt (098): mặc định provider đang bật; "local" = Ollama (sau lỗi online, người dùng chọn). */
 export type AiTarget = "active" | "local";
 
+export type RagSearchScope = "current" | "all";
+
 export interface RagAskInput {
   notebookId: string;
   question: string;
   mode: RagMode;
   history: RagTurn[];
   target?: AiTarget;
+  scope?: RagSearchScope;
 }
 
 /** Trích dẫn: số [n] trong câu trả lời → chunk/nguồn/vị trí thật (dữ liệu cho source-viewer 006). */
@@ -376,6 +379,8 @@ export interface Citation {
   sourceId: string;
   sourceTitle: string;
   locator: Locator;
+  notebookId?: string;
+  notebookName?: string;
 }
 
 // ===== content-search (073) — tìm toàn văn nội dung nguồn (FTS5 BM25) =====
@@ -384,6 +389,7 @@ export interface Citation {
 export interface ContentSearchInput {
   notebookId: string;
   query: string;
+  scope?: RagSearchScope;
 }
 
 /** 1 kết quả tìm: mở rộng Citation (bấm → openCitation mở Source Viewer + highlight) + đoạn trích. */
@@ -780,7 +786,8 @@ export type LicenseFeature =
   | "meetingLong"
   | "lanAi"
   | "sharedNotebooks"
-  | "itPolicy";
+  | "itPolicy"
+  | "crossNotebookSearch";
 
 /** Signed payload inside a `.sclicense` file. */
 export interface LicensePayload {

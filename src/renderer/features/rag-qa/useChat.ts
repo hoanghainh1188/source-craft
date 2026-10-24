@@ -64,6 +64,8 @@ export interface FailedTurn {
 export function useChat(notebookId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mode, setMode] = useState<RagMode>("grounded");
+  const [scope, setScope] =
+    useState<import("@shared/ipc/types").RagSearchScope>("current");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ChatError | null>(null);
   const [failedTurn, setFailedTurn] = useState<FailedTurn | null>(null);
@@ -215,6 +217,7 @@ export function useChat(notebookId: string) {
           mode,
           history,
           streamId,
+          scope,
           ...(local ? { target: "local" as const } : {}),
         });
         // Lượt đã bị huỷ/đổi notebook giữa chừng → không ghi đè (streamId không còn active).
@@ -307,6 +310,8 @@ export function useChat(notebookId: string) {
     messages,
     mode,
     setMode,
+    scope,
+    setScope,
     loading,
     error,
     failedTurn,

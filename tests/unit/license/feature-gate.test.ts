@@ -40,6 +40,7 @@ describe("feature-gate & entitlements matrix", () => {
       "studioPro",
       "meetingLong",
       "sharedNotebooks",
+      "crossNotebookSearch",
     ]);
   });
 
@@ -54,6 +55,7 @@ describe("feature-gate & entitlements matrix", () => {
       "lanAi",
       "sharedNotebooks",
       "itPolicy",
+      "crossNotebookSearch",
     ]);
   });
 
