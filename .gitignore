@@ -31,3 +31,8 @@ tests/eval/reports/
 tests/spike/.cache/
 tests/spike/reports/
 build/ffmpeg/
+
+# 226 khóa ký bản quyền Ed25519 (scripts/issue-license.mjs keygen) — KHÔNG BAO GIỜ commit
+keys/
+.keys/
+*.pem
