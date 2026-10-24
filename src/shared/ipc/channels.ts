@@ -40,6 +40,7 @@ import type {
   MeetingState,
   LicenseStatus,
   ActivateLicenseResult,
+  OpenPurchasePageResult,
   EnterprisePolicy,
   LanAiConfig,
   LanAiTestResult,
@@ -181,6 +182,7 @@ export const CHANNELS = {
   licenseGetStatus: "license:getStatus",
   licenseActivateFile: "license:activateFile",
   licenseDeactivate: "license:deactivate",
+  licenseOpenPurchasePage: "license:openPurchasePage", // 237 — URL cố định ở main
   licenseChanged: "license:changed", // event push main→renderer (not in ChannelResponse)
   // lan-ai-and-policy (228) — LAN AI Server & IT Policy
   policyGet: "policy:get",
@@ -303,6 +305,7 @@ export interface ChannelResponse {
   [CHANNELS.licenseGetStatus]: LicenseStatus;
   [CHANNELS.licenseActivateFile]: ActivateLicenseResult;
   [CHANNELS.licenseDeactivate]: LicenseStatus;
+  [CHANNELS.licenseOpenPurchasePage]: OpenPurchasePageResult;
   // lan-ai-and-policy (228)
   [CHANNELS.policyGet]: EnterprisePolicy | null;
   [CHANNELS.lanAiGetConfig]: LanAiConfig;

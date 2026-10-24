@@ -25,6 +25,7 @@ import type {
   ReindexStatus,
   SourceRelinkResult,
   SourceReprocessResult,
+  OpenPurchasePageResult,
 } from "@shared/ipc/types";
 import { getPrivacyState } from "../services/app-shell/privacy-state";
 import { computeStorageInfo } from "../services/app-shell/storage-info";
@@ -120,6 +121,8 @@ interface RegisterDeps {
   meetingViewer: MeetingViewerApi;
   // 226 — Enterprise License & Feature Gate.
   licenseService?: LicenseService;
+  // 237 — mở trang mua bản quyền (URL cố định ở main).
+  openPurchasePage?: () => Promise<OpenPurchasePageResult>;
   // 228 — Enterprise IT Policy Service.
   policyService?: PolicyService;
   // 229 — Shared Team Notebooks Package Service.
@@ -161,6 +164,7 @@ export function registerIpc({
   meeting,
   meetingViewer,
   licenseService,
+  openPurchasePage,
   policyService,
   packageService,
 }: RegisterDeps): void {
@@ -573,6 +577,9 @@ export function registerIpc({
       licenseService.activateFromDialog(),
     );
     safeHandle(CHANNELS.licenseDeactivate, () => licenseService.deactivate());
+  }
+  if (openPurchasePage) {
+    safeHandle(CHANNELS.licenseOpenPurchasePage, () => openPurchasePage());
   }
 
   // lan-ai-and-policy (228) — IT Policy & LAN AI Server

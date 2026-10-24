@@ -4,10 +4,13 @@ import type {
   LicenseStatus,
 } from "@shared/ipc/types";
 import { useT } from "../../shared/i18n/i18n-context";
+import { usePurchasePage } from "../license-upsell/usePurchasePage";
+import "../license-upsell/license-upsell.css";
 
 // 226 — Settings section for offline Ed25519 license activation (.sclicense) and tier display.
 export function SettingsLicenseSection(): JSX.Element {
   const t = useT();
+  const purchase = usePurchasePage();
   const [status, setStatus] = useState<LicenseStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [errorCode, setErrorCode] = useState<LicenseActivationErrorCode | null>(
@@ -184,6 +187,34 @@ export function SettingsLicenseSection(): JSX.Element {
           </button>
         )}
       </div>
+
+      {/* 237: chỉ mời mua khi chưa có bản quyền trả phí đang hiệu lực (Free / hết hạn / không hợp lệ / đồng hồ lùi). */}
+      {status && status.state !== "valid" && (
+        <div className="license-buy" data-testid="license-buy">
+          <button
+            type="button"
+            className="license-buy-btn"
+            disabled={purchase.busy}
+            onClick={() => void purchase.open()}
+            data-testid="license-buy-btn"
+          >
+            {t.t("settings.license.buyBtn")}
+            <span className="upgrade-prompt-ext" aria-hidden="true">
+              ↗
+            </span>
+          </button>
+          <p className="license-buy-hint">{t.t("settings.license.buyHint")}</p>
+          {purchase.failed && (
+            <p
+              className="upgrade-prompt-failed"
+              role="alert"
+              data-testid="purchase-open-failed"
+            >
+              {t.t("settings.license.purchaseOpenFailed")}
+            </p>
+          )}
+        </div>
+      )}
 
       {errorCode && (
         <div

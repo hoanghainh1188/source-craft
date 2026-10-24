@@ -95,6 +95,7 @@ import {
   restrictDumpDir,
 } from "./services/crash-report/crash-fs";
 import { createCrashService } from "./services/crash-report/crash-service";
+import { createPurchasePageOpener } from "./services/license-upsell/purchase-page";
 import { createRelink } from "./services/ingestion/relink";
 import { createReprocessRequest } from "./services/ingestion/reprocess-request";
 import { pickSourceFile } from "./services/ingestion/relink-dialog";
@@ -1088,6 +1089,11 @@ app
       meeting,
       meetingViewer,
       licenseService,
+      openPurchasePage: createPurchasePageOpener({
+        openExternal: (url) => shell.openExternal(url),
+        log: logEvent,
+        now: Date.now,
+      }),
       policyService,
       packageService: createPackageService({
         getNotebook: (id) =>

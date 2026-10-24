@@ -855,6 +855,10 @@ export type ActivateLicenseResult =
   | { status: "cancelled" }
   | { status: "error"; code: LicenseActivationErrorCode };
 
+/** 237 — kết quả `license:openPurchasePage` (mở trang mua bằng trình duyệt hệ thống). */
+export type OpenPurchasePageResult =
+  { ok: true } | { ok: false; throttled?: true };
+
 // 228 — LAN AI Server & Enterprise IT Policy Types
 
 export type LanAiProviderKind = "lan-ollama" | "lan-openai";

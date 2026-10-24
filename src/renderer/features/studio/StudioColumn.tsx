@@ -19,6 +19,7 @@ import { announce } from "../../shared/a11y/announcer";
 import { studioMessage } from "../../shared/a11y/messages";
 import { useT } from "../../shared/i18n/i18n-context";
 import { describeIpcError } from "../../shared/i18n/describe-error";
+import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 import "./studio.css";
 
 // Cột Studio (prototype S2, cột 3). Nút "Tạo nhanh" (178: 8 loại, lưới 2×4) → sinh bản tổng hợp toàn notebook. Nút vô hiệu khi
@@ -317,6 +318,7 @@ export function StudioColumn({
                 data-testid={`studio-error-${kind}`}
               >
                 <p role="alert">{describeIpcError(err, t)}</p>
+                <UpgradePrompt error={err} />
                 {/* 098: lỗi AI online ⇒ người dùng chọn tạo bằng AI cục bộ cho lượt này, hoặc thử lại. */}
                 {onlineFailed[kind] && (
                   <div className="fallback-actions">

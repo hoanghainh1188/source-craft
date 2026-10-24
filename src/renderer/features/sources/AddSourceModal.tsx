@@ -9,6 +9,7 @@ import {
   describeIpcError,
   toParsedError,
 } from "../../shared/i18n/describe-error";
+import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 
 const FILE_EXT: Record<string, Exclude<SourceKind, "url">> = {
   pdf: "pdf",
@@ -249,6 +250,7 @@ export function AddSourceModal({
             {addErrorText(error, t)}
           </p>
         )}
+        {error?.kind === "ipc" && <UpgradePrompt error={error.error} />}
         {notice && (
           <p className="form-notice">{t.t(`sources.add.${notice}`)}</p>
         )}
