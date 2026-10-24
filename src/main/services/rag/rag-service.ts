@@ -1,5 +1,10 @@
 import { detectQuestionLanguage } from "@shared/i18n";
-import type { ChatMessage, RagAnswer, RagAskInput } from "@shared/ipc/types";
+import type {
+  ChatMessage,
+  Citation,
+  RagAnswer,
+  RagAskInput,
+} from "@shared/ipc/types";
 import type { ChatStreamOpts } from "../ai-runtime/provider";
 import {
   validateHistory,
@@ -31,8 +36,9 @@ export interface RagServiceDeps extends RetrievalDeps {
    * 059: notebook NÀY có đang tái lập chỉ mục (chưa nhúng đủ vector) không? true → trả thông báo "đang tái
    * lập chỉ mục" thay vì truy xuất trên vector chưa đầy đủ (FR-010). PER-NOTEBOOK (research R4): notebook
    * đã nhúng lại xong vẫn hỏi đáp được dù các notebook khác còn dở. Async vì cần đếm vector (LanceDB).
+   * 231: null = tìm toàn cục → true nếu còn BẤT KỲ notebook nào chưa nhúng xong.
    */
-  reindexing?: (notebookId: string) => Promise<boolean>;
+  reindexing?: (notebookId: string | null) => Promise<boolean>;
   /**
    * 108: cấu hình bộ lọc độ liên quan cho retrieve(). Chỉ công cụ đo (tests/eval, phần LLM tham khảo) đặt; app để
    * trống ⇒ dùng RELEVANCE_CALIBRATION.config.
@@ -49,6 +55,23 @@ export interface RagServiceDeps extends RetrievalDeps {
       modeUsed: RagAnswer["modeUsed"];
     },
   ) => void;
+}
+
+// 231: bản sao trích dẫn kèm notebookId/notebookName của nguồn (không sửa mảng gốc). Thiếu tra cứu → giữ nguyên.
+function withNotebookContext(
+  citations: Citation[],
+  sourceNotebook: RetrievalDeps["sourceNotebook"],
+): Citation[] {
+  if (!sourceNotebook) return citations;
+  return citations.map((c) => {
+    const nb = sourceNotebook(c.sourceId);
+    if (!nb) return c;
+    return {
+      ...c,
+      ...(nb.notebookId ? { notebookId: nb.notebookId } : {}),
+      ...(nb.notebookName ? { notebookName: nb.notebookName } : {}),
+    };
+  });
 }
 
 // Mọi nhánh "không tìm thấy" ở chế độ theo nguồn trả CÙNG cờ notFound; câu hiển thị + gợi ý do giao diện dịch (123).
@@ -73,14 +96,12 @@ export function createRagService(deps: RagServiceDeps) {
     const history = validateHistory(input.history);
 
     const isAllScope = input.scope === "all";
+    // 231: null = toàn cục (mọi sổ tay) cho cả guard reindex lẫn truy xuất.
+    const scopeNotebookId = isAllScope ? null : input.notebookId;
 
     // 059: notebook này đang tái lập chỉ mục → vector chưa đầy đủ → báo thay vì trả sai/thiếu (FR-010).
-    // Per-notebook: notebook khác đã xong vẫn hỏi đáp bình thường. Không chặn khi tìm kiếm toàn cục (231).
-    if (
-      !isAllScope &&
-      deps.reindexing &&
-      (await deps.reindexing(input.notebookId))
-    ) {
+    // Per-notebook: notebook khác đã xong vẫn hỏi đáp bình thường. Toàn cục (231): chặn khi còn notebook nào dở.
+    if (deps.reindexing && (await deps.reindexing(scopeNotebookId))) {
       return {
         answer: REINDEXING_CONTENT,
         citations: [],
@@ -93,7 +114,7 @@ export function createRagService(deps: RagServiceDeps) {
     // 055, 231: truyền history cho query rewriting và notebookId (null nếu tìm kiếm toàn cục đa sổ tay).
     const scored = await retrieve(
       question,
-      isAllScope ? null : input.notebookId,
+      scopeNotebookId,
       deps,
       history,
       deps.relevanceConfig,
@@ -117,18 +138,13 @@ export function createRagService(deps: RagServiceDeps) {
     ];
 
     const raw = await chatFn(messages);
-    const { answer, citations } = postprocessCitations(raw, built.map);
-
-    // 231: gán tên sổ tay và notebookId cho các citations nếu có
-    if (deps.sourceNotebook) {
-      for (const c of citations) {
-        const nbInfo = deps.sourceNotebook(c.sourceId);
-        if (nbInfo) {
-          if (nbInfo.notebookId) c.notebookId = nbInfo.notebookId;
-          if (nbInfo.notebookName) c.notebookName = nbInfo.notebookName;
-        }
-      }
-    }
+    const processed = postprocessCitations(raw, built.map);
+    const answer = processed.answer;
+    // 231: CHỈ khi tìm toàn cục mới gắn sổ tay vào trích dẫn (phân biệt nguồn giữa các sổ tay). Trong 1 sổ tay,
+    // nhãn giữ nguyên "[n] Nguồn · trang X" như trước.
+    const citations = isAllScope
+      ? withNotebookContext(processed.citations, deps.sourceNotebook)
+      : processed.citations;
 
     if (mode === "open") {
       return { answer, citations, notFound: false, modeUsed: "open" };

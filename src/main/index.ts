@@ -106,6 +106,7 @@ import {
 } from "./services/ai-runtime/ai-target";
 import { numCtxFor, studioContextFor } from "./services/studio/context-window";
 import { runReindex, needsReindex } from "./services/embedding/reindex-runner";
+import { createReindexingCheck } from "./services/embedding/reindex-check";
 import { recommendChatModel } from "./services/ai/model-recommend";
 import { checkOllama } from "./services/ai/ollama-health";
 import type { ReindexStatus } from "@shared/ipc/types";
@@ -825,13 +826,13 @@ app
           (await ingestion.embedder.embed([text], "query"))[0],
         // 059 PER-NOTEBOOK (research R4): chỉ chặn notebook CHƯA nhúng đủ vector. Notebook đã xong (số vector =
         // số chunk) hỏi đáp bình thường dù reindex toàn cục còn chạy. Notebook rỗng (0 chunk) → không chặn.
-        reindexing: async (nb) => {
-          if (!reindex.inProgress) return false;
-          const chunks = ingestion.sourceRepo.countChunksByNotebook(nb);
-          if (chunks === 0) return false;
-          const vectors = await ingestion.vectorStore.countByNotebook(nb);
-          return vectors < chunks;
-        },
+        // 231: null (tìm toàn cục) → chặn khi còn notebook nào chưa nhúng xong.
+        reindexing: createReindexingCheck({
+          inProgress: () => reindex.inProgress,
+          listNotebookIds: () => notebookRepo.list().map((n) => n.id),
+          countChunks: (nb) => ingestion.sourceRepo.countChunksByNotebook(nb),
+          countVectors: (nb) => ingestion.vectorStore.countByNotebook(nb),
+        }),
         search: (v, nb, k) => ingestion.vectorStore.search(v, nb, k),
         getChunksByIds: (ids) => ingestion.sourceRepo.getChunksByIds(ids),
         sourceTitle: (sid) =>

@@ -91,7 +91,7 @@ describe("rag-service — 059 reindex guard (per-notebook)", () => {
   });
 
   it("guard nhận đúng notebookId đang hỏi (chặn theo từng notebook)", async () => {
-    const seen: string[] = [];
+    const seen: (string | null)[] = [];
     const svc = createRagService({
       ...makeDeps({}),
       reindexing: async (nb) => {
