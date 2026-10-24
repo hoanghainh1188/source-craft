@@ -37,6 +37,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile, realpath } from "node:fs/promises";
 import { createLicenseService } from "./services/license/license-service";
 import { createPolicyService } from "./services/policy/policy-service";
+import { createPackageService } from "./services/notebooks/package/package-service";
 import { setLanProviderActive } from "./services/app-shell/privacy-state";
 import {
   app,
@@ -1088,6 +1089,73 @@ app
       meetingViewer,
       licenseService,
       policyService,
+      packageService: createPackageService({
+        getNotebook: (id) =>
+          notebookRepo.list().find((n) => n.id === id) ?? null,
+        listSources: (nbId) => ingestion.sourceRepo.listByNotebook(nbId),
+        listChunks: (srcId) => ingestion.sourceRepo.listChunks(srcId),
+        getVectorsByChunkIds: async (ids) => {
+          const map = await ingestion.vectorStore.getVectorsByIds(ids);
+          return Array.from(map.entries()).map(([chunkId, vector]) => ({
+            chunkId,
+            vector,
+          }));
+        },
+        showSaveDialog: async (defaultFilename) => {
+          const parent = BrowserWindow.getFocusedWindow();
+          const opts = {
+            defaultPath: defaultFilename,
+            filters: [
+              { name: "SourceCraft Notebook Package", extensions: ["scnb"] },
+            ],
+          };
+          const res = parent
+            ? await dialog.showSaveDialog(parent, opts)
+            : await dialog.showSaveDialog(opts);
+          return res.canceled ? null : (res.filePath ?? null);
+        },
+        writeFileBytes: async (targetPath, bytes) => {
+          const { writeFile } = await import("node:fs/promises");
+          await writeFile(targetPath, bytes);
+        },
+        showOpenDialog: async () => {
+          const parent = BrowserWindow.getFocusedWindow();
+          const opts = {
+            properties: ["openFile" as const],
+            filters: [
+              { name: "SourceCraft Notebook Package", extensions: ["scnb"] },
+            ],
+          };
+          const res = parent
+            ? await dialog.showOpenDialog(parent, opts)
+            : await dialog.showOpenDialog(opts);
+          return res.canceled || res.filePaths.length === 0
+            ? null
+            : (res.filePaths[0] ?? null);
+        },
+        readFileBytes: async (filePath) =>
+          new Uint8Array(await readFile(filePath)),
+        createNotebook: (input) =>
+          notebookRepo.create({ name: input.name, color: input.color }),
+        insertSource: (src) => {
+          return ingestion.sourceRepo.create({
+            notebookId: src.notebookId,
+            kind: src.kind,
+            title: src.title,
+            origin: src.origin,
+            contentHash: src.contentHash,
+          });
+        },
+        markSourceReady: (id) => {
+          ingestion.sourceRepo.updateStatus(id, "ready");
+        },
+        insertChunks: (sourceId, drafts) => {
+          return ingestion.sourceRepo.insertChunks(sourceId, drafts);
+        },
+        writeVectors: async (records) => {
+          await ingestion.vectorStore.add(records);
+        },
+      }),
     });
 
     // 145: menu ứng dụng theo ngôn ngữ giao diện — dựng lúc khởi động và dựng lại ngay khi đổi ngôn ngữ.

@@ -83,6 +83,12 @@ export const coreVi = {
       "Tính năng kết nối Máy chủ AI Mạng nội bộ (LAN) yêu cầu bản quyền Enterprise. Vui lòng nâng cấp bản quyền.",
     policyCloudDisabled:
       "Tính năng AI Đám mây công cộng đã bị khoá bởi Chính sách Quản trị IT của Tổ chức ({org}).",
+    licenseRequireProSharedNotebooks:
+      "Tính năng Đóng gói và Chia sẻ Sổ tay (.scnb) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt bản quyền trong Cài đặt.",
+    packageCorrupted:
+      "Tệp gói sổ tay (.scnb) bị hỏng hoặc không khớp mã kiểm tra SHA-256.",
+    notebookReadOnly:
+      "Sổ tay này đang ở chế độ dùng chung (Chỉ đọc). Bạn không thể thay đổi hoặc thêm/xoá nguồn.",
   },
   online: {
     auth: "Khóa API không hợp lệ hoặc đã hết hạn.",
@@ -248,6 +254,12 @@ export const coreEn: Widen<typeof coreVi> = {
       "Connecting to a Local Area Network (LAN) AI Server requires an Enterprise license. Please upgrade your license.",
     policyCloudDisabled:
       "Public Cloud AI features have been disabled by your Organization's IT Policy ({org}).",
+    licenseRequireProSharedNotebooks:
+      "Packaging and Sharing Notebooks (.scnb) requires a Pro or Enterprise license. Please activate a license in Settings.",
+    packageCorrupted:
+      "The notebook package (.scnb) file is corrupted or failed SHA-256 verification.",
+    notebookReadOnly:
+      "This notebook is in Shared (Read-Only) mode. You cannot modify, add, or remove sources.",
   },
   online: {
     auth: "The API key is invalid or has expired.",

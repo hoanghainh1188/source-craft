@@ -10,6 +10,7 @@ export function NotebookCard({
   onOpen,
   onEdit,
   onDelete,
+  onExport,
   recoverable = 0,
 }: {
   notebook: Notebook;
@@ -19,6 +20,7 @@ export function NotebookCard({
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onExport?: () => void;
 }): JSX.Element {
   const t = useT();
   return (
@@ -50,13 +52,33 @@ export function NotebookCard({
               {t.plural("meeting.recovery.badge", recoverable)}
             </span>
           )}
+          {notebook.readOnly && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border inline-block mt-1"
+              data-testid="notebook-readonly-badge"
+            >
+              🔒 {t.t("notebooks.grid.readOnlyBadge")}
+            </span>
+          )}
         </div>
       </button>
       <div className="nb-card-actions">
+        {onExport && (
+          <button
+            type="button"
+            className="nb-icon-btn"
+            onClick={onExport}
+            title={t.t("notebooks.grid.exportPackage")}
+            data-testid="notebook-export"
+          >
+            📦
+          </button>
+        )}
         <button
           type="button"
           className="nb-icon-btn"
           onClick={onEdit}
+          disabled={Boolean(notebook.readOnly)}
           data-testid="notebook-edit"
         >
           {t.t("notebooks.card.edit")}

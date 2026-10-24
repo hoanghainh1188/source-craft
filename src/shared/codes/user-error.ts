@@ -52,6 +52,10 @@ export const USER_ERROR_CODES = [
   "lanAiInvalidHost",
   "lanAiRequireEnterprise",
   "policyCloudDisabled",
+  // 229 — Shared Team Notebooks (.scnb)
+  "licenseRequireProSharedNotebooks",
+  "packageCorrupted",
+  "notebookReadOnly",
 ] as const;
 
 export type UserErrorCode = (typeof USER_ERROR_CODES)[number];

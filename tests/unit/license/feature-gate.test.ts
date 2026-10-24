@@ -35,7 +35,12 @@ describe("feature-gate & entitlements matrix", () => {
     expect(ent.allowedSourceKinds).toContain("image");
     expect(ent.allowedStudioKinds).toHaveLength(9);
     expect(ent.allowedStudioKinds).toContain("custom");
-    expect(ent.features).toEqual(["multimedia", "studioPro", "meetingLong"]);
+    expect(ent.features).toEqual([
+      "multimedia",
+      "studioPro",
+      "meetingLong",
+      "sharedNotebooks",
+    ]);
   });
 
   it("computes Enterprise tier entitlements including B2B flags (lanAi, sharedNotebooks, itPolicy)", () => {

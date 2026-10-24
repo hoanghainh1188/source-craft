@@ -66,6 +66,22 @@ export function NotebooksGrid(): JSX.Element {
         </div>
         <button
           type="button"
+          className="btn-secondary-sm border border-border px-3 py-1 text-xs rounded hover:bg-muted"
+          onClick={async () => {
+            try {
+              await window.api.importNotebookPackage();
+              window.location.reload();
+            } catch (err) {
+              setDeleteError(toParsedError(err));
+            }
+          }}
+          title={t.t("notebooks.grid.importPackage")}
+          data-testid="notebook-import"
+        >
+          📥 {t.t("notebooks.grid.importPackage")}
+        </button>
+        <button
+          type="button"
           className="btn-primary-sm"
           onClick={() => setModal({ kind: "create" })}
           data-testid="notebook-new"
@@ -108,6 +124,13 @@ export function NotebooksGrid(): JSX.Element {
               onOpen={() => navigate(`/workspace/${n.id}`)}
               onEdit={() => setModal({ kind: "edit", notebook: n })}
               onDelete={() => setPendingDelete(n)}
+              onExport={async () => {
+                try {
+                  await window.api.exportNotebookPackage(n.id);
+                } catch (err) {
+                  setDeleteError(toParsedError(err));
+                }
+              }}
               recoverable={recoverable.get(n.id) ?? 0}
             />
           ))}

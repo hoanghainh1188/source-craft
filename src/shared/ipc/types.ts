@@ -205,6 +205,8 @@ export interface Notebook {
   createdAt: number;
   updatedAt: number;
   sourceCount: number;
+  /** 229: Sổ tay dùng chung chỉ đọc (gắn kết từ gói .scnb hoặc ổ mạng). */
+  readOnly?: boolean;
 }
 
 export interface CreateNotebookInput {
@@ -890,4 +892,58 @@ export interface LanAiTestResult {
   ok: boolean;
   error?: string;
   models?: string[];
+}
+
+// 229 — Shared Team Notebooks (.scnb) Types
+
+export interface NotebookPackageManifest {
+  schemaVersion: 1;
+  id: string;
+  name: string;
+  color?: string;
+  createdAt: number;
+  exportedAt: number;
+  sourceCount: number;
+  chunkCount: number;
+  checksum: string;
+}
+
+export interface PackageSourceRecord {
+  id: string;
+  title: string;
+  kind: SourceKind;
+  charCount?: number;
+  tokenCount?: number;
+}
+
+export interface PackageChunkRecord {
+  id: string;
+  sourceId: string;
+  text: string;
+  charStart?: number;
+  charEnd?: number;
+}
+
+export interface PackageVectorRecord {
+  chunkId: string;
+  vector: number[];
+}
+
+export interface NotebookPackageData {
+  manifest: NotebookPackageManifest;
+  sources: PackageSourceRecord[];
+  chunks: PackageChunkRecord[];
+  vectors: PackageVectorRecord[];
+}
+
+export interface ExportPackageResult {
+  ok: boolean;
+  filePath?: string;
+  cancelled?: boolean;
+}
+
+export interface ImportPackageResult {
+  ok: boolean;
+  notebook?: Notebook;
+  cancelled?: boolean;
 }
