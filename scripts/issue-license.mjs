@@ -9,7 +9,12 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_PRO_FEATURES = ["multimedia", "studioPro", "meetingLong"];
+const DEFAULT_PRO_FEATURES = [
+  "multimedia",
+  "studioPro",
+  "meetingLong",
+  "sharedNotebooks",
+];
 const DEFAULT_ENTERPRISE_FEATURES = [
   "multimedia",
   "studioPro",
