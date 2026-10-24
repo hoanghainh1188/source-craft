@@ -1,9 +1,12 @@
 import { useState, type ReactNode } from "react";
-import type { Citation, StudioResult } from "@shared/ipc/types";
+import type { Citation, ExportFormat, StudioResult } from "@shared/ipc/types";
 import { isoDate } from "@shared/i18n";
+import { parseIpcError, type ParsedIpcError } from "@shared/online-error-tag";
 import { formatCitationLabel } from "../rag-qa/citation-format";
 import { MarkdownContent } from "../../shared/markdown/MarkdownContent";
 import { useT } from "../../shared/i18n/i18n-context";
+import { isUpsellCode } from "../license-upsell/upsell-codes";
+import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 
 // Card kết quả Studio. Render MARKDOWN an toàn + chip [n] (029, React node — KHÔNG innerHTML). Bấm chip →
 // onCite (mở Source Viewer 019). Ghi chú khi truncated. 123: nhãn loại = khoá `studio.kind.<kind>`.
@@ -51,6 +54,8 @@ export function StudioResultCard({
   const citeByN = new Map(result.citations.map((c) => [c.n, c]));
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<NoticeKey | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportError, setExportError] = useState<ParsedIpcError | null>(null);
 
   const flash = (key: NoticeKey): void => {
     setNotice(key);
@@ -69,7 +74,9 @@ export function StudioResultCard({
     }
   };
 
-  const onExport = async (): Promise<void> => {
+  const onExport = async (format: ExportFormat = "md"): Promise<void> => {
+    setShowExportMenu(false);
+    setExportError(null);
     try {
       const res = await window.api.studioExport({
         content: result.content,
@@ -77,10 +84,23 @@ export function StudioResultCard({
           kind: kindLabel,
           date: isoDate(result.createdAt),
         }),
+        format,
+        options: {
+          title: kindLabel,
+          includeCoverPage: true,
+          includeTableOfContents: true,
+        },
       });
       if (res.saved) flash("exported");
-    } catch {
-      flash("exportFailed");
+    } catch (err: unknown) {
+      const parsed = parseIpcError(
+        err instanceof Error ? err.message : String(err),
+      );
+      if (isUpsellCode(parsed.code)) {
+        setExportError(parsed);
+      } else {
+        flash("exportFailed");
+      }
     }
   };
 
@@ -108,14 +128,117 @@ export function StudioResultCard({
           >
             {copied ? t.t("common.copied") : t.t("common.copy")}
           </button>
-          <button
-            type="button"
-            className="studio-cardbtn"
-            onClick={() => void onExport()}
-            data-testid={`studio-export-${result.kind}`}
-          >
-            {t.t("chat.actions.export")}
-          </button>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <button
+              type="button"
+              className="studio-cardbtn"
+              onClick={() => setShowExportMenu((prev) => !prev)}
+              data-testid={`studio-export-${result.kind}`}
+              aria-expanded={showExportMenu}
+            >
+              {t.t("chat.actions.export")} ▾
+            </button>
+            {showExportMenu && (
+              <div
+                className="studio-export-menu"
+                data-testid={`studio-export-menu-${result.kind}`}
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  zIndex: 50,
+                  backgroundColor: "var(--color-bg, #ffffff)",
+                  border: "1px solid var(--color-border, #cbd5e1)",
+                  borderRadius: "6px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                  minWidth: "160px",
+                  padding: "4px",
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "6px 10px",
+                    fontSize: "12px",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                  }}
+                  onClick={() => void onExport("md")}
+                  data-testid={`studio-export-md-${result.kind}`}
+                >
+                  {t.t("studio.exportFormats.md")}
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "6px 10px",
+                    fontSize: "12px",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderRadius: "4px",
+                  }}
+                  onClick={() => void onExport("docx")}
+                  data-testid={`studio-export-docx-${result.kind}`}
+                >
+                  <span>{t.t("studio.exportFormats.docx")}</span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      backgroundColor: "rgba(245, 158, 11, 0.2)",
+                      color: "#b45309",
+                      padding: "1px 4px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    PRO
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "6px 10px",
+                    fontSize: "12px",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderRadius: "4px",
+                  }}
+                  onClick={() => void onExport("pdf")}
+                  data-testid={`studio-export-pdf-${result.kind}`}
+                >
+                  <span>{t.t("studio.exportFormats.pdf")}</span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      backgroundColor: "rgba(245, 158, 11, 0.2)",
+                      color: "#b45309",
+                      padding: "1px 4px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    PRO
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
           <button
             type="button"
             className="studio-regen"
@@ -127,6 +250,7 @@ export function StudioResultCard({
           </button>
         </div>
       </header>
+      {exportError && <UpgradePrompt error={exportError} />}
       {versionPicker}
       {/* 178 (FR-024): yêu cầu tuỳ chỉnh của phiên bản — text node (React tự thoát), KHÔNG markdown / HTML. */}
       {result.customPrompt && (

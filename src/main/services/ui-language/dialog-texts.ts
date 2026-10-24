@@ -32,6 +32,17 @@ export function relinkDialogTexts(
   };
 }
 
-export function exportDialogFilters(tr: Translator): FileFilter[] {
+import type { ExportFormat } from "@shared/ipc/types";
+
+export function exportDialogFilters(
+  tr: Translator,
+  format: ExportFormat = "md",
+): FileFilter[] {
+  if (format === "docx") {
+    return [{ name: tr.t("dialogs.export.filterDocx"), extensions: ["docx"] }];
+  }
+  if (format === "pdf") {
+    return [{ name: tr.t("dialogs.export.filterPdf"), extensions: ["pdf"] }];
+  }
   return [{ name: tr.t("dialogs.export.filter"), extensions: ["md"] }];
 }

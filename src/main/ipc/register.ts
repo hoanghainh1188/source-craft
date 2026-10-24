@@ -26,6 +26,7 @@ import type {
   SourceRelinkResult,
   SourceReprocessResult,
   OpenPurchasePageResult,
+  StudioExportInput,
 } from "@shared/ipc/types";
 import { getPrivacyState } from "../services/app-shell/privacy-state";
 import { computeStorageInfo } from "../services/app-shell/storage-info";
@@ -46,7 +47,7 @@ import type { RagService } from "../services/rag/rag-service";
 import type { ChatRepo } from "../services/rag/chat-repo";
 import type { StudioService } from "../services/studio/studio-service";
 import type { ContentSearch } from "../services/search/content-search";
-import { exportMarkdown } from "../services/studio/export";
+import { exportFormattedDocument } from "../services/studio/export";
 import { createStudioProgressEmitter } from "../services/studio/progress-emitter";
 import { createStudioTokenEmitter } from "../services/studio/token-emitter";
 import {
@@ -550,16 +551,17 @@ export function registerIpc({
     };
     return studioServices.active.deleteVersion(notebookId, id);
   });
-  // studio export (025) — ghi .md qua save dialog (main). KHÔNG log content.
+  // studio export (025, 232) — xuất kết quả ra .md, .docx hoặc .pdf qua save dialog (main). KHÔNG log content.
   safeHandle(CHANNELS.studioExport, (input) => {
-    const { content, suggestedName } = input as {
-      content: string;
-      suggestedName: string;
-    };
-    return exportMarkdown(
+    const exportInput = (input ?? {}) as StudioExportInput;
+    if (exportInput.format === "docx" || exportInput.format === "pdf") {
+      if (licenseService && !licenseService.gate.hasFeature("brandedExport")) {
+        throw new UserFacingError("licenseRequireProExport");
+      }
+    }
+    return exportFormattedDocument(
       BrowserWindow.getFocusedWindow(),
-      content,
-      suggestedName,
+      exportInput,
       uiLanguage.translator(),
     );
   });

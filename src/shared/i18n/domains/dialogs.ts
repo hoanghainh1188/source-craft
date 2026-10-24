@@ -32,6 +32,8 @@ export const dialogsVi = {
   },
   export: {
     filter: "Markdown",
+    filterDocx: "Tài liệu Microsoft Word (.docx)",
+    filterPdf: "Tài liệu PDF (.pdf)",
   },
 } as const;
 
@@ -64,5 +66,7 @@ export const dialogsEn: Widen<typeof dialogsVi> = {
   },
   export: {
     filter: "Markdown",
+    filterDocx: "Microsoft Word Document (.docx)",
+    filterPdf: "PDF Document (.pdf)",
   },
 };

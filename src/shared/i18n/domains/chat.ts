@@ -32,6 +32,8 @@ export const chatVi = {
     all: "Toàn bộ kho tri thức",
     proBadge: "PRO",
     proTooltip: "Tìm kiếm toàn cục đa sổ tay (Bản quyền Pro/Enterprise)",
+    lockedTooltip:
+      "Tìm kiếm toàn cục đa sổ tay yêu cầu bản quyền Pro hoặc Enterprise",
   },
   ungroundedBadge: "Mở rộng · có thể ngoài nguồn",
   ungroundedTitle:
@@ -91,6 +93,7 @@ export const chatEn: Widen<typeof chatVi> = {
     proBadge: "PRO",
     proTooltip:
       "Cross-notebook search across all notebooks (Pro/Enterprise license)",
+    lockedTooltip: "Cross-notebook search requires a Pro or Enterprise license",
   },
   ungroundedBadge: "Extended · may go beyond sources",
   ungroundedTitle:
