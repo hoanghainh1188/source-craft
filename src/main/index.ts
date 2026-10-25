@@ -1088,7 +1088,7 @@ app
       recommendChatModel: () => recommendChatModel(totalmem()),
       ollamaHealth: () =>
         checkOllama({
-          ping: async () => (await aiRuntime.getRuntimeStatus()).reachable,
+          ping: async () => (await aiRuntime.testConnection()).reachable,
           listModels: () => aiRuntime.listModels(),
           selectedChatModel: () =>
             aiRuntime.getSelectedModels().chatModel ?? undefined,

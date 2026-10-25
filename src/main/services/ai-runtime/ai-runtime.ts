@@ -14,6 +14,7 @@ import {
   type StoreLike,
 } from "./model-selection";
 import { computeRuntimeStatus } from "./runtime-status";
+import { withActiveStatus } from "./active-status";
 import { createSecretStore } from "./online/secret-store";
 import { loadKeytar } from "./online/keytar-loader";
 import {
@@ -30,6 +31,7 @@ export interface AiRuntime {
   testConnection(): Promise<RuntimeStatus>;
   getSelectedModels(): ModelSelection;
   setSelectedModels(sel: ModelSelection): ModelSelection;
+  /** Trạng thái Ollama cục bộ + sẵn sàng của provider đang bật (activeProviderId/activeReady) cho cổng Chat. */
   getRuntimeStatus(): Promise<RuntimeStatus>;
   /** Embedding LUÔN dùng Ollama local (031, quyết định #1) — độc lập provider chat active. */
   embedLocal(req: EmbedRequest): Promise<EmbedResult>;
@@ -63,8 +65,11 @@ export function createAiRuntime(
       computeRuntimeStatus(client, getSelectedModels(store)),
     getSelectedModels: () => getSelectedModels(store),
     setSelectedModels: (sel) => setSelectedModels(store, sel),
-    getRuntimeStatus: () =>
-      computeRuntimeStatus(client, getSelectedModels(store)),
+    getRuntimeStatus: async () =>
+      withActiveStatus(
+        registry,
+        await computeRuntimeStatus(client, getSelectedModels(store)),
+      ),
     embedLocal: (req) => ollama.embed(req),
     registry,
     online,

@@ -121,6 +121,10 @@ export interface RuntimeStatus {
   reasonParams?: { models?: string; provider?: string };
   /** 123: lỗi gốc khi kiểm tra kết nối online thất bại (có thể mang thẻ [[err:…]] / [[online:…]]). */
   reasonError?: string;
+  /** Provider SẼ trả lời Chat (registry.getActive(): LAN > online > Ollama) — chỉ getRuntimeStatus điền. */
+  activeProviderId?: string;
+  /** Provider đó sẵn sàng (Ollama ⇒ = ollamaReady; LAN ⇒ test(); online ⇒ chỉ kiểm key + model, không gọi mạng). */
+  activeReady?: boolean;
 }
 
 export type RuntimeReasonCode =
