@@ -9,6 +9,7 @@ import { studioVi } from "./domains/studio";
 import { aiVi } from "./domains/ai";
 import { backupVi } from "./domains/backup";
 import { crashVi } from "./domains/crash";
+import { auditVi } from "./domains/audit";
 import { dialogsVi } from "./domains/dialogs";
 import { a11yVi } from "./domains/a11y";
 import { menuVi } from "./domains/menu";
@@ -30,6 +31,7 @@ export const vi = {
   ai: aiVi,
   backup: backupVi,
   crash: crashVi,
+  audit: auditVi,
   dialogs: dialogsVi,
   a11y: a11yVi,
   menu: menuVi,
