@@ -8,10 +8,15 @@ import { MAIN, launchAudit, readyWindow, dismissOnboarding } from "./helper";
 
 // 236 (PR B, T068): chế độ dòng lệnh của chính binary — kiểm tra / sinh khoá, mã thoát, không đụng userData.
 
+// Linux CI: `chrome-sandbox` trong node_modules không thuộc root/4755 ⇒ Chromium abort (SIGTRAP) ngay khi khởi động.
+// Chế độ dòng lệnh không mở renderer nào nên sandbox không liên quan tới điều được kiểm; cờ đứng TRƯỚC lệnh `--audit-*`
+// nên bộ phân tích tham số bỏ qua (như `--user-data-dir`). Bản cài thật (dmg / nsis) không cần cờ này.
+const SANDBOX_ARGS = process.platform === "linux" ? ["--no-sandbox"] : [];
+
 function cli(args: string[], userData: string) {
   const r = spawnSync(
     electronPath as unknown as string,
-    [MAIN, `--user-data-dir=${userData}`, ...args],
+    [MAIN, `--user-data-dir=${userData}`, ...SANDBOX_ARGS, ...args],
     {
       encoding: "utf8",
       timeout: 60_000,
