@@ -22,6 +22,13 @@ cuộn tới đúng đoạn highlight). Có tùy chọn dùng AI online bằng A
 - `docs/03-ui/prototype.html` — wireframe định hướng: 5 màn (Notebooks · Workspace 3 cột · Thêm nguồn ·
   Xem nguồn có highlight · Cài đặt). Chuẩn cho bố cục, luồng, văn phong UI.
 
+**Hệ thống Repository & Quản trị Task:**
+
+- **Repo Public (Core / App):** https://github.com/hoanghainh1188/source-craft (app chính, UI, cổng bản quyền, build/release, stub Pro)
+- **Repo Private (Pro Modules):** https://github.com/hoanghainh1188/source-craft-pro (chỉ chứa phần cài đặt các module Pro)
+- **GitHub Project Board (quản lý chung cả 2 repo):** https://github.com/users/hoanghainh1188/projects/8
+- Kế hoạch chi tiết & quy tắc ranh giới: [`docs/pro-repo-split-plan.md`](docs/pro-repo-split-plan.md) và ADR [`docs/04-decisions/2026-10-25-pro-repo-split.md`](docs/04-decisions/2026-10-25-pro-repo-split.md).
+
 ## Tech stack
 
 > Chốt qua ADR `docs/04-decisions/2026-07-10-tech-stack.md`. Sửa stack → cập nhật ADR đó, không sửa lén ở đây.
