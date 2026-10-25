@@ -12,7 +12,7 @@ import { OnlineProviderError } from "./online-error";
 import { PROVIDER_LABELS } from "./presets";
 import { sseData, sseDeltaGemini } from "./stream-parse";
 import type { OnlineProviderDeps } from "./provider-deps";
-import { testOnlineChat } from "./anthropic-provider";
+import { onlineReadiness, testOnlineChat } from "./anthropic-provider";
 
 // Provider Google Gemini — Generative Language API generateContent. role 'assistant' → 'model';
 // 'system' → systemInstruction. Embedding KHÔNG dùng ở đây (luôn Ollama local — quyết định #1).
@@ -129,5 +129,9 @@ export class GeminiProvider implements LLMProvider {
 
   async test(): Promise<RuntimeStatus> {
     return testOnlineChat(this, this.deps, LABEL);
+  }
+
+  async readiness(): Promise<RuntimeStatus> {
+    return onlineReadiness(this.deps, LABEL);
   }
 }

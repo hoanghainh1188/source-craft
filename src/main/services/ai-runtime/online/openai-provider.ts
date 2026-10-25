@@ -12,7 +12,7 @@ import { OnlineProviderError } from "./online-error";
 import { PROVIDER_LABELS } from "./presets";
 import { sseData, sseDeltaOpenAI } from "./stream-parse";
 import type { OnlineProviderDeps } from "./provider-deps";
-import { testOnlineChat } from "./anthropic-provider";
+import { onlineReadiness, testOnlineChat } from "./anthropic-provider";
 
 // Provider OpenAI — Chat Completions API. messages giữ nguyên dạng {role, content} (kể cả system).
 // Embedding KHÔNG dùng ở đây (luôn Ollama local — quyết định #1).
@@ -125,5 +125,9 @@ export class OpenAIProvider implements LLMProvider {
 
   async test(): Promise<RuntimeStatus> {
     return testOnlineChat(this, this.deps, LABEL);
+  }
+
+  async readiness(): Promise<RuntimeStatus> {
+    return onlineReadiness(this.deps, LABEL);
   }
 }

@@ -6,6 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { runtimeStatusStore } from "../ai-runtime/runtime-status-store";
+import { chatReadiness } from "./chat-readiness";
 import type {
   AiTarget,
   Citation,
@@ -81,9 +82,12 @@ export function useChat(notebookId: string) {
     runtimeStatusStore.subscribe,
     runtimeStatusStore.getSnapshot,
   );
-  const runtimeReady: boolean | null = runtime.status
-    ? runtime.status.ollamaReady
-    : null;
+  // Cổng gửi theo provider SẼ trả lời (LAN/online/Ollama); localReady chỉ cho nhánh "AI cục bộ" (098).
+  const {
+    ready: runtimeReady,
+    localReady,
+    blockKey: runtimeBlockKey,
+  } = chatReadiness(runtime.status);
   const [hasReadySources, setHasReadySources] = useState(false);
   // 039: id stream đang chạy (để hiện nút Dừng); ref để listener token lọc đúng lượt.
   const [streamingId, setStreamingId] = useState<string | null>(null);
@@ -295,8 +299,13 @@ export function useChat(notebookId: string) {
     async (target: AiTarget) => {
       if (!failedTurn) return;
       // Không gửi được (Ollama ngừng chạy giữa phiên…) ⇒ báo rõ thay vì bấm mà không có gì xảy ra (ADR 098).
+      // "AI cục bộ" cần chính Ollama — provider đang bật (online) sẵn sàng không đủ.
+      if (target === "local" && localReady !== true) {
+        setError({ kind: "localNotReady" });
+        return;
+      }
       if (!canSend) {
-        setError({ kind: target === "local" ? "localNotReady" : "notSent" });
+        setError({ kind: "notSent" });
         return;
       }
       await send(failedTurn.question, {
@@ -304,7 +313,7 @@ export function useChat(notebookId: string) {
         retry: true,
       });
     },
-    [canSend, failedTurn, send],
+    [canSend, failedTurn, localReady, send],
   );
 
   // Dừng stream đang chạy (039) — main abort → ragAskStream resolve với phần đã nhận → finalize bình thường.
@@ -328,6 +337,7 @@ export function useChat(notebookId: string) {
     failedTurn,
     retryFailed,
     runtimeReady,
+    runtimeBlockKey,
     hasReadySources,
     canSend,
     streamingId,

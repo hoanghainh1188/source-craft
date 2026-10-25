@@ -126,4 +126,46 @@ describe("createRuntimeStatusStore", () => {
     await flush();
     expect(s.getSnapshot().status).toEqual(READY);
   });
+
+  it("Chat sẵn sàng qua provider đang bật (LAN) dù Ollama không chạy ⇒ dừng tự kiểm tra (không ping LAN mỗi 5s)", async () => {
+    const LAN_READY: RuntimeStatus = {
+      ...NOT,
+      activeProviderId: "lan-ollama",
+      activeReady: true,
+    };
+    const read = vi.fn().mockResolvedValue(LAN_READY);
+    const s = createRuntimeStatusStore(read, {
+      intervalMs: 5000,
+      isHidden: () => false,
+    });
+    s.subscribe(() => undefined);
+    await flush();
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(read).toHaveBeenCalledTimes(1);
+  });
+
+  it("Ollama chạy nhưng provider đang bật chưa sẵn sàng ⇒ vẫn tự kiểm tra lại", async () => {
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...READY,
+        activeProviderId: "lan-ollama",
+        activeReady: false,
+      })
+      .mockResolvedValue({
+        ...READY,
+        activeProviderId: "lan-ollama",
+        activeReady: true,
+      });
+    const s = createRuntimeStatusStore(read, {
+      intervalMs: 5000,
+      isHidden: () => false,
+    });
+    s.subscribe(() => undefined);
+    await flush();
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(read).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(read).toHaveBeenCalledTimes(2);
+  });
 });
