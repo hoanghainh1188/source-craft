@@ -106,6 +106,8 @@ export default defineConfig({
         "src/main/services/app-log/log-fs.ts",
         // 236: I/O mỏng của nhật ký kiểm toán (append + fsync) — phủ bởi audit-writer-perf (đĩa thật) + e2e.
         "src/main/services/audit/node-audit-fs.ts",
+        // 236 (PR B): I/O mỏng của CLI cho IT — phủ bởi tests/e2e/audit-cli.spec.ts (chạy binary thật).
+        "src/main/services/audit/cli/node-cli-fs.ts",
         // 093: adapter node:fs cho báo lỗi (tệp đánh dấu phiên, đọc đuôi nhật ký, liệt kê minidump).
         "src/main/services/crash-report/crash-fs.ts",
         // 101: hộp thoại Electron chọn lại tệp gốc (I/O native) — phủ bởi e2e (IV_E2E_DIALOG_PATH).

@@ -160,6 +160,9 @@ import {
   type AuditService,
 } from "./services/audit/audit-service";
 import { createNodeAuditFs } from "./services/audit/node-audit-fs";
+import { parseAuditCliArgs } from "./services/audit/cli/cli-args";
+import { runAuditCli } from "./services/audit/cli/run-cli";
+import { createNodeCliFs } from "./services/audit/cli/node-cli-fs";
 import {
   loadStrictKeytar,
   memoryKeystore,
@@ -319,6 +322,16 @@ let keepSessionMarker = false;
 let fatalHandled = false;
 function handleFatalStartup(err: unknown): void {
   if (fatalHandled) return;
+  // 236 (review PR B): chế độ dòng lệnh không có cửa sổ ⇒ không hộp thoại; thoát mã 3 (KHÔNG BAO GIỜ 0 = "nguyên vẹn").
+  if (
+    process.argv.some(
+      (a) => a.startsWith("--audit-") || a.startsWith("--help-audit"),
+    )
+  ) {
+    fatalHandled = true;
+    app.exit(3);
+    return;
+  }
   // 123: ngôn ngữ OS (cài đặt có thể chưa đọc được ở giai đoạn này).
   const { title, detail, errorType } = startupErrorDialog(
     err,
@@ -346,16 +359,43 @@ process.on("unhandledRejection", handleFatalStartup);
 // (không chạy init). Guard trong whenReady chặn init kể cả khi handler kịp chạy trước lúc quit hoàn tất.
 // Đổi tên sản phẩm → SourceCraft: bản cài thật đã có dữ liệu ở thư mục userData cũ → ghim lại để không "mất" dữ liệu.
 // PHẢI chạy trước requestSingleInstanceLock/getPath("userData") (khoá + log + DB đều nằm trong userData).
+// 236 (PR B, C4): chế độ dòng lệnh cho IT (--audit-verify / --audit-decrypt / --audit-keygen). Rẽ nhánh TRƯỚC khoá
+// một-phiên-bản và mọi truy cập userData: không mở cửa sổ, không DB/model/mạng; chạy được khi app đang mở.
+const auditCliCommand = parseAuditCliArgs(process.argv);
+if (auditCliCommand) {
+  app.dock?.hide();
+  // Chờ stdout/stderr ghi xong trước khi thoát (pipe bất đồng bộ trên Windows có thể bị cắt — review PR B).
+  const pending: Promise<void>[] = [];
+  const writeTo = (stream: NodeJS.WriteStream) => (s: string) => {
+    pending.push(new Promise((done) => stream.write(s, () => done())));
+  };
+  void (async () => {
+    const code = await runAuditCli(auditCliCommand, {
+      fs: createNodeCliFs(),
+      stdout: writeTo(process.stdout),
+      stderr: writeTo(process.stderr),
+      defaultLang: (systemLocale() ?? "").toLowerCase().startsWith("vi")
+        ? "vi"
+        : "en",
+    });
+    await Promise.all(pending);
+    return code;
+  })()
+    .then((code) => app.exit(code))
+    .catch(() => app.exit(3));
+}
+
 const legacyUserData = resolveLegacyUserDataPath({
   isPackaged: app.isPackaged,
   hasUserDataSwitch: app.commandLine.hasSwitch("user-data-dir"),
   appData: app.getPath("appData"),
   exists: existsSync,
 });
-if (legacyUserData) app.setPath("userData", legacyUserData);
+if (legacyUserData && !auditCliCommand) app.setPath("userData", legacyUserData);
 
-const gotSingleInstanceLock = app.requestSingleInstanceLock();
-if (!gotSingleInstanceLock) {
+const gotSingleInstanceLock =
+  !auditCliCommand && app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock && !auditCliCommand) {
   app.quit();
 }
 const sessionMarker = (dir: string) =>

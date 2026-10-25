@@ -111,26 +111,26 @@ description: "Tasks — Nhật ký Kiểm toán & Tuân thủ cho Doanh nghiệp
 
 ### Fixture + tests trước
 
-- [ ] T053 [US2] Script dev `tests/fixtures/audit/build-fixtures.ts` (chạy qua vitest helper, không vào app) dùng `audit-writer` + fs bộ nhớ sinh thư mục chuẩn 50 bản ghi qua 2 tệp xoay vòng, rồi các biến thể `tampered-edit-char/`, `tampered-delete-line/`, `tampered-insert-line/`, `tampered-swap-lines/`, `tampered-missing-file/`, `rotated-key/`, `tail-repaired/`, `open-interaction/` dưới `tests/fixtures/audit/`.
-- [ ] T054 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/cli-args.test.ts` cho `parseAuditCliArgs(argv)`: không có cờ `--audit-*`/`--help-audit` ⇒ `null` (app chạy bình thường, kể cả argv của Electron/Playwright); mỗi lệnh với tham số bắt buộc/tuỳ chọn ở contracts/audit-cli.md; thiếu `--out` ở decrypt, thiếu `--org-key`, hai lệnh cùng lúc, `--lang` lạ ⇒ `usageError`.
-- [ ] T055 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/verify.test.ts` cho `verifyAuditDir(fs, dir, opts)` trên fixture T053: chuẩn ⇒ `intact` + đủ trường `AuditVerifyReport`; mỗi biến thể can thiệp ⇒ `tampered` với `kind` đúng (`badHash`, `seqGap`, `badSignature`/`brokenChain`, `seqOrder`, `missingFile`) và `file`/`line`/`seq`; `rotated-key` ⇒ `intact` + cảnh báo `keyRotated`; `tail-repaired` ⇒ `intact` + cảnh báo; `open-interaction` ⇒ `intact` + cảnh báo `openInteraction`; `--expect-device-key` khác ⇒ `unexpectedDeviceKey`; tệp đầu là `audit.fileStarted` ⇒ cảnh báo `startsAfterZero`.
-- [ ] T056 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/verify-perf.test.ts`: 10 000 bản ghi sinh trong bộ nhớ ⇒ `verifyAuditDir` < 10 s (SC-004).
-- [ ] T057 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/decrypt.test.ts` cho `decryptAuditDir`: mỗi `interaction.start` có `question` ⇒ dòng ra có thêm `questionText` đúng; `orgKeyId` khác ⇒ lỗi I/O-khoá (mã 3); nhật ký bị can thiệp ⇒ vẫn giải mã + dòng cảnh báo đầu; không hàm nào ghi vào thư mục nhật ký.
-- [ ] T058 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/keygen.test.ts` cho `generateOrgKeyPair()`: khoá X25519 PEM hợp lệ với `parseAuditPolicy` (T024); `orgKeyId` khớp; đoạn JSON `"auditPublicKey"` thoát `\n` đúng; `writeKeyFiles` từ chối ghi đè tệp đã có (mã 2).
-- [ ] T059 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/report-text.test.ts`: báo cáo chữ vi + en cho `intact` có cảnh báo và `tampered`, đúng mẫu ở contracts/audit-cli.md; không in nội dung câu hỏi.
-- [ ] T060 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/run-cli.test.ts` cho `runAuditCli(cmd, deps)`: mã thoát 0/1/2/3 theo contract; `--json` in `AuditVerifyReport`; `--out` ghi tệp; decrypt không bao giờ ghi `questionText` ra stdout; khoá bí mật không được ghi lại ở đâu (spy fs).
+- [X] T053 [US2] Script dev `tests/fixtures/audit/build-fixtures.ts` (chạy qua vitest helper, không vào app) dùng `audit-writer` + fs bộ nhớ sinh thư mục chuẩn 50 bản ghi qua 2 tệp xoay vòng, rồi các biến thể `tampered-edit-char/`, `tampered-delete-line/`, `tampered-insert-line/`, `tampered-swap-lines/`, `tampered-missing-file/`, `rotated-key/`, `tail-repaired/`, `open-interaction/` dưới `tests/fixtures/audit/`.
+- [X] T054 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/cli-args.test.ts` cho `parseAuditCliArgs(argv)`: không có cờ `--audit-*`/`--help-audit` ⇒ `null` (app chạy bình thường, kể cả argv của Electron/Playwright); mỗi lệnh với tham số bắt buộc/tuỳ chọn ở contracts/audit-cli.md; thiếu `--out` ở decrypt, thiếu `--org-key`, hai lệnh cùng lúc, `--lang` lạ ⇒ `usageError`.
+- [X] T055 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/verify.test.ts` cho `verifyAuditDir(fs, dir, opts)` trên fixture T053: chuẩn ⇒ `intact` + đủ trường `AuditVerifyReport`; mỗi biến thể can thiệp ⇒ `tampered` với `kind` đúng (`badHash`, `seqGap`, `badSignature`/`brokenChain`, `seqOrder`, `missingFile`) và `file`/`line`/`seq`; `rotated-key` ⇒ `intact` + cảnh báo `keyRotated`; `tail-repaired` ⇒ `intact` + cảnh báo; `open-interaction` ⇒ `intact` + cảnh báo `openInteraction`; `--expect-device-key` khác ⇒ `unexpectedDeviceKey`; tệp đầu là `audit.fileStarted` ⇒ cảnh báo `startsAfterZero`.
+- [X] T056 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/verify-perf.test.ts`: 10 000 bản ghi sinh trong bộ nhớ ⇒ `verifyAuditDir` < 10 s (SC-004).
+- [X] T057 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/decrypt.test.ts` cho `decryptAuditDir`: mỗi `interaction.start` có `question` ⇒ dòng ra có thêm `questionText` đúng; `orgKeyId` khác ⇒ lỗi I/O-khoá (mã 3); nhật ký bị can thiệp ⇒ vẫn giải mã + dòng cảnh báo đầu; không hàm nào ghi vào thư mục nhật ký.
+- [X] T058 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/keygen.test.ts` cho `generateOrgKeyPair()`: khoá X25519 PEM hợp lệ với `parseAuditPolicy` (T024); `orgKeyId` khớp; đoạn JSON `"auditPublicKey"` thoát `\n` đúng; `writeKeyFiles` từ chối ghi đè tệp đã có (mã 2).
+- [X] T059 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/report-text.test.ts`: báo cáo chữ vi + en cho `intact` có cảnh báo và `tampered`, đúng mẫu ở contracts/audit-cli.md; không in nội dung câu hỏi.
+- [X] T060 [P] [US2] Test TRƯỚC `tests/unit/audit/cli/run-cli.test.ts` cho `runAuditCli(cmd, deps)`: mã thoát 0/1/2/3 theo contract; `--json` in `AuditVerifyReport`; `--out` ghi tệp; decrypt không bao giờ ghi `questionText` ra stdout; khoá bí mật không được ghi lại ở đâu (spy fs).
 
 ### Cài đặt
 
-- [ ] T061 [P] [US2] Cài `src/main/services/audit/cli/cli-args.ts` (T054).
-- [ ] T062 [US2] Cài `src/main/services/audit/cli/verify.ts` tái dùng `record-chain.ts`, `rotation.ts`, `tail.ts` (T055, T056).
-- [ ] T063 [P] [US2] Cài `src/main/services/audit/cli/decrypt.ts` tái dùng `question-cipher.ts` (T057).
-- [ ] T064 [P] [US2] Cài `src/main/services/audit/cli/keygen.ts` (quyền 0600 cho khoá bí mật trên POSIX) (T058).
-- [ ] T065 [P] [US2] Cài `src/main/services/audit/cli/report-text.ts` (chuỗi vi/en cục bộ của CLI — không dùng i18n renderer) (T059).
-- [ ] T066 [US2] Cài `src/main/services/audit/cli/run-cli.ts` (T060).
-- [ ] T067 [US2] `src/main/index.ts`: ngay đầu tệp (trước `resolveLegacyUserDataPath` và `requestSingleInstanceLock`) gọi `parseAuditCliArgs(process.argv)`; có lệnh ⇒ không giành lock, không `setPath`, không tạo cửa sổ/DB/log sink; `app.whenReady().then(() => runAuditCli(...)).then(code => app.exit(code))`; `usageError` ⇒ in hướng dẫn + `app.exit(2)`. Kiểm tay: app mở bình thường khi không có cờ.
-- [ ] T068 [US2] `tests/e2e/audit-cli.spec.ts`: chạy binary Electron dev với `--audit-verify <fixture chuẩn> --json --out <tmp>` ⇒ mã 0 + JSON hợp lệ; với `tampered-edit-char` ⇒ mã 1; không tạo `userData` mới (kiểm thư mục `--user-data-dir` tạm vẫn rỗng).
-- [ ] T069 [US2] Cổng review PR B: code-reviewer → glossary-steward → **security-reviewer** (khoá bí mật chỉ trong bộ nhớ, không ghi/sửa nhật ký, rẽ nhánh trước lock không mở bề mặt mới) → test gate + `npx playwright test tests/e2e/audit-cli.spec.ts`.
+- [X] T061 [P] [US2] Cài `src/main/services/audit/cli/cli-args.ts` (T054).
+- [X] T062 [US2] Cài `src/main/services/audit/cli/verify.ts` tái dùng `record-chain.ts`, `rotation.ts`, `tail.ts` (T055, T056).
+- [X] T063 [P] [US2] Cài `src/main/services/audit/cli/decrypt.ts` tái dùng `question-cipher.ts` (T057).
+- [X] T064 [P] [US2] Cài `src/main/services/audit/cli/keygen.ts` (quyền 0600 cho khoá bí mật trên POSIX) (T058).
+- [X] T065 [P] [US2] Cài `src/main/services/audit/cli/report-text.ts` (chuỗi vi/en cục bộ của CLI — không dùng i18n renderer) (T059).
+- [X] T066 [US2] Cài `src/main/services/audit/cli/run-cli.ts` (T060).
+- [X] T067 [US2] `src/main/index.ts`: ngay đầu tệp (trước `resolveLegacyUserDataPath` và `requestSingleInstanceLock`) gọi `parseAuditCliArgs(process.argv)`; có lệnh ⇒ không giành lock, không `setPath`, không tạo cửa sổ/DB/log sink; `app.whenReady().then(() => runAuditCli(...)).then(code => app.exit(code))`; `usageError` ⇒ in hướng dẫn + `app.exit(2)`. Kiểm tay: app mở bình thường khi không có cờ.
+- [X] T068 [US2] `tests/e2e/audit-cli.spec.ts`: chạy binary Electron dev với `--audit-verify <fixture chuẩn> --json --out <tmp>` ⇒ mã 0 + JSON hợp lệ; với `tampered-edit-char` ⇒ mã 1; không tạo `userData` mới (kiểm thư mục `--user-data-dir` tạm vẫn rỗng).
+- [X] T069 [US2] Cổng review PR B: code-reviewer → glossary-steward → **security-reviewer** (khoá bí mật chỉ trong bộ nhớ, không ghi/sửa nhật ký, rẽ nhánh trước lock không mở bề mặt mới) → test gate + `npx playwright test tests/e2e/audit-cli.spec.ts`.
 
 **Checkpoint**: IT tự kiểm tra và giải mã được nhật ký PR A sinh ra.
 
