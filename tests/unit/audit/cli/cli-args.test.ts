@@ -11,6 +11,7 @@ const dev = [
   "--inspect=0",
   "/x/out/main/index.js",
   "--user-data-dir=/tmp/u",
+  "--no-sandbox", // e2e trên Linux CI (tests/e2e/audit-cli.spec.ts)
 ];
 
 describe("parseAuditCliArgs", () => {
