@@ -37,6 +37,13 @@ export function StudioDiffPicker({
     }
   }, [scope]);
 
+  // review #233 lỗi 3: nguồn đã chọn bị xoá / hết ready ⇒ bỏ chọn (không gửi id cũ, main sẽ từ chối).
+  useEffect(() => {
+    const ids = new Set(sources.map((s) => s.id));
+    setBaseId((cur) => (cur !== "" && !ids.has(cur) ? "" : cur));
+    setRevisedId((cur) => (cur !== "" && !ids.has(cur) ? "" : cur));
+  }, [sources]);
+
   const handleSwap = (): void => {
     setBaseId(revisedId);
     setRevisedId(baseId);

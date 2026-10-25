@@ -205,4 +205,29 @@ describe("StudioDiffPicker (233)", () => {
       q<HTMLButtonElement>("[data-testid=studio-diff-submit]")!.textContent,
     ).toContain("Compare");
   });
+
+  // review #233 lỗi 3: nguồn đã chọn bị xoá / hết ready ⇒ bỏ chọn, nút So sánh tắt (không gửi id cũ).
+  it("nguồn đã chọn biến mất khỏi sources ⇒ ô chọn tương ứng về rỗng và nút So sánh tắt", () => {
+    const onSubmit = vi.fn();
+    render({ scope: ["s1", "s2"], onSubmit });
+    expect(
+      q<HTMLSelectElement>("[data-testid=studio-diff-base-select]")!.value,
+    ).toBe("s1");
+
+    render({
+      scope: ["s1", "s2"],
+      onSubmit,
+      sources: [SOURCES[1], SOURCES[2]],
+    });
+    expect(
+      q<HTMLSelectElement>("[data-testid=studio-diff-base-select]")!.value,
+    ).toBe("");
+    expect(
+      q<HTMLSelectElement>("[data-testid=studio-diff-revised-select]")!.value,
+    ).toBe("s2");
+    const submit = q<HTMLButtonElement>("[data-testid=studio-diff-submit]")!;
+    expect(submit.disabled).toBe(true);
+    act(() => submit.click());
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

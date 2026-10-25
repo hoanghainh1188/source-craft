@@ -145,6 +145,13 @@ export function systemPromptFor(
   return `${common(outputLanguage)}\n\n${t}\n${languageReminder(outputLanguage)}`;
 }
 
+/** 233: tên file trong khối <pair> — trung hoà thẻ + gộp mọi khoảng trắng / xuống dòng (không giả được dòng "Revised:"). */
+function pairTitle(title: string): string {
+  return neutralizePairTags(neutralizeRequestTags(title))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export interface DiffPairTitles {
   baseTitle: string;
   revisedTitle: string;
@@ -164,12 +171,8 @@ export function finalUserContent(
   pair?: DiffPairTitles,
 ): string {
   if (kind === "documentDiff" && pair) {
-    const cleanBase = neutralizePairTags(
-      neutralizeRequestTags(pair.baseTitle),
-    ).trim();
-    const cleanRevised = neutralizePairTags(
-      neutralizeRequestTags(pair.revisedTitle),
-    ).trim();
+    const cleanBase = pairTitle(pair.baseTitle);
+    const cleanRevised = pairTitle(pair.revisedTitle);
     const pairBlock = `<pair>\nOriginal: ${cleanBase}\nRevised: ${cleanRevised}\n</pair>`;
     const cleanBody = neutralizePairTags(body);
     return `${pairBlock}\n\n${cleanBody}\n\n${languageReminder(lang)}`;
