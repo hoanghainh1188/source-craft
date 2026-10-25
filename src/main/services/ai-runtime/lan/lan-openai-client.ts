@@ -1,4 +1,5 @@
 import type { ChatRequest, ChatResult } from "@shared/ipc/types";
+import { LanHttpError, type LanChatOptions } from "./lan-http-error";
 
 // 228 — LAN OpenAI-Compatible Client (vLLM / LiteLLM / LocalAI / TGI) for internal enterprise infrastructure.
 
@@ -9,8 +10,8 @@ export interface LanOpenAiClientOptions {
 }
 
 export interface LanOpenAiClient {
-  listModels(): Promise<string[]>;
-  chat(request: ChatRequest): Promise<ChatResult>;
+  listModels(opts?: LanChatOptions): Promise<string[]>;
+  chat(request: ChatRequest, opts?: LanChatOptions): Promise<ChatResult>;
 }
 
 export function createLanOpenAiClient(
@@ -30,19 +31,23 @@ export function createLanOpenAiClient(
   };
 
   return {
-    async listModels(): Promise<string[]> {
+    async listModels(opts?: LanChatOptions): Promise<string[]> {
       const res = await fetchFn(`${cleanUrl}/v1/models`, {
         method: "GET",
         headers: makeHeaders(),
+        signal: opts?.signal,
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        throw new LanHttpError(res.status, res.statusText);
       }
       const data = (await res.json()) as { data?: { id: string }[] };
       return Array.isArray(data.data) ? data.data.map((m) => m.id) : [];
     },
 
-    async chat(request: ChatRequest): Promise<ChatResult> {
+    async chat(
+      request: ChatRequest,
+      opts?: LanChatOptions,
+    ): Promise<ChatResult> {
       const res = await fetchFn(`${cleanUrl}/v1/chat/completions`, {
         method: "POST",
         headers: makeHeaders(),
@@ -50,10 +55,14 @@ export function createLanOpenAiClient(
           model: request.model,
           messages: request.messages,
           stream: false,
+          ...(request.temperature !== undefined
+            ? { temperature: request.temperature }
+            : {}),
         }),
+        signal: opts?.signal,
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        throw new LanHttpError(res.status, res.statusText);
       }
       const data = (await res.json()) as {
         choices?: { message?: { content: string } }[];
