@@ -28,7 +28,10 @@ import type {
   OpenPurchasePageResult,
   StudioExportInput,
 } from "@shared/ipc/types";
-import { getPrivacyState } from "../services/app-shell/privacy-state";
+import {
+  getPrivacyState,
+  withEgress,
+} from "../services/app-shell/privacy-state";
 import { computeStorageInfo } from "../services/app-shell/storage-info";
 import { createFsOps } from "../services/app-shell/storage-fs";
 import { buildAppInfo } from "../services/app-shell/app-info";
@@ -84,8 +87,7 @@ import type { PolicyService } from "../services/policy/policy-service";
 import { validateLanUrl } from "../services/ai-runtime/lan/lan-guard";
 import { createLanOllamaClient } from "../services/ai-runtime/lan/lan-ollama-client";
 import { createLanOpenAiClient } from "../services/ai-runtime/lan/lan-openai-client";
-import { setLanProviderActive } from "../services/app-shell/privacy-state";
-import type { LanAiConfig } from "@shared/ipc/types";
+import type { LanRuntime } from "../services/ai-runtime/lan/lan-runtime";
 import type { PackageService } from "../services/notebooks/package/package-service";
 
 interface RegisterDeps {
@@ -130,6 +132,8 @@ interface RegisterDeps {
   openPurchasePage?: () => Promise<OpenPurchasePageResult>;
   // 228 — Enterprise IT Policy Service.
   policyService?: PolicyService;
+  // 228 — LAN AI provider (registry override + badge).
+  lanRuntime?: LanRuntime;
   // 229 — Shared Team Notebooks Package Service.
   packageService?: PackageService;
 }
@@ -171,6 +175,7 @@ export function registerIpc({
   licenseService,
   openPurchasePage,
   policyService,
+  lanRuntime,
   packageService,
 }: RegisterDeps): void {
   const safeHandle = (
@@ -600,31 +605,7 @@ export function registerIpc({
   // lan-ai-and-policy (228) — IT Policy & LAN AI Server
   safeHandle(CHANNELS.policyGet, () => policyService?.getPolicy() ?? null);
 
-  safeHandle(CHANNELS.lanAiGetConfig, () => {
-    const raw = store.get("lanAi.config") as
-      Record<string, unknown> | undefined;
-    const policyDefault = policyService?.getPreconfiguredLanAi();
-    const config: LanAiConfig = {
-      enabled:
-        typeof raw?.["enabled"] === "boolean"
-          ? raw["enabled"]
-          : (policyDefault?.enabled ?? false),
-      provider:
-        raw?.["provider"] === "lan-openai"
-          ? "lan-openai"
-          : (policyDefault?.provider ?? "lan-ollama"),
-      baseUrl:
-        typeof raw?.["baseUrl"] === "string"
-          ? raw["baseUrl"]
-          : (policyDefault?.baseUrl ?? ""),
-      chatModel:
-        typeof raw?.["chatModel"] === "string"
-          ? raw["chatModel"]
-          : (policyDefault?.chatModel ?? null),
-      hasCustomToken: Boolean(store.get("lanAi.hasToken")),
-    };
-    return config;
-  });
+  safeHandle(CHANNELS.lanAiGetConfig, () => lanRuntime?.getConfig() ?? null);
 
   safeHandle(CHANNELS.lanAiSaveConfig, async (input) => {
     const params = (
@@ -664,7 +645,8 @@ export function registerIpc({
       }
     }
 
-    setLanProviderActive(enabled);
+    // #228: chuyển provider THẬT (registry) + badge cùng lúc — không còn badge "lan" khi chat vẫn đi nơi khác.
+    lanRuntime?.sync();
     return { ok: true };
   });
 
@@ -690,11 +672,11 @@ export function registerIpc({
     try {
       if (provider === "lan-openai") {
         const client = createLanOpenAiClient({ baseUrl, token });
-        const models = await client.listModels();
+        const models = await withEgress(() => client.listModels(), "lanAi");
         return { ok: true, models };
       } else {
         const client = createLanOllamaClient({ baseUrl, token });
-        const models = await client.listModels();
+        const models = await withEgress(() => client.listModels(), "lanAi");
         return { ok: true, models };
       }
     } catch (err) {

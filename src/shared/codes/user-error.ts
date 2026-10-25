@@ -51,6 +51,9 @@ export const USER_ERROR_CODES = [
   // 228 — LAN AI Server & Enterprise IT Policy
   "lanAiInvalidHost",
   "lanAiRequireEnterprise",
+  "lanAiUnreachable",
+  "lanAiTimeout",
+  "lanAiHttp",
   "policyCloudDisabled",
   // 229 — Shared Team Notebooks (.scnb)
   "licenseRequireProSharedNotebooks",

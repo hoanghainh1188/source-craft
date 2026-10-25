@@ -48,4 +48,29 @@ describe("ProviderRegistry", () => {
     expect(r.get("ollama")).toBe(a);
     expect(() => r.get("x")).toThrow();
   });
+
+  // #228: LAN AI (Enterprise) ưu tiên hơn provider online — khớp thứ tự badge riêng tư (lan > online > local).
+  it("setOverride: getActive trả provider override; null ⇒ về active cũ", () => {
+    const r = new ProviderRegistry();
+    r.register(fakeProvider("ollama", "local"));
+    r.register(fakeProvider("openai", "online"));
+    r.register(fakeProvider("lan-ollama", "lan"));
+    r.setActive("openai");
+    r.setOverride("lan-ollama");
+    expect(r.getActive().id).toBe("lan-ollama");
+    // Đổi provider online trong lúc LAN bật KHÔNG giành quyền khỏi LAN.
+    r.setActive("ollama");
+    expect(r.getActive().id).toBe("lan-ollama");
+    r.setOverride(null);
+    expect(r.getActive().id).toBe("ollama");
+    // "local" (098) vẫn lấy thẳng Ollama dù có override.
+    r.setOverride("lan-ollama");
+    expect(r.get("ollama").id).toBe("ollama");
+  });
+
+  it("setOverride id chưa đăng ký ⇒ ném", () => {
+    const r = new ProviderRegistry();
+    r.register(fakeProvider("ollama", "local"));
+    expect(() => r.setOverride("lan-x")).toThrow();
+  });
 });
