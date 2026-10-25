@@ -184,6 +184,8 @@ export interface OnlineState {
   providers: OnlineProviderView[];
   /** Provider online đang active; null = đang dùng local Ollama. */
   activeOnlineId: OnlineProviderId | null;
+  /** 228: tên tổ chức khi chính sách IT bật forceLocalOnly (AI đám mây bị khoá ở main); null = không khoá. */
+  cloudLockedBy: string | null;
 }
 
 /** Input đặt API key cho 1 provider (key CHỈ đi tới main, lưu keytar, không log). */

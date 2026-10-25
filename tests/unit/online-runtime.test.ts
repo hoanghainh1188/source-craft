@@ -123,3 +123,117 @@ describe("online-runtime (031)", () => {
     expect(ctx.registry.getActive().id).toBe("ollama");
   });
 });
+
+// 228 (SC-003): forceLocalOnly trong enterprise-policy.json ⇒ main CHẶN AI đám mây công cộng (không chỉ nhãn UI).
+describe("online-runtime — chính sách IT forceLocalOnly (228)", () => {
+  function setupWithPolicy(opts: {
+    locked: boolean;
+    activeOnline?: OnlineProviderId;
+  }) {
+    const registry = new ProviderRegistry();
+    registry.register(fakeOllama);
+    const onActiveChange = vi.fn();
+    const store = fakeStore();
+    const secretStore = fakeSecret();
+    const fetchFn = vi.fn() as unknown as typeof fetch;
+    if (opts.activeOnline) {
+      store.set("ai.onlineConfig", {
+        activeOnlineId: opts.activeOnline,
+        models: { anthropic: null, gemini: null, openai: null },
+      });
+    }
+    let locked = opts.locked;
+    const policy = {
+      isCloudDisabled: () => locked,
+      getPolicy: () =>
+        locked
+          ? {
+              schemaVersion: 1 as const,
+              policyId: "p1",
+              organization: "ACME Law",
+              forceLocalOnly: true,
+            }
+          : null,
+    };
+    const rt = createOnlineRuntime({
+      store,
+      secretStore,
+      registry,
+      fetchFn,
+      onActiveChange,
+      policy,
+    });
+    return {
+      rt,
+      registry,
+      onActiveChange,
+      secretStore,
+      fetchFn,
+      unlock: () => (locked = false),
+    };
+  }
+
+  it("setActiveProvider(online) bị chặn với policyCloudDisabled + org; registry giữ local", async () => {
+    const ctx = setupWithPolicy({ locked: true });
+    await ctx.secretStore.setKey("openai", "sk-1");
+    const err = await ctx.rt.setActiveProvider("openai").catch((e) => e);
+    expect(err).toMatchObject({
+      name: "UserFacingError",
+      code: "policyCloudDisabled",
+      params: { org: "ACME Law" },
+    });
+    expect(ctx.registry.getActive().id).toBe("ollama");
+    expect(ctx.onActiveChange).not.toHaveBeenCalledWith(true);
+    expect((await ctx.rt.getOnlineState()).activeOnlineId).toBeNull();
+  });
+
+  it("chặn trước cả kiểm tra key (không lộ trạng thái key qua lỗi apiKeyMissing)", async () => {
+    const ctx = setupWithPolicy({ locked: true });
+    await expect(ctx.rt.setActiveProvider("gemini")).rejects.toMatchObject({
+      code: "policyCloudDisabled",
+    });
+  });
+
+  it("setActiveProvider(null) vẫn được phép (về local)", async () => {
+    const ctx = setupWithPolicy({ locked: true });
+    const s = await ctx.rt.setActiveProvider(null);
+    expect(s.activeOnlineId).toBeNull();
+    expect(ctx.onActiveChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("syncActiveFromConfig: provider online đã lưu + có key ⇒ bị tắt, badge về local, config xoá active", async () => {
+    const ctx = setupWithPolicy({ locked: true, activeOnline: "anthropic" });
+    await ctx.secretStore.setKey("anthropic", "k");
+    await ctx.rt.syncActiveFromConfig();
+    expect(ctx.registry.getActive().id).toBe("ollama");
+    expect(ctx.onActiveChange).toHaveBeenLastCalledWith(false);
+    expect((await ctx.rt.getOnlineState()).activeOnlineId).toBeNull();
+  });
+
+  it("testProvider bị chặn — không gọi mạng ra đám mây", async () => {
+    const ctx = setupWithPolicy({ locked: true });
+    await ctx.secretStore.setKey("openai", "sk-1");
+    await expect(ctx.rt.testProvider("openai")).rejects.toMatchObject({
+      code: "policyCloudDisabled",
+    });
+    expect(ctx.fetchFn).not.toHaveBeenCalled();
+  });
+
+  it("getOnlineState báo cloudLockedBy = tên tổ chức để UI khoá toggle", async () => {
+    const ctx = setupWithPolicy({ locked: true });
+    expect((await ctx.rt.getOnlineState()).cloudLockedBy).toBe("ACME Law");
+  });
+
+  it("không có policy khoá ⇒ cloudLockedBy null và bật online bình thường", async () => {
+    const ctx = setupWithPolicy({ locked: false });
+    await ctx.secretStore.setKey("openai", "sk-1");
+    const s = await ctx.rt.setActiveProvider("openai");
+    expect(s.cloudLockedBy).toBeNull();
+    expect(ctx.registry.getActive().id).toBe("openai");
+  });
+
+  it("không truyền policy (mặc định) ⇒ không khoá", async () => {
+    const s = await setup().rt.getOnlineState();
+    expect(s.cloudLockedBy).toBeNull();
+  });
+});

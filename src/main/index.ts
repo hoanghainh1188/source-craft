@@ -462,9 +462,6 @@ app
     runMigrations(db);
     const notebookRepo = createNotebookRepo(db);
 
-    // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
-    const aiRuntime = createAiRuntime(store);
-
     // 228 — Enterprise IT Policy Service (reads enterprise-policy.json)
     const policyService = createPolicyService({
       userDataPath: join(dataDir.path, "enterprise-policy.json"),
@@ -476,6 +473,10 @@ app
           (meta as Record<string, string | number | boolean>) ?? {},
         ),
     });
+
+    // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
+    // 228: nhận policyService để forceLocalOnly khoá AI đám mây ngay ở main (SC-003).
+    const aiRuntime = createAiRuntime(store, policyService);
 
     // #228: LAN AI là provider THẬT trong registry (không chỉ cờ badge). hasLicense đọc licenseService (khởi tạo ngay
     // dưới) — sync() chỉ chạy sau khi licenseService sẵn sàng. Request LAN nằm trong egress "lanAi" (badge "đang gửi").
