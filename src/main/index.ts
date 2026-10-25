@@ -902,7 +902,7 @@ app
           : category === "online"
             ? (getOnlineConfig(store).models[providerId as OnlineProviderId] ??
               null)
-            : null;
+            : lanRuntime.getConfig().chatModel;
       return { category, providerId, model };
     };
     // 105 (review S5): CÙNG num_ctx cho mọi lượt chat Ollama (hỏi đáp + Studio). Ollama nạp lại model khi num_ctx đổi

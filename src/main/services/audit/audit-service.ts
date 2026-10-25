@@ -10,6 +10,7 @@ import type {
   InteractionMeta,
   InteractionOutcome,
 } from "./audit-types";
+import { STUDIO_KINDS } from "../studio/constants";
 import { createAuditWriter, type AuditWriter } from "./audit-writer";
 import { loadOrCreateDeviceKey } from "./device-key";
 import {
@@ -44,17 +45,8 @@ export interface AuditServiceDeps {
   logEvent: (event: string, meta?: Record<string, unknown>) => void;
 }
 
-const STUDIO_KINDS: readonly StudioKind[] = [
-  "summary",
-  "keyPoints",
-  "faq",
-  "outline",
-  "studyGuide",
-  "briefing",
-  "timeline",
-  "keyTerms",
-  "custom",
-];
+// Loại Studio hợp lệ = danh sách của Studio (một nguồn sự thật — 233 thêm documentDiff) + yêu cầu tuỳ chỉnh.
+const AUDIT_STUDIO_KINDS: readonly StudioKind[] = [...STUDIO_KINDS, "custom"];
 
 const errorTypeOf = (e: unknown): string =>
   (e as NodeJS.ErrnoException | null)?.code ??
@@ -408,7 +400,9 @@ export function createAuditService(deps: AuditServiceDeps) {
         if (!activated || !health.healthy) return;
         // Trường từ renderer KHÔNG tin cậy: chuẩn hoá trước khi ký vào nhật ký (review S4).
         const notebookId = safeId(meta.notebookId);
-        const studioKind = STUDIO_KINDS.find((k) => k === meta.studioKind);
+        const studioKind = AUDIT_STUDIO_KINDS.find(
+          (k) => k === meta.studioKind,
+        );
         const id = deps.identity();
         append(() => ({
           type: "export.saved",

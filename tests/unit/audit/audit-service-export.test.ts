@@ -71,3 +71,17 @@ describe("AuditService.recordExport", () => {
     expect(r).toMatchObject({ format: "md", notebookId: null });
   });
 });
+
+describe("recordExport — loại Studio mới (233)", () => {
+  it("documentDiff được giữ (lấy từ STUDIO_KINDS, không danh sách riêng)", async () => {
+    const h = harness();
+    await h.service.start();
+    await h.service.recordExport({
+      format: "pdf",
+      notebookId: "nb_7",
+      studioKind: "documentDiff",
+      fileName: "d.pdf",
+    });
+    expect(h.records().at(-1)).toMatchObject({ studioKind: "documentDiff" });
+  });
+});
