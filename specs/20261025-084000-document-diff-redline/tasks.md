@@ -1,9 +1,60 @@
 # Tasks: document-diff-redline
 
-- [ ] Task 1: Bổ sung `"documentDiff"` vào `StudioKind` trong `src/shared/ipc/types.ts`.
-- [ ] Task 2: Thêm mã lỗi `studioDiffNeedTwoSources` vào `src/shared/codes/user-error.ts` và từ điển dịch thuật `src/shared/i18n/domains/studio.ts`, `core.ts`.
-- [ ] Task 3: Xây dựng cấu trúc prompt `task("documentDiff")` trong `src/main/services/studio/prompt.ts`.
-- [ ] Task 4: Kiểm tra điều kiện tối thiểu 2 nguồn trong `src/main/services/studio/studio-service.ts`.
-- [ ] Task 5: Cập nhật giao diện `StudioColumn.tsx` với nút So sánh văn bản, huy hiệu PRO và tích hợp `UpgradePrompt`.
-- [ ] Task 6: Viết unit tests kiểm tra prompt, validation tối thiểu 2 nguồn và gating bản quyền.
-- [ ] Task 7: Chạy kiểm thử toàn bộ test suite, lint và build dự án.
+Quy ước: `[P]` = làm song song được (khác file, không phụ thuộc task chưa xong). Mỗi cặp test → cài đặt theo TDD: viết test,
+chạy thấy FAIL, rồi mới cài.
+
+## Phase 0 — Quy trình
+
+- [ ] T001 Chuyển `docs/01-basic-design/document-diff/basic-design.md` → `docs/intake/233-document-diff-design.md`, sửa sơ đồ
+      theo D1/D8.
+
+## Phase 1 — Nền dữ liệu
+
+- [ ] T002 Test migration v13 trong `tests/unit/migration-studio-diff.test.ts` (giữ đủ cột, INSERT `documentDiff`, CHECK khớp
+      `STUDIO_ALL_KINDS`).
+- [ ] T003 Thêm `documentDiff` vào `StudioKind` (`src/shared/ipc/types.ts`) và `STUDIO_KINDS`, `STUDIO_ALL_KINDS`
+      (`src/main/services/studio/constants.ts`).
+- [ ] T004 Viết migration v13 trong `src/main/db/migrations.ts` (phụ thuộc T002, T003).
+- [ ] T005 [P] Mã lỗi `studioDiffNeedTwoSources` (`src/shared/codes/user-error.ts`) + thông điệp vi/en
+      (`src/shared/i18n/domains/core.ts`).
+- [ ] T006 [P] Khoá i18n `studio.kind.documentDiff`, `studio.diff.*` (`src/shared/i18n/domains/studio.ts`); giữ xanh
+      `i18n-catalog.test.ts`, `i18n-no-hardcoded-vi.test.ts`.
+
+## Phase 2 — Prompt
+
+- [ ] T007 Test `systemPromptFor("documentDiff")` + `finalUserContent` với `<pair>` trong `tests/unit/studio-prompt.test.ts`
+      (4 mục, cột bảng, quy tắc `[n]` theo mục, rủi ro chỉ từ câu chữ, trung hoà thẻ trong tên file).
+- [ ] T008 Cài `task("documentDiff")`, nhãn theo ngôn ngữ và khối `<pair>` trong `src/main/services/studio/prompt.ts`.
+
+## Phase 3 — Service & map-reduce
+
+- [ ] T009 Test kiểm tra cặp + thứ tự vai trò trong `tests/unit/studio-service.test.ts` (0/1/trùng/3 id, nguồn 0 chunk, không
+      gọi `contextInfo`/`chat`, mã cũ giữ nguyên, groups theo thứ tự `sourceIds`, lưu đúng thứ tự).
+- [ ] T010 [P] Test đóng lô theo nguồn + map prompt diff + nhãn vai trò trong `tests/unit/studio-map-reduce.test.ts`; loại khác
+      không đổi.
+- [ ] T011 Cài kiểm tra cặp và dựng `groups` theo vai trò trong `src/main/services/studio/studio-service.ts` (sau T008, T009).
+- [ ] T012 Cài đóng lô theo nguồn + map prompt diff trong `src/main/services/studio/map-reduce.ts` (sau T010).
+
+## Phase 4 — Bản quyền
+
+- [ ] T013 [P] Test Free từ chối / Pro + Enterprise cho phép `documentDiff` trong `tests/unit/license/feature-gate.test.ts`.
+
+## Phase 5 — Renderer
+
+- [ ] T014 Test `tests/unit/studio-diff-picker.test.ts` (nguồn ready, điền sẵn, hoán đổi, nút tắt khi chưa đủ, gửi
+      `[gốc, sửa đổi]`).
+- [ ] T015 Cài `src/renderer/features/studio/StudioDiffPicker.tsx` + style trong `studio.css` (sau T006, T014).
+- [ ] T016 Nối picker vào `StudioColumn.tsx`, thêm `documentDiff` vào `RESULT_KINDS`; cập nhật
+      `tests/unit/studio-kinds-layout.test.ts`.
+- [ ] T017 Ghi chú disclaimer cho `documentDiff` trong `StudioResultCard.tsx` + test; test `UpgradePrompt` khi Free bị từ chối.
+- [ ] T018 [P] Test chip `[n]` trong ô bảng GFM bấm được (`MarkdownContent`).
+
+## Phase 6 — Xuất
+
+- [ ] T019 [P] Test xuất DOCX/PDF/tên file cho `documentDiff` có bảng chứa `[n]`
+      (`studio-export-docx.test.ts`, `studio-export-pdf.test.ts`, `studio-export-name.test.ts`); bổ sung nhãn nếu thiếu.
+
+## Phase 7 — Quality gates
+
+- [ ] T020 `npm test`, `npm run lint`, `npm run build`; coverage ≥ 80% phần mã mới/đổi.
+- [ ] T021 Đánh dấu checklist `checklists/requirements.md`; chạy code-reviewer → glossary-steward → security-reviewer.

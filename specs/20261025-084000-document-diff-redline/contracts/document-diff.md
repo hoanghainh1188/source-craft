@@ -1,20 +1,26 @@
 # Contracts: document-diff-redline
 
-## 1. Studio Generate Contract
+Quyết định: [`docs/04-decisions/2026-10-25-document-diff-clarify.md`](../../../docs/04-decisions/2026-10-25-document-diff-clarify.md) (D1–D3, D9).
+
+## 1. Studio Generate Contract (`studio:generate`, không thêm kênh/field mới)
+
 - **Input**:
   ```typescript
   interface StudioGenerateInput {
     notebookId: string;
     kind: "documentDiff";
-    sourceIds?: string[]; // Danh sách nguồn so sánh (yêu cầu ≥ 2)
+    sourceIds: [baseSourceId: string, revisedSourceId: string]; // đúng 2, khác nhau; thứ tự = vai trò
     outputLanguage?: "vi" | "en";
-    ...
+    target?: AiTarget;
+    generationId?: string;
+    domainMode?: DomainMode; // qua gate IPC như loại khác; không đổi prompt diff ở v1 (D10)
   }
   ```
-- **Validation Rules**:
-  - Nếu `kind === "documentDiff"`:
-    - Nếu `sourceIds` được truyền: `sourceIds.length >= 2`.
-    - Nếu `sourceIds` không được truyền (chọn toàn bộ notebook): số lượng nguồn có `status === "ready"` trong notebook phải $\ge 2$.
-    - Vi phạm: ném `UserFacingError("studioDiffNeedTwoSources")`.
-- **Output**:
-  - `StudioResult` lưu vào DB SQLite và trả về cho renderer kèm `citations` đã hậu kiểm.
+- **Thứ tự kiểm tra ở main**:
+  1. `register.ts`: `assertDomainModeAllowed` → `assertCanGenerateStudio("documentDiff")` (Free ⇒ `licenseRequireProStudio`).
+  2. `studio-service.ts`: `resolveSourceScope` (id lạ ⇒ `studioSourcesInvalid`; chưa ready ⇒ `studioSourceNotReady`).
+  3. Cặp diff: `scope.ids` phải có đúng 2 phần tử và mỗi nguồn có ≥ 1 chunk; sai ⇒ `studioDiffNeedTwoSources`. Thiếu
+     `sourceIds` (cả notebook) cũng ⇒ `studioDiffNeedTwoSources`.
+  4. Chỉ sau đó mới `contextInfo()` và gọi AI.
+- **Output**: `StudioResult` với `kind = "documentDiff"`, `sourceIds = [base, revised]` (đúng thứ tự), `citations` đã hậu
+  kiểm, `parts` / `truncated` như các loại khác. Lưu vào `studio_result` (cần migration v13).

@@ -1,13 +1,30 @@
 # Research: Document Diff & Contract Redline
 
 ## 1. Cơ chế đối chiếu ngữ cảnh của LLM
-- Trong `citationBlock`:
-  `[n] (Source: <sourceTitle>, page <pageLabel>)\n<chunkText>`
-  Tên nguồn tài liệu được ghi rõ trong từng đoạn ngữ cảnh. Khi người dùng nạp `HopDong_Goc.pdf` và `HopDong_SuaDoi.pdf`, LLM phân biệt được nội dung thuộc về từng bản thảo.
-- Với tài liệu dài vượt ngân sách ngữ cảnh:
-  Hệ thống `MapReduce` (`runMapReduce`) trong Studio đã có sẵn cơ chế gom nhóm theo nguồn (`groups: ScoredChunk[][]`), chia đều ngân sách giữa các tài liệu (`buildBalancedContext`) giúp bản so sánh không bị lệch về một văn bản.
 
-## 2. Kiểm soát bản quyền
-- `assertCanGenerateStudio` trong `src/main/services/license/feature-gate.ts`:
-  Gói Free chỉ cho phép `summary` và `keyPoints`.
-  Khi thêm `documentDiff`, nó tự động thuộc nhóm tính năng nâng cao yêu cầu `allStudioKinds` (Pro & Enterprise).
+- `citationBlock` ghi `[n] (Source: <sourceTitle>, page <pageLabel>)` trước mỗi đoạn ⇒ LLM biết đoạn thuộc tài liệu nào.
+  Nhưng chưa có **vai trò** (gốc / sửa đổi) ⇒ cần khối `<pair>` (D3).
+- `studio-service.ts` dựng `groups` theo thứ tự nguồn **trong notebook**, không theo `sourceIds` ⇒ diff phải dựng theo thứ
+  tự `scope.ids`. `resolveSourceScope` đã giữ thứ tự khi khử trùng.
+
+## 2. Map-reduce với tài liệu dài
+
+- `packBatches` (`map-reduce.ts`) đóng lô tham lam trên toàn bộ khối đã đánh số ⇒ một lô có thể chứa đoạn của cả hai bản.
+- `mapPrompt` chỉ rút "các ý chính" ⇒ dễ mất đúng khác biệt cần so (số tiền, thời hạn, phủ định).
+- ⇒ D4: đóng lô theo nguồn, map prompt riêng trích gần nguyên văn, ghi chú gắn nhãn vai trò.
+
+## 3. Kiểm soát bản quyền
+
+- `assertCanGenerateStudio` so `kind` với `entitlements.allowedStudioKinds`. Pro/Enterprise lấy `STUDIO_ALL_KINDS`
+  (`feature-gate.ts:94`), Free lấy `FREE_ALLOWED_STUDIO_KINDS` (`summary`, `keyPoints`).
+- `documentDiff` chỉ thuộc Pro khi được thêm vào `STUDIO_ALL_KINDS` (không tự động).
+- Renderer hiện không có huy hiệu PRO cho loại Studio bị khoá; chỉ `UpgradePrompt` khi lỗi ⇒ D8.
+
+## 4. Lưu trữ
+
+- CHECK `kind` của `studio_result` (migration v11, `migrations.ts:263`) cố định 9 loại ⇒ cần migration v13 (D11).
+
+## 5. Hiển thị & xuất
+
+- `MarkdownContent` dùng `remark-gfm` ⇒ bảng hiển thị được.
+- `docx-generator.ts` và `pdf-generator.ts` đã dựng bảng Markdown ⇒ chỉ cần test khoá cho bảng có `[n]`.
