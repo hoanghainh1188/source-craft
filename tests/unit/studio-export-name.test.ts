@@ -27,4 +27,14 @@ describe("sanitizeName (studio export)", () => {
       "Tóm tắt tài liệu — 2026-07-11",
     );
   });
+
+  // 233 (T019): tên xuất gợi ý cho documentDiff
+  it("xử lý tên xuất documentDiff theo ngôn ngữ vi và en", () => {
+    expect(sanitizeName("So sánh văn bản — 2026-10-25")).toBe(
+      "So sánh văn bản — 2026-10-25",
+    );
+    expect(sanitizeName("Compare documents — 2026-10-25")).toBe(
+      "Compare documents — 2026-10-25",
+    );
+  });
 });

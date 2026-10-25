@@ -24,7 +24,7 @@ describe("feature-gate & entitlements matrix", () => {
     expect(ent.features).toEqual([]);
   });
 
-  it("computes Pro tier entitlements with unlimited notebooks/sources, multimedia, and all 9 Studio kinds", () => {
+  it("computes Pro tier entitlements with unlimited notebooks/sources, multimedia, and all 10 Studio kinds", () => {
     const ent = entitlementsFor("pro");
     expect(ent.tier).toBe("pro");
     expect(ent.maxNotebooks).toBeNull();
@@ -33,8 +33,9 @@ describe("feature-gate & entitlements matrix", () => {
     expect(ent.allowedSourceKinds).toContain("audio");
     expect(ent.allowedSourceKinds).toContain("video");
     expect(ent.allowedSourceKinds).toContain("image");
-    expect(ent.allowedStudioKinds).toHaveLength(9);
+    expect(ent.allowedStudioKinds).toHaveLength(10);
     expect(ent.allowedStudioKinds).toContain("custom");
+    expect(ent.allowedStudioKinds).toContain("documentDiff");
     expect(ent.features).toEqual([
       "multimedia",
       "studioPro",
@@ -127,6 +128,7 @@ describe("feature-gate & entitlements matrix", () => {
       "timeline",
       "keyTerms",
       "custom",
+      "documentDiff",
     ] as const) {
       try {
         assertCanGenerateStudio(freeEnt, kind);
@@ -137,9 +139,13 @@ describe("feature-gate & entitlements matrix", () => {
       }
     }
 
+    const proEnt = entitlementsFor("pro");
+    expect(() => assertCanGenerateStudio(proEnt, "documentDiff")).not.toThrow();
+
     const entEnt = entitlementsFor("enterprise");
     expect(() => assertCanGenerateStudio(entEnt, "custom")).not.toThrow();
     expect(() => assertCanGenerateStudio(entEnt, "studyGuide")).not.toThrow();
+    expect(() => assertCanGenerateStudio(entEnt, "documentDiff")).not.toThrow();
   });
 
   it("createFeatureGate delegates dynamically to current entitlements", () => {

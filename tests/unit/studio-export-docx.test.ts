@@ -56,4 +56,41 @@ Dưới đây là bảng tổng hợp các điều khoản trọng yếu [1]:
     const extracted = await mammoth.extractRawText({ buffer: docxBuf });
     expect(extracted.value).toContain("Tóm tắt ngắn gọn.");
   });
+
+  // 233 (T019, FR-011, D6): xuất documentDiff có bảng chứa [n] trong ô
+  it("exports documentDiff with 4 sections and GFM table containing citations in cells", async () => {
+    const diffMarkdown = `## 1. Tổng quan thay đổi
+
+Bản sửa đổi điều chỉnh một số điều khoản quan trọng [1, 2].
+
+## 2. Điều khoản bổ sung
+
+- Bổ sung quy định bảo mật thông tin [2].
+
+## 3. Điều khoản bị loại bỏ
+
+- Loại bỏ điều khoản miễn trừ trách nhiệm [1].
+
+## 4. Điều khoản sửa đổi & phân tích rủi ro
+
+| Điều khoản | Bản gốc | Bản sửa đổi | Ảnh hưởng / rủi ro |
+| --- | --- | --- | --- |
+| Điều 5 | Thanh toán 30 ngày [1] | Thanh toán 15 ngày [2] | Rút ngắn dòng tiền [1, 2] |
+`;
+
+    const docxBuf = generateDocx(diffMarkdown, {
+      title: "So sánh văn bản — 2026-10-25",
+      includeCoverPage: true,
+      includeTableOfContents: true,
+    });
+    expect(Buffer.isBuffer(docxBuf)).toBe(true);
+    const extracted = await mammoth.extractRawText({ buffer: docxBuf });
+    expect(extracted.value).toContain("1. Tổng quan thay đổi");
+    expect(extracted.value).toContain(
+      "4. Điều khoản sửa đổi & phân tích rủi ro",
+    );
+    expect(extracted.value).toContain("Thanh toán 30 ngày [1]");
+    expect(extracted.value).toContain("Thanh toán 15 ngày [2]");
+    expect(extracted.value).toContain("Rút ngắn dòng tiền [1, 2]");
+  });
 });

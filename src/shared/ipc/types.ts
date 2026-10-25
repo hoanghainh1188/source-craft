@@ -474,7 +474,8 @@ export type StudioKind =
   | "briefing"
   | "timeline"
   | "keyTerms"
-  | "custom"; // 178 (PR 3): yêu cầu tuỳ chỉnh
+  | "custom" // 178 (PR 3): yêu cầu tuỳ chỉnh
+  | "documentDiff"; // 233: so sánh văn bản & hợp đồng đối chiếu rủi ro
 
 /** Kết quả tổng hợp Studio = một PHIÊN BẢN (178) — content dạng text kèm chip [n]; citations đã hậu kiểm (Constitution II). */
 export interface StudioResult {

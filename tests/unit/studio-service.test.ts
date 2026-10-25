@@ -753,3 +753,191 @@ describe("178 (PR 4): studio-service — phạm vi nhiều nguồn", () => {
     expect(insert.mock.calls[0][0]).not.toHaveProperty("sourceIds");
   });
 });
+
+// 233 (T009, FR-003, D1..D3): kiểm tra cặp nguồn documentDiff + thứ tự vai trò [gốc, sửa đổi]
+describe("233: studio-service — documentDiff", () => {
+  function makeDiff(opts?: { chunkMap?: Record<string, number> }) {
+    const calls: ChatMessage[][] = [];
+    const chat = vi.fn(async (m: ChatMessage[]) => {
+      calls.push(m);
+      return "Kết quả diff [1] [2].";
+    });
+    const insert = vi.fn((v: Record<string, unknown>) => ({
+      id: "r-diff",
+      createdAt: 1,
+      ...v,
+    }));
+    const contextInfo = vi.fn(async () => ({
+      budget: 50_000,
+      numCtx: null,
+    }));
+    const sources: Source[] = [
+      {
+        id: "src-B",
+        notebookId: "nb1",
+        kind: "pdf",
+        title: "HopDong_SuaDoi.pdf",
+        status: "ready",
+      } as Source,
+      {
+        id: "src-A",
+        notebookId: "nb1",
+        kind: "pdf",
+        title: "HopDong_Goc.pdf",
+        status: "ready",
+      } as Source,
+      {
+        id: "src-C",
+        notebookId: "nb1",
+        kind: "pdf",
+        title: "ChuaReady.pdf",
+        status: "processing",
+      } as Source,
+      {
+        id: "src-D",
+        notebookId: "nb1",
+        kind: "pdf",
+        title: "HopDong_ThuBa.pdf",
+        status: "ready",
+      } as Source,
+    ];
+    const chunkCounts = opts?.chunkMap ?? {
+      "src-A": 2,
+      "src-B": 2,
+      "src-D": 2,
+    };
+    const svc = createStudioService({
+      listSources: () => sources,
+      listChunks: (id) =>
+        chunks(id, chunkCounts[id] ?? 0, 100).map((c) => ({
+          ...c,
+          notebookId: "nb1",
+        })),
+      studioRepo: { insert, listByNotebook: () => [] } as never,
+      chat,
+      contextInfo,
+    });
+    return { svc, calls, chat, insert, contextInfo };
+  }
+
+  it("thiếu sourceIds, rỗng, 1 id, 2 id trùng nhau, ≥ 3 id ⇒ lỗi studioDiffNeedTwoSources, không gọi contextInfo và chat", async () => {
+    const { svc, chat, contextInfo } = makeDiff();
+
+    // không truyền sourceIds
+    await expect(
+      svc.generate({ notebookId: "nb1", kind: "documentDiff" }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+
+    // sourceIds rỗng
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: [],
+      }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+
+    // 1 id
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A"],
+      }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+
+    // 2 id trùng nhau (sau khử trùng còn 1)
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-A"],
+      }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+
+    // 3 id
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-B", "src-D"],
+      }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+
+    expect(contextInfo).not.toHaveBeenCalled();
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("một nguồn ready nhưng có 0 chunk ⇒ lỗi studioDiffNeedTwoSources, không gọi contextInfo và chat", async () => {
+    const { svc, chat, contextInfo } = makeDiff({
+      chunkMap: { "src-A": 2, "src-B": 0 },
+    });
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-B"],
+      }),
+    ).rejects.toMatchObject({ code: "studioDiffNeedTwoSources" });
+    expect(contextInfo).not.toHaveBeenCalled();
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("id lạ / chưa ready ⇒ giữ mã lỗi cũ (studioSourcesInvalid / studioSourceNotReady)", async () => {
+    const { svc, chat, contextInfo } = makeDiff();
+    // id lạ
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-UNKNOWN"],
+      }),
+    ).rejects.toMatchObject({ code: "studioSourcesInvalid" });
+
+    // chưa ready
+    await expect(
+      svc.generate({
+        notebookId: "nb1",
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-C"],
+      }),
+    ).rejects.toMatchObject({ code: "studioSourceNotReady" });
+
+    expect(contextInfo).not.toHaveBeenCalled();
+    expect(chat).not.toHaveBeenCalled();
+  });
+
+  it("nguồn trong notebook xếp [B, A] mà sourceIds = [A, B] ⇒ đoạn của A đánh số trước, <pair> ghi A là gốc, lưu đúng thứ tự", async () => {
+    const { svc, calls, insert } = makeDiff();
+    const res = await svc.generate({
+      notebookId: "nb1",
+      kind: "documentDiff",
+      sourceIds: ["src-A", "src-B"],
+    });
+
+    expect(calls).toHaveLength(1);
+    const userMsg = calls[0][1].content;
+
+    // <pair> ghi rõ vai trò
+    expect(userMsg).toContain(
+      "<pair>\nOriginal: HopDong_Goc.pdf\nRevised: HopDong_SuaDoi.pdf\n</pair>",
+    );
+
+    // Đoạn [1] thuộc tài liệu A (bản gốc), không phải B (dù B xếp trước trong notebook)
+    const block1 = userMsg.indexOf("[1] (Source: HopDong_Goc.pdf");
+    const block2 = userMsg.indexOf("[2] (Source: HopDong_Goc.pdf");
+    const block3 = userMsg.indexOf("[3] (Source: HopDong_SuaDoi.pdf");
+    expect(block1).toBeGreaterThan(-1);
+    expect(block2).toBeGreaterThan(block1);
+    expect(block3).toBeGreaterThan(block2);
+
+    // Lưu vào studio_result đúng thứ tự [A, B]
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "documentDiff",
+        sourceIds: ["src-A", "src-B"],
+      }),
+    );
+    expect(res.sourceIds).toEqual(["src-A", "src-B"]);
+  });
+});

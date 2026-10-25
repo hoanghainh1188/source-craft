@@ -342,6 +342,41 @@ export const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  // 233-document-diff: studio_result thêm loại 'documentDiff' vào CHECK constraint. Dựng lại bảng theo mẫu v11,
+  // copy đủ 12 cột (gồm 5 cột thêm ở v11).
+  {
+    version: 13,
+    up(db) {
+      db.exec(`
+        CREATE TABLE studio_result_new (
+          id              TEXT PRIMARY KEY,
+          notebook_id     TEXT NOT NULL REFERENCES notebook(id) ON DELETE CASCADE,
+          kind            TEXT NOT NULL CHECK (kind IN ('summary','keyPoints','faq','outline','studyGuide','briefing','timeline','keyTerms','custom','documentDiff')),
+          content         TEXT NOT NULL,
+          citations_json  TEXT NOT NULL,
+          custom_prompt   TEXT,
+          source_ids_json TEXT,
+          parts           INTEGER,
+          truncated       INTEGER CHECK (truncated IN (0,1)),
+          local           INTEGER CHECK (local IN (0,1)),
+          created_at      INTEGER NOT NULL,
+          updated_at      INTEGER NOT NULL
+        )
+      `);
+      db.exec(
+        `INSERT INTO studio_result_new (id, notebook_id, kind, content, citations_json, custom_prompt, source_ids_json, parts, truncated, local, created_at, updated_at)
+           SELECT id, notebook_id, kind, content, citations_json, custom_prompt, source_ids_json, parts, truncated, local, created_at, updated_at FROM studio_result`,
+      );
+      db.exec("DROP TABLE studio_result");
+      db.exec("ALTER TABLE studio_result_new RENAME TO studio_result");
+      db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_studio_notebook ON studio_result(notebook_id)",
+      );
+      db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_studio_versions ON studio_result(notebook_id, kind, created_at)",
+      );
+    },
+  },
 ];
 
 export function getUserVersion(db: Db): number {

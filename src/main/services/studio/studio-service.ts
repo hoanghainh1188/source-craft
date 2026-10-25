@@ -11,10 +11,15 @@ import type { ScoredChunk } from "../rag/rag-types";
 import { buildBalancedContext } from "./balanced-context";
 import { postprocessCitations, citationsFromMap } from "../rag/citation";
 import { STUDIO_ALL_KINDS, STUDIO_CONTEXT_BUDGET } from "./constants";
-import { finalUserContent, systemPromptFor } from "./prompt";
+import {
+  finalUserContent,
+  systemPromptFor,
+  type DiffPairTitles,
+} from "./prompt";
 import { parseCustomPrompt } from "./custom-prompt";
 import { resolveSourceScope, STUDIO_MAX_SOURCE_IDS } from "./source-scope";
 import {
+  numberAll,
   runMapReduce,
   safeProgress,
   type OnStudioProgress,
@@ -136,27 +141,68 @@ export function createStudioService(deps: StudioServiceDeps) {
           : undefined,
       );
     }
-    const inScope = scope.ids ? new Set(scope.ids) : null;
 
-    // Gom chunk theo NHÓM NGUỒN (mỗi nguồn 1 mảng, chunk theo ordinal). buildBalancedContext chia đều
-    // ngân sách cho mọi nguồn (#65) → bản tóm tắt không thiên về 1 tài liệu.
-    const groups: ScoredChunk[][] = [];
-    let totalChunks = 0;
-    for (const src of sources) {
-      if (src.status !== "ready") continue;
-      if (inScope && !inScope.has(src.id)) continue;
-      const chunks = deps
-        .listChunks(src.id)
-        .map((chunk) => ({ chunk, sourceTitle: src.title, score: 0 }));
-      if (chunks.length > 0) {
-        groups.push(chunks);
-        totalChunks += chunks.length;
+    // 233 (FR-003, D1, D2): documentDiff cần đúng 2 nguồn khác nhau trong sourceIds
+    if (kind === "documentDiff") {
+      if (!scope.ids || scope.ids.length !== 2) {
+        throw new UserFacingError("studioDiffNeedTwoSources");
       }
     }
-    if (totalChunks === 0) {
-      throw new UserFacingError(
-        scope.ids ? "studioSourceNotReady" : "studioNoReadySources",
-      );
+
+    let diffPair: DiffPairTitles | undefined;
+    const groups: ScoredChunk[][] = [];
+    let totalChunks = 0;
+
+    // 233 (D3): với documentDiff, dựng groups theo đúng thứ tự vai trò [gốc, sửa đổi]
+    if (kind === "documentDiff") {
+      const [baseId, revisedId] = scope.ids!;
+      const baseSource = sources.find((s) => s.id === baseId);
+      const revisedSource = sources.find((s) => s.id === revisedId);
+      if (!baseSource || !revisedSource) {
+        throw new UserFacingError("studioSourcesInvalid", {
+          max: STUDIO_MAX_SOURCE_IDS,
+        });
+      }
+      diffPair = {
+        baseTitle: baseSource.title,
+        revisedTitle: revisedSource.title,
+      };
+      const baseChunks = deps
+        .listChunks(baseSource.id)
+        .map((chunk) => ({ chunk, sourceTitle: baseSource.title, score: 0 }));
+      const revisedChunks = deps.listChunks(revisedSource.id).map((chunk) => ({
+        chunk,
+        sourceTitle: revisedSource.title,
+        score: 0,
+      }));
+
+      // D2: mỗi nguồn trong cặp phải ready và có >= 1 chunk
+      if (baseChunks.length === 0 || revisedChunks.length === 0) {
+        throw new UserFacingError("studioDiffNeedTwoSources");
+      }
+
+      groups.push(baseChunks, revisedChunks);
+      totalChunks = baseChunks.length + revisedChunks.length;
+    } else {
+      // Gom chunk theo NHÓM NGUỒN (mỗi nguồn 1 mảng, chunk theo ordinal). buildBalancedContext chia đều
+      // ngân sách cho mọi nguồn (#65) → bản tóm tắt không thiên về 1 tài liệu.
+      const inScope = scope.ids ? new Set(scope.ids) : null;
+      for (const src of sources) {
+        if (src.status !== "ready") continue;
+        if (inScope && !inScope.has(src.id)) continue;
+        const chunks = deps
+          .listChunks(src.id)
+          .map((chunk) => ({ chunk, sourceTitle: src.title, score: 0 }));
+        if (chunks.length > 0) {
+          groups.push(chunks);
+          totalChunks += chunks.length;
+        }
+      }
+      if (totalChunks === 0) {
+        throw new UserFacingError(
+          scope.ids ? "studioSourceNotReady" : "studioNoReadySources",
+        );
+      }
     }
 
     const ctx = deps.contextInfo
@@ -179,9 +225,18 @@ export function createStudioService(deps: StudioServiceDeps) {
           deps.chat(messages, { ...chatOpts, onToken: streamToken })
       : chat;
 
-    // Vừa ngân sách (theo TỔNG độ dài thật — không theo round-robin, vốn nhận chunk đầu mọi nguồn bất chấp ngân
-    // sách) ⇒ 1 lượt như cũ. Vượt ⇒ map-reduce (ném nếu runtime chưa sẵn sàng → bubble lên, không bịa).
-    const single = buildBalancedContext(groups, Number.POSITIVE_INFINITY);
+    // Vừa ngân sách ⇒ 1 lượt như cũ. Vượt ⇒ map-reduce (ném nếu runtime chưa sẵn sàng → bubble lên, không bịa).
+    // 233 (D3): với documentDiff, ghép tuần tự toàn bộ đoạn gốc trước, sửa đổi sau.
+    const single =
+      kind === "documentDiff"
+        ? (() => {
+            const { blocks, map } = numberAll(groups);
+            return {
+              contextText: blocks.map((b) => b.text).join("\n\n"),
+              map,
+            };
+          })()
+        : buildBalancedContext(groups, Number.POSITIVE_INFINITY);
     let raw: string;
     let map = single.map;
     let parts = 1;
@@ -197,6 +252,7 @@ export function createStudioService(deps: StudioServiceDeps) {
             customPrompt,
             single.contextText,
             outputLanguage,
+            diffPair,
           ),
         },
       ]);
@@ -211,6 +267,7 @@ export function createStudioService(deps: StudioServiceDeps) {
         signal,
         customPrompt,
         writeChat,
+        diffPair,
       });
       ({ raw, map, parts, truncated } = mr);
     }

@@ -40,6 +40,7 @@ export const studioVi = {
     timeline: "Dòng thời gian",
     keyTerms: "Bảng thuật ngữ",
     custom: "Yêu cầu tuỳ chỉnh", // 178 PR 3
+    documentDiff: "So sánh văn bản", // 233: so sánh bản gốc ↔ bản sửa đổi
   },
   // 178 (PR 3): ô yêu cầu tuỳ chỉnh dưới lưới nút
   custom: {
@@ -50,6 +51,16 @@ export const studioVi = {
     submit: "Tạo",
     submitAria: "Tạo theo yêu cầu tuỳ chỉnh",
     requestHeading: "Yêu cầu",
+  },
+  // 233: bộ chọn so sánh văn bản & hợp đồng đối chiếu rủi ro
+  diff: {
+    base: "Bản gốc",
+    revised: "Bản sửa đổi",
+    swap: "Hoán đổi",
+    run: "So sánh",
+    pick: "Chọn tài liệu…",
+    disclaimer:
+      "Phân tích dựa trên nội dung tài liệu, không thay thế tư vấn pháp lý.",
   },
   localRetry: "Tạo bằng AI cục bộ",
   localRetryAria: "Tạo {kind} bằng AI cục bộ",
@@ -130,6 +141,7 @@ export const studioEn: Widen<typeof studioVi> = {
     timeline: "Timeline",
     keyTerms: "Glossary",
     custom: "Custom request",
+    documentDiff: "Compare documents",
   },
   custom: {
     label: "Custom request",
@@ -139,6 +151,14 @@ export const studioEn: Widen<typeof studioVi> = {
     submit: "Create",
     submitAria: "Create from custom request",
     requestHeading: "Request",
+  },
+  diff: {
+    base: "Original",
+    revised: "Revised",
+    swap: "Swap",
+    run: "Compare",
+    pick: "Choose a document…",
+    disclaimer: "Based on the documents' text only — not legal advice.",
   },
   localRetry: "Create with local AI",
   localRetryAria: "Create {kind} with local AI",

@@ -6,6 +6,7 @@ import { StudioProgress } from "./StudioProgress";
 import { StudioCancel } from "./StudioCancel";
 import { StudioVersionPicker } from "./StudioVersionPicker";
 import { StudioCustomRequest } from "./StudioCustomRequest";
+import { StudioDiffPicker } from "./StudioDiffPicker";
 import { StudioScopePicker } from "./StudioScopePicker";
 import { StudioStreamPreview } from "./StudioStreamPreview";
 import { pruneScope } from "./scope-prune";
@@ -37,14 +38,20 @@ const KINDS: readonly StudioKind[] = [
   "timeline",
   "keyTerms",
 ];
-// 178 (PR 3): loại có thẻ kết quả = 8 loại có nút + "custom" (nhập ở hàng riêng dưới lưới).
-const RESULT_KINDS: readonly StudioKind[] = [...KINDS, "custom"];
+// 178 (PR 3) / 233: loại có thẻ kết quả = 8 loại có nút + "custom" + "documentDiff".
+const RESULT_KINDS: readonly StudioKind[] = [
+  ...KINDS,
+  "custom",
+  "documentDiff",
+];
 
-/** Nút "khởi tạo" của một loại (đích focus): nút loại, hoặc nút Tạo của hàng yêu cầu tuỳ chỉnh. */
+/** Nút "khởi tạo" của một loại (đích focus): nút loại, nút Tạo của hàng yêu cầu tuỳ chỉnh, hoặc nút toggle So sánh. */
 const startSelector = (kind: StudioKind): string =>
   kind === "custom"
     ? "[data-testid=studio-custom-submit]"
-    : `[data-testid=studio-btn-${kind}]`;
+    : kind === "documentDiff"
+      ? "[data-testid=studio-diff-toggle]"
+      : `[data-testid=studio-btn-${kind}]`;
 
 interface StudioColumnProps {
   notebookId: string;
@@ -251,6 +258,17 @@ export function StudioColumn({
         loading={loading.custom === true}
         disabled={disabled}
         onSubmit={(text) => void run("custom", undefined, text, scope)}
+      />
+
+      <StudioDiffPicker
+        key={`diff-${notebookId}`}
+        sources={readySources}
+        scope={scope}
+        disabled={disabled}
+        loading={loading.documentDiff === true}
+        onSubmit={(pair) =>
+          void run("documentDiff", undefined, undefined, pair)
+        }
       />
 
       <div className="studio-results">
