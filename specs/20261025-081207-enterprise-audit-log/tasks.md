@@ -159,8 +159,8 @@ description: "Tasks — Nhật ký Kiểm toán & Tuân thủ cho Doanh nghiệp
 ## Phase 4: Polish & phát hành (sau khi PR C merge)
 
 - [ ] T079 Chạy toàn bộ checklist tay [quickstart.md](./quickstart.md) trên bản đóng gói macOS + Windows (`npm run build` → electron-builder), ghi kết quả vào ADR T051 (mục "Kiểm tay").
-- [ ] T080 [P] Đề xuất PR constitution riêng (steward, rule 5): Principle III ngoại lệ có kiểm soát cho nhật ký kiểm toán; Principle I yêu cầu chỉ báo khi tổ chức bật ghi (plan › Complexity Tracking) — chỉ mở PR, không chờ merge.
-- [ ] T081 [P] Đóng các mục trong `specs/20261025-081207-enterprise-audit-log/checklists/requirements.md` nếu analyze/review phát sinh thay đổi; cập nhật tick trong tasks.md.
+- [X] T080 [P] Đề xuất PR constitution riêng (steward, rule 5): Principle III ngoại lệ có kiểm soát cho nhật ký kiểm toán; Principle I yêu cầu chỉ báo khi tổ chức bật ghi (plan › Complexity Tracking) — chỉ mở PR, không chờ merge.
+- [X] T081 [P] Đóng các mục trong `specs/20261025-081207-enterprise-audit-log/checklists/requirements.md` nếu analyze/review phát sinh thay đổi; cập nhật tick trong tasks.md.
 
 ---
 
