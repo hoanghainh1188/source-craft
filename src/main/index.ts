@@ -642,6 +642,13 @@ app
           (meta as Record<string, string | number | boolean>) ?? {},
         ),
     });
+    // PR C: đẩy trạng thái tới mọi cửa sổ (chip header + Cài đặt cập nhật ngay khi bản quyền / ghi đổi).
+    audit.onStatusChange((status) => {
+      for (const w of BrowserWindow.getAllWindows()) {
+        if (!w.isDestroyed())
+          w.webContents.send(CHANNELS.auditStatusChanged, status);
+      }
+    });
     await audit.start();
     app.on("will-quit", () => audit?.stop("appQuit"));
 

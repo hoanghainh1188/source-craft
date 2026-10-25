@@ -27,6 +27,7 @@ import type {
   SourceReprocessResult,
   OpenPurchasePageResult,
   StudioExportInput,
+  AuditStatus,
 } from "@shared/ipc/types";
 import {
   getPrivacyState,
@@ -653,6 +654,13 @@ export function registerIpc({
 
   // lan-ai-and-policy (228) — IT Policy & LAN AI Server
   safeHandle(CHANNELS.policyGet, () => policyService?.getPolicy() ?? null);
+
+  // 236 (PR C) — chỉ đọc trạng thái hiệu lực cho chip + Cài đặt. AuditStatus chỉ có nhãn vị trí (directoryKind),
+  // không bao giờ có đường dẫn hay nội dung nhật ký.
+  safeHandle(
+    CHANNELS.auditGetStatus,
+    (): AuditStatus => audit?.status() ?? { state: "off" },
+  );
 
   safeHandle(CHANNELS.lanAiGetConfig, () => lanRuntime?.getConfig() ?? null);
 

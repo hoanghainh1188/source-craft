@@ -46,6 +46,7 @@ import type {
   LanAiTestResult,
   ExportPackageResult,
   ImportPackageResult,
+  AuditStatus,
 } from "./types";
 
 /**
@@ -192,6 +193,9 @@ export const CHANNELS = {
   // shared-team-notebooks (229)
   notebookExportPackage: "notebook:exportPackage",
   notebookImportPackage: "notebook:importPackage",
+  // enterprise-audit-log (236, PR C) — chỉ đọc: trạng thái hiệu lực, không kênh ghi/xoá/bật/tắt
+  auditGetStatus: "audit:getStatus",
+  auditStatusChanged: "audit:statusChanged", // event push main→renderer (not in ChannelResponse)
 } as const;
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
@@ -314,4 +318,6 @@ export interface ChannelResponse {
   // shared-team-notebooks (229)
   [CHANNELS.notebookExportPackage]: ExportPackageResult;
   [CHANNELS.notebookImportPackage]: ImportPackageResult;
+  // enterprise-audit-log (236)
+  [CHANNELS.auditGetStatus]: AuditStatus;
 }

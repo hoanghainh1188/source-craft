@@ -109,7 +109,8 @@ export function createAuditService(deps: AuditServiceDeps) {
       delete status.directoryKind;
     }
     lastStatus = status;
-    const k = `${state}|${reason ?? ""}`;
+    // PR C: tổ chức / nhãn vị trí cũng nằm trong khoá ⇒ Cài đặt không hiện thông tin cũ (review bảo mật MEDIUM-1).
+    const k = `${state}|${reason ?? ""}|${status.organization ?? ""}|${status.directoryKind ?? ""}`;
     if (k === lastKey) return;
     lastKey = k;
     for (const l of listeners) {

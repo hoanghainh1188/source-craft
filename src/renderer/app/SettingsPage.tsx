@@ -4,6 +4,7 @@ import { SettingsStorageSection } from "../features/app-shell/SettingsStorageSec
 import { SettingsLanguageSection } from "../features/app-shell/SettingsLanguageSection";
 import { SettingsLicenseSection } from "../features/app-shell/SettingsLicenseSection";
 import { SettingsLanAiSection } from "../features/app-shell/SettingsLanAiSection";
+import { AuditSettingsSection } from "../features/audit-status/AuditSettingsSection";
 import { useT } from "../shared/i18n/i18n-context";
 
 // 123: trang Cài đặt tách khỏi cấu hình router (router tạo một lần lúc nạp module ⇒ chuỗi phải dịch lúc render).
@@ -15,6 +16,7 @@ export function SettingsPage() {
       <SettingsLicenseSection />
       <SettingsLanguageSection />
       <SettingsLanAiSection />
+      <AuditSettingsSection />
       <SettingsAiSection />
       <SettingsAiOnlineSection />
       <SettingsStorageSection />

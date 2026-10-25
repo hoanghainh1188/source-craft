@@ -1,0 +1,122 @@
+/* 236 (PR C) — chip nhật ký kiểm toán cạnh huy hiệu riêng tư + mục Cài đặt chỉ đọc. Dùng token có sẵn (tokens.css). */
+
+.audit-chip {
+  position: relative;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--accent-line);
+  padding: 4px 10px;
+  border-radius: 100px;
+  cursor: default;
+  outline: none;
+}
+/* Huy hiệu riêng tư đứng ngay sau chip: chip đã đẩy cụm sang phải. */
+.audit-chip + .privacy-badge {
+  margin-left: 8px;
+}
+.audit-chip__icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1.5px solid currentColor;
+}
+.audit-chip--warn {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  font-weight: 500;
+}
+.audit-chip:hover,
+.audit-chip:focus-visible {
+  border-color: var(--accent-ink);
+}
+.audit-chip--warn:hover,
+.audit-chip--warn:focus-visible {
+  border-color: var(--danger);
+}
+.audit-chip:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.audit-chip__tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 300px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(-4px);
+  visibility: hidden;
+  transition:
+    opacity var(--duration-fast) ease,
+    transform var(--duration-fast) ease,
+    visibility var(--duration-fast);
+}
+/* Cầu nối vô hình qua khe 8px ⇒ di chuột từ chip xuống tooltip không làm mất :hover. */
+.audit-chip__tooltip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 10px;
+}
+.audit-chip:hover .audit-chip__tooltip,
+.audit-chip:focus .audit-chip__tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+.audit-chip.is-dismissed .audit-chip__tooltip {
+  opacity: 0;
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .audit-chip__tooltip {
+    transition: none;
+  }
+}
+
+.settings-audit .audit-managed {
+  font-size: 11px;
+  color: var(--ink-faint);
+  border: 1px solid var(--accent-line);
+  border-radius: 100px;
+  padding: 2px 8px;
+}
+.settings-audit .audit-description {
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.audit-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+.audit-facts dt {
+  color: var(--ink-soft);
+}
+.audit-facts dd {
+  margin: 0;
+  color: var(--ink);
+}
+.audit-facts__warn {
+  color: var(--danger) !important;
+  font-weight: 500;
+}

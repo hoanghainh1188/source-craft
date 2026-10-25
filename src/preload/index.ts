@@ -53,6 +53,7 @@ import type {
   LicenseStatus,
   ActivateLicenseResult,
   OpenPurchasePageResult,
+  AuditStatus,
 } from "@shared/ipc/types";
 
 /**
@@ -429,6 +430,15 @@ const api = {
     ipcRenderer.invoke(CHANNELS.notebookExportPackage, { notebookId }),
   importNotebookPackage: (opts?: { readOnly?: boolean }) =>
     ipcRenderer.invoke(CHANNELS.notebookImportPackage, opts),
+  // enterprise-audit-log (236, PR C) — chỉ đọc trạng thái; không kênh ghi/xoá/bật/tắt nhật ký
+  auditGetStatus: (): Promise<AuditStatus> =>
+    ipcRenderer.invoke(CHANNELS.auditGetStatus),
+  onAuditStatusChanged: (cb: (s: AuditStatus) => void): (() => void) => {
+    const listener = (_e: unknown, payload: AuditStatus): void => cb(payload);
+    ipcRenderer.on(CHANNELS.auditStatusChanged, listener);
+    return () =>
+      ipcRenderer.removeListener(CHANNELS.auditStatusChanged, listener);
+  },
 };
 
 export type Api = typeof api;

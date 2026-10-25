@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { AppInfo, LicenseStatus } from "@shared/ipc/types";
 import { PrivacyBadge } from "./PrivacyBadge";
 import { AboutDialog } from "./AboutDialog";
+import { AuditStatusChip } from "../audit-status/AuditStatusChip";
 import { useT } from "../../shared/i18n/i18n-context";
 
 // Header in-app (dưới khung native OS — clarify A3): tên app + privacy badge + About dialog trigger.
@@ -71,6 +72,8 @@ export function AppHeader(): JSX.Element {
         </span>
       )}
       <span className="app-tagline">{t.t("app.header.tagline")}</span>
+      {/* 236: chip nhật ký kiểm toán đứng ngay trước huy hiệu riêng tư (chỉ khi tổ chức bật ghi). */}
+      <AuditStatusChip />
       <PrivacyBadge />
       {showAbout && (
         <AboutDialog appInfo={info} onClose={() => setShowAbout(false)} />
