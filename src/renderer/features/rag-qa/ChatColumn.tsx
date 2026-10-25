@@ -34,6 +34,7 @@ export function ChatColumn({
     failedTurn,
     retryFailed,
     runtimeReady,
+    runtimeBlockKey,
     hasReadySources,
     canSend,
     streamingId,
@@ -68,12 +69,11 @@ export function ChatColumn({
     setDraft("");
   };
 
-  const blockReason =
-    runtimeReady === false
-      ? t.t("chat.blockRuntime")
-      : !hasReadySources
-        ? t.t("chat.blockNoSources")
-        : null;
+  const blockReason = runtimeBlockKey
+    ? t.t(runtimeBlockKey)
+    : !hasReadySources
+      ? t.t("chat.blockNoSources")
+      : null;
 
   return (
     <section

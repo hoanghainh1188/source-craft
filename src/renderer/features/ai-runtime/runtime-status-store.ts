@@ -23,6 +23,12 @@ export interface RuntimeStatusStoreOptions {
   isHidden: () => boolean;
 }
 
+/** Chat gửi được qua provider đang bật (main điền activeReady; main cũ ⇒ ollamaReady). */
+export function isChatReady(status: RuntimeStatus | null): boolean {
+  if (!status) return false;
+  return status.activeReady ?? status.ollamaReady;
+}
+
 const UNREADABLE: RuntimeStatus = {
   reachable: false,
   ollamaReady: false,
@@ -54,7 +60,8 @@ export function createRuntimeStatusStore(
 
   const schedule = (): void => {
     stopTimer();
-    if (listeners.size === 0 || snapshot.status?.ollamaReady) return;
+    // Dừng khi Chat đã gửi được (provider đang bật sẵn sàng) — máy chỉ có LAN không bị ping lại mỗi chu kỳ.
+    if (listeners.size === 0 || isChatReady(snapshot.status)) return;
     timer = setTimeout(() => {
       timer = null;
       if (opts.isHidden()) schedule();

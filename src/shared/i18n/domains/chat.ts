@@ -9,6 +9,8 @@ export const chatVi = {
   empty: "Đặt câu hỏi về các nguồn trong notebook này.",
   blockRuntime:
     "AI cục bộ (Ollama) chưa sẵn sàng. Mở Cài đặt để bật/chọn mô hình.",
+  blockActiveProvider:
+    "Nhà cung cấp AI đang bật chưa sẵn sàng. Mở Cài đặt để kiểm tra kết nối và mô hình.",
   blockNoSources: "Nạp nguồn để bắt đầu hỏi đáp.",
   localRetry: "Trả lời bằng AI cục bộ",
   placeholder: "Nhập câu hỏi…",
@@ -79,6 +81,8 @@ export const chatEn: Widen<typeof chatVi> = {
   empty: "Ask a question about the sources in this notebook.",
   blockRuntime:
     "Local AI (Ollama) is not ready. Open Settings to turn it on or choose a model.",
+  blockActiveProvider:
+    "The active AI provider is not ready. Open Settings to check its connection and model.",
   blockNoSources: "Add sources to start asking questions.",
   localRetry: "Answer with local AI",
   placeholder: "Type a question…",

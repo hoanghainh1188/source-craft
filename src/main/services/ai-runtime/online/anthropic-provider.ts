@@ -154,15 +154,18 @@ export class AnthropicProvider implements LLMProvider {
   async test(): Promise<RuntimeStatus> {
     return testOnlineChat(this, this.deps, LABEL);
   }
+
+  async readiness(): Promise<RuntimeStatus> {
+    return onlineReadiness(this.deps, LABEL);
+  }
 }
 
-/** Chung cho 3 provider: test = gọi chat "ping" tối thiểu; báo reason rõ khi thiếu key/model/lỗi. */
-export async function testOnlineChat(
-  provider: LLMProvider,
+/** Chung cho 3 provider: thiếu key/model ⇒ trạng thái chưa sẵn sàng; đủ ⇒ null. Không gọi mạng. */
+function onlineConfigProblem(
+  key: string | null,
   deps: OnlineProviderDeps,
   label: string,
-): Promise<RuntimeStatus> {
-  const key = await deps.getKey();
+): RuntimeStatus | null {
   if (!key)
     return {
       reachable: false,
@@ -179,6 +182,31 @@ export async function testOnlineChat(
       reasonCode: "modelNotSelected",
       reasonParams: { provider: label },
     };
+  return null;
+}
+
+/** Cổng Chat: đủ key + model ⇒ coi là sẵn sàng (lỗi mạng/hạn mức lộ ra khi gửi ⇒ nút "AI cục bộ" của 098). */
+export async function onlineReadiness(
+  deps: OnlineProviderDeps,
+  label: string,
+): Promise<RuntimeStatus> {
+  return (
+    onlineConfigProblem(await deps.getKey(), deps, label) ?? {
+      reachable: true,
+      ollamaReady: true,
+      reason: null,
+    }
+  );
+}
+
+/** Chung cho 3 provider: test = gọi chat "ping" tối thiểu; báo reason rõ khi thiếu key/model/lỗi. */
+export async function testOnlineChat(
+  provider: LLMProvider,
+  deps: OnlineProviderDeps,
+  label: string,
+): Promise<RuntimeStatus> {
+  const problem = onlineConfigProblem(await deps.getKey(), deps, label);
+  if (problem) return problem;
   try {
     await provider.chat({ messages: [{ role: "user", content: "ping" }] });
     return { reachable: true, ollamaReady: true, reason: null };
