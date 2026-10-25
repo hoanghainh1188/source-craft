@@ -1,9 +1,52 @@
 import type { Widen } from "../translate";
 
 // 236 — khoá dịch domain "audit" (nhật ký kiểm toán). PR B: chữ của chế độ dòng lệnh cho IT (--audit-verify / --audit-decrypt /
-// --audit-keygen). KHÔNG có nội dung câu hỏi trong bất kỳ chuỗi nào.
+// --audit-keygen). PR C: chip header + mục Cài đặt (chỉ đọc). KHÔNG có nội dung câu hỏi hay đường dẫn trong bất kỳ chuỗi nào.
 
 export const auditVi = {
+  status: {
+    chip: {
+      active: "Đang ghi nhật ký kiểm toán",
+      blocked: "Nhật ký kiểm toán lỗi — AI tạm khoá",
+    },
+    tooltip: {
+      active:
+        "Tổ chức của bạn bật ghi nhật ký kiểm toán: câu hỏi gửi AI, mô hình và tài liệu được trích dẫn được ghi lại trên máy này. Câu trả lời không được ghi.",
+      blocked:
+        "Không ghi được nhật ký kiểm toán nên tính năng AI tạm khoá theo chính sách của tổ chức. Hãy liên hệ bộ phận IT.",
+    },
+    section: {
+      title: "Nhật ký kiểm toán",
+      description:
+        "Do bộ phận IT quản lý qua chính sách của tổ chức. Bạn không thể bật, tắt hay xem nội dung nhật ký từ ứng dụng.",
+      state: "Trạng thái",
+      reason: "Lý do",
+      organization: "Tổ chức",
+      directory: "Vị trí lưu",
+      managed: "Do bộ phận IT quản lý",
+    },
+    state: {
+      off: "Không bật",
+      licenseInactive:
+        "Chưa có hiệu lực — cần bản quyền Enterprise có tính năng chính sách IT",
+      policyError: "Lỗi chính sách — AI tạm khoá",
+      active: "Đang ghi",
+      blocked: "Không ghi được — AI tạm khoá",
+    },
+    reason: {
+      writeFailed: "Không ghi được vào thư mục nhật ký",
+      keyUnavailable:
+        "Không truy cập được khoá ký trong kho lưu khoá an toàn của hệ điều hành",
+      unreadableSystemPolicy: "Không đọc được tệp chính sách hệ thống",
+      invalidAuditPublicKey: "Khoá công khai của tổ chức không hợp lệ",
+      invalidAuditLogDirectory: "Thư mục nhật ký trong chính sách không hợp lệ",
+      unknown: "Lỗi không xác định",
+    },
+    directory: {
+      default: "Mặc định (trong thư mục dữ liệu của ứng dụng)",
+      custom: "Do bộ phận IT chỉ định",
+    },
+  },
   cli: {
     title: "SourceCraft — Kiểm tra nhật ký kiểm toán",
     dir: "Thư mục: {dir} ({files} tệp, {records} bản ghi, seq {first}–{last})",
@@ -78,6 +121,49 @@ export const auditVi = {
 } as const;
 
 export const auditEn: Widen<typeof auditVi> = {
+  status: {
+    chip: {
+      active: "Audit logging on",
+      blocked: "Audit log error — AI paused",
+    },
+    tooltip: {
+      active:
+        "Your organization has turned on audit logging: questions sent to AI, the model, and the cited documents are recorded on this computer. Answers are not recorded.",
+      blocked:
+        "The audit log cannot be written, so AI features are paused under your organization's policy. Please contact IT.",
+    },
+    section: {
+      title: "Audit log",
+      description:
+        "Managed by IT through your organization's policy. You cannot turn it on or off, or view the log, from the app.",
+      state: "Status",
+      reason: "Reason",
+      organization: "Organization",
+      directory: "Location",
+      managed: "Managed by IT",
+    },
+    state: {
+      off: "Off",
+      licenseInactive:
+        "Not in effect — requires an Enterprise license with the IT policy feature",
+      policyError: "Policy error — AI paused",
+      active: "Recording",
+      blocked: "Cannot write — AI paused",
+    },
+    reason: {
+      writeFailed: "Cannot write to the audit log folder",
+      keyUnavailable:
+        "Cannot access the signing key in the operating system's secure key store",
+      unreadableSystemPolicy: "Cannot read the system policy file",
+      invalidAuditPublicKey: "The organization public key is invalid",
+      invalidAuditLogDirectory: "The audit log folder in the policy is invalid",
+      unknown: "Unknown error",
+    },
+    directory: {
+      default: "Default (inside the app data folder)",
+      custom: "Set by IT",
+    },
+  },
   cli: {
     title: "SourceCraft — Audit log verification",
     dir: "Directory: {dir} ({files} files, {records} records, seq {first}–{last})",

@@ -307,10 +307,19 @@ test("236 — thư mục không ghi được ⇒ chặn (fail-closed), 0 request
     const before = fake.chats();
     expect(await askError(win, nbId)).toContain("auditWriteFailed");
     expect(fake.chats()).toBe(before);
+    // PR C: chip header chuyển sang cảnh báo khi không ghi được.
+    await expect(win.getByTestId("audit-status-chip")).toHaveAttribute(
+      "data-state",
+      "blocked",
+    );
     await chmod(run.auditDir, 0o700);
     for (const n of await readdir(run.auditDir))
       await chmod(join(run.auditDir, n), 0o600);
     expect(await askError(win, nbId)).toBe("ok");
+    await expect(win.getByTestId("audit-status-chip")).toHaveAttribute(
+      "data-state",
+      "active",
+    );
     const types = (await readAuditRecords(run.auditDir)).map((r) => r["type"]);
     expect(types.slice(-3)).toEqual([
       "audit.recovered",
@@ -453,5 +462,80 @@ test("236 — chi phí audit tới lúc nhận câu trả lời ≤ 50 ms (trung
     expect(on - off).toBeLessThanOrEqual(50);
   } finally {
     fake.server.close();
+  }
+});
+
+// 236 (PR C, T076): minh bạch với người dùng — chip header + Cài đặt chỉ đọc, đổi theo trạng thái và ngôn ngữ.
+async function openSettings(win: Page): Promise<void> {
+  await win.getByTestId("nav-settings").click();
+  await expect(win.getByTestId("placeholder-settings")).toBeVisible();
+}
+
+test("236 — chip + Cài đặt: active hiện chip, vị trí theo nhãn, không có điều khiển, đổi vi↔en", async () => {
+  test.setTimeout(90_000);
+  const run = await launchAudit({});
+  try {
+    const win = await readyWindow(run.app);
+    await dismissOnboarding(win);
+    const chip = win.getByTestId("audit-status-chip");
+    await expect(chip).toBeVisible();
+    await expect(chip).toHaveAttribute("data-state", "active");
+    await expect(chip).toContainText("Đang ghi nhật ký kiểm toán");
+    // Tooltip đọc được bằng bàn phím (focus ⇒ hiện, gắn aria-describedby).
+    await chip.focus();
+    const tipId = await chip.getAttribute("aria-describedby");
+    await expect(win.locator(`[id="${tipId}"]`)).toBeVisible();
+
+    await openSettings(win);
+    const section = win.getByTestId("settings-audit-section");
+    await expect(win.getByTestId("settings-audit-state")).toHaveText(
+      "Đang ghi",
+    );
+    await expect(win.getByTestId("settings-audit-directory")).toHaveText(
+      "Do bộ phận IT chỉ định",
+    );
+    // Không bao giờ hiện đường dẫn thư mục nhật ký.
+    await expect(section).not.toContainText(run.auditDir);
+    expect(
+      await section.locator("button, input, select, textarea").count(),
+    ).toBe(0);
+
+    await win.evaluate(() => window.api.setUiLanguage("en"));
+    await expect(chip).toContainText("Audit logging on");
+    await expect(win.getByTestId("settings-audit-state")).toHaveText(
+      "Recording",
+    );
+  } finally {
+    await run.app.close().catch(() => {});
+  }
+});
+
+test("236 — chip + Cài đặt: free ⇒ không chip, báo cần Enterprise; policy hỏng ⇒ không chip, báo lý do", async () => {
+  test.setTimeout(120_000);
+  const free = await launchAudit({ IV_E2E_LICENSE_TIER: "free" });
+  try {
+    const win = await readyWindow(free.app);
+    await dismissOnboarding(win);
+    await openSettings(win);
+    await expect(win.getByTestId("settings-audit-state")).toContainText(
+      "cần bản quyền Enterprise",
+    );
+    await expect(win.getByTestId("audit-status-chip")).toHaveCount(0);
+  } finally {
+    await free.app.close().catch(() => {});
+  }
+
+  const broken = await launchAudit({}, { brokenPolicy: true });
+  try {
+    const win = await readyWindow(broken.app);
+    await dismissOnboarding(win);
+    await openSettings(win);
+    await expect(win.getByTestId("settings-audit-state")).toHaveText(
+      "Lỗi chính sách — AI tạm khoá",
+    );
+    await expect(win.getByTestId("settings-audit-reason")).toBeVisible();
+    await expect(win.getByTestId("audit-status-chip")).toHaveCount(0);
+  } finally {
+    await broken.app.close().catch(() => {});
   }
 });
