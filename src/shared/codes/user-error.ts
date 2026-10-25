@@ -63,6 +63,10 @@ export const USER_ERROR_CODES = [
   "licenseRequireProSpecialistModes",
   "packageCorrupted",
   "notebookReadOnly",
+  // 236 — Nhật ký kiểm toán (fail-closed: lượt AI bị chặn khi không ghi được)
+  "auditWriteFailed",
+  "auditPolicyInvalid",
+  "auditKeyUnavailable",
 ] as const;
 
 export type UserErrorCode = (typeof USER_ERROR_CODES)[number];

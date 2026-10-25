@@ -565,6 +565,9 @@ export interface StudioExportInput {
   suggestedName: string;
   format?: ExportFormat;
   options?: BrandedExportOptions;
+  /** 236: ngữ cảnh cho bản ghi kiểm toán `export.saved` (không tin cậy — main kiểm kiểu, tra tên sổ tay từ DB). */
+  notebookId?: string;
+  studioKind?: StudioKind;
 }
 
 /** Kết quả xuất tệp: saved=false khi người dùng huỷ hộp thoại. */
@@ -990,4 +993,21 @@ export interface ImportPackageResult {
   ok: boolean;
   notebook?: Notebook;
   cancelled?: boolean;
+}
+
+// ── audit (236) — Nhật ký kiểm toán. Renderer CHỈ đọc trạng thái (không ghi/xoá/bật/tắt), không nhận đường dẫn.
+
+/** policyError / blocked ⇒ lượt AI bị chặn (fail-closed). */
+export type AuditState =
+  "off" | "licenseInactive" | "policyError" | "active" | "blocked";
+
+export interface AuditStatus {
+  state: AuditState;
+  /** Mã lý do (renderer dịch): policyError ⇒ lý do chính sách; blocked ⇒ "writeFailed" | "keyUnavailable". */
+  reason?: string;
+  organization?: string;
+  /** Chỉ nhãn vị trí — renderer không nhận đường dẫn (quy ước 085). */
+  directoryKind?: "default" | "custom";
+  /** blocked: thời điểm bắt đầu sự cố (ms). */
+  blockedSince?: number;
 }
