@@ -316,3 +316,51 @@ describe("buildReport — hiệu năng ghi cuộc họp (186 PR B, ADR meeting-a
     expect(text).not.toContain("Meeting recording performance");
   });
 });
+
+// T023 (236) — báo lỗi chỉ đọc logs/, không bao giờ đọc thư mục audit; sự kiện audit trong main.log chỉ có mã (FR-022).
+describe("crash report và nhật ký kiểm toán", () => {
+  it("readLogTail chỉ đọc main.log trong logsDir, bỏ qua thư mục audit kề bên", async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const { readLogTail } =
+      await import("../../src/main/services/crash-report/crash-fs");
+    const root = mkdtempSync(join(tmpdir(), "sc-crash-audit-"));
+    const logs = join(root, "logs");
+    mkdirSync(logs);
+    mkdirSync(join(root, "audit"));
+    mkdirSync(join(logs, "audit"));
+    writeFileSync(
+      join(logs, "main.log"),
+      line({ ts: "t", level: "info", event: "app.start", meta: {} }) + "\n",
+    );
+    writeFileSync(
+      join(root, "audit", "audit-000000000000.jsonl"),
+      '{"type":"interaction.start","secret":"Q"}\n',
+    );
+    writeFileSync(
+      join(logs, "audit", "audit-000000000000.jsonl"),
+      '{"type":"interaction.start","secret":"Q"}\n',
+    );
+    const tail = readLogTail(logs, 100);
+    expect(tail.join("\n")).not.toContain("interaction.start");
+    expect(tail.filter((l) => l.trim() !== "")).toHaveLength(1);
+  });
+
+  it("dòng audit.writeFailed trong báo cáo chỉ mang errorType", () => {
+    const text = buildReport({
+      env: ENV,
+      records: parseLogRecords([
+        line({
+          ts: "2026-10-25T01:00:00.000Z",
+          level: "error",
+          event: "audit.writeFailed",
+          meta: { errorType: "ENOSPC" },
+        }),
+      ]),
+      nativeCrashes: { count: 0, latestAt: null },
+    });
+    expect(text).toContain("audit.writeFailed");
+    expect(text).toContain("ENOSPC");
+  });
+});

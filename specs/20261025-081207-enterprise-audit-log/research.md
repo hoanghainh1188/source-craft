@@ -70,7 +70,7 @@ Mọi mục dưới đây theo mẫu **Decision / Rationale / Alternatives**. Kh
 
 ## R10 — Trạng thái hiệu lực và bản quyền theo lượt
 
-- **Decision**: `AuditService.effectiveState()` thuần = f(`auditPolicy`, `license.getStatus().state === "valid"`, `gate.hasFeature("itPolicy")`, `writerHealth`) ∈ `off` (không cấu hình) · `licenseInactive` (policy bật, bản quyền không đủ — FR-004, không chặn AI) · `policyError` (FR-006/FR-010a — **chặn AI**, vì policy đã yêu cầu audit) · `active` · `blocked` (active nhưng ghi lỗi — chặn AI). Đánh giá ở mỗi lượt (FR-002), lúc khởi động, khi `license:changed` (móc tại `index.ts` nơi đang phát sự kiện) và `before-quit`. Chuyển `active → không active` ⇒ ghi `audit.stopped` kèm lý do (`licenseInactive` / `appQuit`) nếu còn ghi được; `→ active` ⇒ `audit.started`.
+- **Decision**: `AuditService.effectiveState()` thuần = f(`auditPolicy`, `license.getStatus().state === "valid"`, `gate.hasFeature("itPolicy")`, `writerHealth`) ∈ `off` (không cấu hình) · `licenseInactive` (policy bật, bản quyền không đủ — FR-004, không chặn AI) · `policyError` (FR-006/FR-010a — **chặn AI**, vì policy đã yêu cầu audit; CHỈ khi bản quyền đủ điều kiện — không có bản quyền thì `licenseInactive`, sửa sau code review) · `active` · `blocked` (active nhưng ghi lỗi — chặn AI). Đánh giá ở mỗi lượt (FR-002), lúc khởi động, khi `license:changed` (móc tại `index.ts` nơi đang phát sự kiện) và `before-quit`. Chuyển `active → không active` ⇒ ghi `audit.stopped` kèm lý do (`licenseInactive` / `appQuit`) nếu còn ghi được; `→ active` ⇒ `audit.started`.
 - **Rationale**: `policyError` chặn AI là hệ quả của Q3 + FR-010a: tổ chức đã yêu cầu audit mà cấu hình sai ⇒ không được âm thầm chạy không audit. `licenseInactive` không chặn (FR-004) vì không có bản quyền thì cờ "không có hiệu lực".
 - **Alternatives**: cache trạng thái bản quyền lúc khởi động — trái FR-002.
 
@@ -131,7 +131,7 @@ Mọi mục dưới đây theo mẫu **Decision / Rationale / Alternatives**. Kh
 
 ## R19 — Đổi khoá ký (FR-019b)
 
-- **Decision**: Lúc khởi động khi audit `active`: đọc khoá từ keychain; không có khoá **và** nhật ký đã có chuỗi ⇒ sinh khoá mới, ghi `audit.keyRotated { previousDeviceKeyId, newPublicKey, reason: "keyMissing" }` — bản ghi này nối chuỗi (`prevHash`) nhưng ký bằng khoá **mới**; trình kiểm tra chấp nhận và **cảnh báo**. Có khoá nhưng `deviceKeyId` khác bản ghi cuối ⇒ tương tự với `reason: "keyMismatch"`.
+- **Decision**: Lúc khởi động khi audit `active`: đọc khoá từ keychain; không có khoá **và** nhật ký đã có chuỗi ⇒ sinh khoá mới, ghi `audit.keyRotated { previousDeviceKeyId, devicePublicKey, deviceKeyId, reason: "keyMissing" }` — bản ghi này nối chuỗi (`prevHash`) nhưng ký bằng khoá **mới**; trình kiểm tra chấp nhận và **cảnh báo**. Có khoá nhưng `deviceKeyId` khác bản ghi cuối ⇒ tương tự với `reason: "keyMismatch"`.
 - **Rationale**: Không âm thầm bắt đầu chuỗi mới; việc đổi khoá hiển hiện cho IT.
 
 ## R20 — Ràng buộc song song với #238

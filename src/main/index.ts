@@ -114,7 +114,15 @@ import { createReindexingCheck } from "./services/embedding/reindex-check";
 import { recommendChatModel } from "./services/ai/model-recommend";
 import { checkOllama } from "./services/ai/ollama-health";
 import type { ReindexStatus } from "@shared/ipc/types";
-import { arch, cpus, homedir, release, totalmem } from "node:os";
+import {
+  arch,
+  cpus,
+  homedir,
+  hostname,
+  release,
+  totalmem,
+  userInfo,
+} from "node:os";
 import { applyPendingRestore } from "./services/vault-backup/restore-swap";
 import { createBackupService } from "./services/vault-backup/backup-service";
 import {
@@ -147,6 +155,22 @@ import {
   EMBEDDING_MODEL_VERSION,
 } from "./services/embedding/model-version";
 import { RELEVANCE_CALIBRATION } from "./services/rag/relevance-calibration";
+import {
+  createAuditService,
+  type AuditService,
+} from "./services/audit/audit-service";
+import { createNodeAuditFs } from "./services/audit/node-audit-fs";
+import {
+  loadStrictKeytar,
+  memoryKeystore,
+} from "./services/audit/audit-keystore";
+import { readAuditTestSeams } from "./services/audit/test-seams";
+import { resolveIdentity } from "./services/audit/identity";
+import { categorizeProvider } from "./services/audit/describe-model";
+import { AUDIT_DEFAULT_DIR_NAME } from "./services/audit/audit-constants";
+import type { AuditModel } from "./services/audit/audit-types";
+import { getOnlineConfig } from "./services/ai-runtime/online/online-config";
+import type { OnlineProviderId } from "@shared/ipc/types";
 
 /** 123: locale OS ưu tiên đầu tiên; an toàn cả trước app.whenReady (getLocale có thể rỗng). */
 function systemLocale(): string | undefined {
@@ -462,8 +486,19 @@ app
     runMigrations(db);
     const notebookRepo = createNotebookRepo(db);
 
+    // 236 — seam e2e (chỉ bản chưa đóng gói): tệp policy "hệ thống" giả + khoá ký trong bộ nhớ (R18a).
+    const auditSeams = readAuditTestSeams({
+      isPackaged: app.isPackaged,
+      env: process.env,
+    });
+    // 236: gán sau khi dựng (cần licenseService); license:changed ⇒ đánh giá lại hiệu lực audit.
+    let audit: AuditService | null = null;
+
     // 228 — Enterprise IT Policy Service (reads enterprise-policy.json)
     const policyService = createPolicyService({
+      ...(auditSeams.systemPolicyPath
+        ? { systemPath: auditSeams.systemPolicyPath }
+        : {}),
       userDataPath: join(dataDir.path, "enterprise-policy.json"),
       fileExists: (p) => existsSync(p),
       readFileText: (p) => readFileSync(p, "utf-8"),
@@ -530,10 +565,45 @@ app
           if (!w.isDestroyed())
             w.webContents.send(CHANNELS.licenseChanged, status);
         }
+        void audit?.reevaluate();
       },
       logEvent: (event, meta) => logEvent(event, meta ?? {}),
     });
     lanRuntime.sync();
+
+    // 236 — Nhật ký kiểm toán: chỉ hiệu lực khi policy HỆ THỐNG bật + bản quyền có itPolicy; ghi trước khi gọi model,
+    // không ghi được ⇒ chặn lượt AI (fail-closed). Khoá ký trong keychain (không rơi về no-op). KHÔNG log nội dung.
+    audit = createAuditService({
+      fs: createNodeAuditFs(),
+      keyStore: auditSeams.memoryKeystore
+        ? memoryKeystore()
+        : loadStrictKeytar(),
+      clock: Date.now,
+      randomId: randomUUID,
+      policy: () => policyService.getAuditPolicy(),
+      license: () => ({
+        valid: licenseService.getStatus().state === "valid",
+        itPolicy: licenseService.gate.hasFeature("itPolicy"),
+      }),
+      identity: () =>
+        resolveIdentity({
+          platform: process.platform,
+          userInfo: () => userInfo(),
+          hostname,
+          env: process.env,
+        }),
+      appVersion: app.getVersion(),
+      defaultDirectory: join(dataDir.path, AUDIT_DEFAULT_DIR_NAME),
+      notebookName: (id) =>
+        notebookRepo.list().find((n) => n.id === id)?.name ?? null,
+      logEvent: (event, meta) =>
+        logEvent(
+          event,
+          (meta as Record<string, string | number | boolean>) ?? {},
+        ),
+    });
+    await audit.start();
+    app.on("will-quit", () => audit?.stop("appQuit"));
 
     // ingestion (011): LanceDB + pipeline. Progress push tới mọi cửa sổ qua source:progress.
     // 109: bộ chấm độ liên quan (cross-encoder in-process) — chỉ khi bản ghi hiệu chuẩn bật. Tải nền một lần vào data dir
@@ -822,6 +892,19 @@ app
     // 098 (ADR online-fallback-clarify): đích AI theo lượt — "local" lấy thẳng Ollama, không đổi provider đang bật.
     const pickProvider = (target: AiTarget) =>
       pickProviderFor(aiRuntime.registry, target);
+    // 236 (R2): mô hình THỰC TẾ của lượt cho bản ghi kiểm toán — cùng pickProvider mà lượt dùng.
+    const describeModel = (target: AiTarget): AuditModel => {
+      const providerId = pickProvider(target).id;
+      const category = categorizeProvider(providerId);
+      const model =
+        category === "local"
+          ? aiRuntime.getSelectedModels().chatModel
+          : category === "online"
+            ? (getOnlineConfig(store).models[providerId as OnlineProviderId] ??
+              null)
+            : null;
+      return { category, providerId, model };
+    };
     // 105 (review S5): CÙNG num_ctx cho mọi lượt chat Ollama (hỏi đáp + Studio). Ollama nạp lại model khi num_ctx đổi
     // ⇒ dùng chung tránh nạp lại mỗi lần chuyển Chat ↔ Studio; hỏi đáp cũng không bị cắt ở cửa sổ mặc định nhỏ.
     const chatNumCtx = async (
@@ -1014,6 +1097,8 @@ app
           app.relaunch();
         }
         endSession(); // app.exit không phát will-quit — khởi động lại sau khôi phục là thoát sạch (093)
+        // 236: app.exit không phát will-quit ⇒ đóng phiên nhật ký kiểm toán tại đây (không để sessionAborted giả).
+        audit?.stop("appQuit");
         app.exit(0);
       },
       log: logEvent,
@@ -1119,6 +1204,8 @@ app
       meeting,
       meetingViewer,
       licenseService,
+      audit,
+      describeModel,
       openPurchasePage: createPurchasePageOpener({
         openExternal: (url) => shell.openExternal(url),
         log: logEvent,

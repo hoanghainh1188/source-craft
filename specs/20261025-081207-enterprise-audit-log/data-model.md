@@ -4,11 +4,11 @@ Không có migration SQLite. Mọi dữ liệu audit nằm trong tệp JSON Line
 
 ## 1. Chính sách (`enterprise-policy.json` hệ thống — 3 khoá tuỳ chọn mới)
 
-| Khoá                 | Kiểu    | Mặc định | Ràng buộc                                                              |
-| -------------------- | ------- | -------- | ---------------------------------------------------------------------- |
-| `enableAuditLogging` | boolean | `false`  | Chỉ đọc từ tệp hệ thống (C1)                                           |
-| `auditPublicKey`     | string  | —        | Bắt buộc khi `enableAuditLogging: true`; PEM SPKI khoá **X25519** (R4) |
-| `auditLogDirectory`  | string  | —        | Đường dẫn tuyệt đối; thiếu ⇒ `<userData>/audit/` (C3)                  |
+| Khoá                 | Kiểu    | Mặc định | Ràng buộc                                                                                  |
+| -------------------- | ------- | -------- | ------------------------------------------------------------------------------------------ |
+| `enableAuditLogging` | boolean | `false`  | Chỉ đọc từ tệp hệ thống (C1); sai kiểu (`"true"`, `1`…) ⇒ `policyError`, không âm thầm tắt |
+| `auditPublicKey`     | string  | —        | Bắt buộc khi `enableAuditLogging: true`; PEM SPKI khoá **X25519** (R4)                     |
+| `auditLogDirectory`  | string  | —        | Đường dẫn tuyệt đối; thiếu ⇒ `<userData>/audit/` (C3)                                      |
 
 `schemaVersion` giữ `1`. `parseEnterprisePolicyJson` (khoá cũ) không đổi. Kiểu `EnterprisePolicy` trong `types.ts` KHÔNG thêm trường (renderer không cần) — kiểu mới `AuditPolicyState` chỉ ở main.
 
@@ -52,6 +52,8 @@ interface AuditStatus {
 ```
 
 Bảng chuyển trạng thái (đánh giá lúc khởi động, mỗi lượt AI, khi `license:changed`, khi `before-quit`):
+
+> Thứ tự đánh giá (sau code review): `notConfigured` ⇒ `off`; bản quyền không đủ ⇒ `licenseInactive` (kể cả khi tệp policy hỏng — chính sách không có hiệu lực, FR-001/FR-004); rồi mới `policyError` ⇒ `blocked` ⇒ `active`. Cột `policyError` dưới đây chỉ áp dụng khi bản quyền đủ.
 
 | Từ \ điều kiện            | policy notConfigured | policy policyError | policy configured + bản quyền không đủ           | configured + bản quyền đủ + ghi OK                     | configured + bản quyền đủ + ghi lỗi |
 | ------------------------- | -------------------- | ------------------ | ------------------------------------------------ | ------------------------------------------------------ | ----------------------------------- |

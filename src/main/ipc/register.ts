@@ -89,6 +89,14 @@ import { createLanOllamaClient } from "../services/ai-runtime/lan/lan-ollama-cli
 import { createLanOpenAiClient } from "../services/ai-runtime/lan/lan-openai-client";
 import type { LanRuntime } from "../services/ai-runtime/lan/lan-runtime";
 import type { PackageService } from "../services/notebooks/package/package-service";
+import type { AuditService } from "../services/audit/audit-service";
+import type { AuditModel } from "../services/audit/audit-types";
+import {
+  ragMeta,
+  ragOutcome,
+  studioMeta,
+  studioOutcome,
+} from "../services/audit/interaction-outcome";
 
 interface RegisterDeps {
   store: StoreLike;
@@ -136,6 +144,9 @@ interface RegisterDeps {
   lanRuntime?: LanRuntime;
   // 229 — Shared Team Notebooks Package Service.
   packageService?: PackageService;
+  // 236 — Nhật ký kiểm toán (write-ahead, fail-closed) + mô hình thực tế của lượt.
+  audit?: AuditService;
+  describeModel?: (target: "active" | "local") => AuditModel;
 }
 
 /** Số báo lỗi renderer tối đa ghi mỗi phiên (chặn vòng lặp lỗi làm phình nhật ký) — 088. */
@@ -177,6 +188,8 @@ export function registerIpc({
   policyService,
   lanRuntime,
   packageService,
+  audit,
+  describeModel,
 }: RegisterDeps): void {
   const safeHandle = (
     channel: string,
@@ -378,6 +391,10 @@ export function registerIpc({
     return contentSearch.search(notebookId, query);
   });
 
+  // 236: tên sổ tay cho bản ghi kiểm toán — tra từ DB, không tin tên do renderer gửi.
+  const notebookNameOf = (id: string): string | null =>
+    notebookRepo.list().find((n) => n.id === id)?.name ?? null;
+
   // rag-qa (013) — embed/search/chat CHỈ ở đây (main). KHÔNG log payload (câu hỏi/nội dung — Constitution III).
   // 098: đích AI theo lượt (input.target) + lỗi provider online gắn thẻ để renderer hiện nút "AI cục bộ".
   // 231: tìm kiếm toàn cục đa sổ tay (scope === 'all') yêu cầu bản quyền Pro/Enterprise.
@@ -388,7 +405,13 @@ export function registerIpc({
     assertRagScopeAllowed(askInput, licenseService?.gate);
     assertDomainModeAllowed(askInput, licenseService?.gate);
     try {
-      return await ragServices[target].ask(askInput);
+      const run = () => ragServices[target].ask(askInput);
+      // 236: ghi interaction.start TRƯỚC cả lượt (bước viết lại truy vấn cũng gửi câu hỏi tới model — research F1).
+      if (!audit || !describeModel) return await run();
+      const meta = ragMeta(askInput, describeModel(target), notebookNameOf);
+      return await audit.runInteraction(meta, run, (r) =>
+        ragOutcome(r, false, meta.scope),
+      );
     } catch (e) {
       return rethrowForIpc(e);
     }
@@ -415,10 +438,16 @@ export function registerIpc({
     const controller = new AbortController();
     streamControllers.set(streamId, controller);
     try {
-      return await ragServices[target].askStream(askInput, {
-        onToken: (delta) => emitToken({ streamId, delta }),
-        signal: controller.signal,
-      });
+      const run = () =>
+        ragServices[target].askStream(askInput, {
+          onToken: (delta) => emitToken({ streamId, delta }),
+          signal: controller.signal,
+        });
+      if (!audit || !describeModel) return await run();
+      const meta = ragMeta(askInput, describeModel(target), notebookNameOf);
+      return await audit.runInteraction(meta, run, (r) =>
+        ragOutcome(r, controller.signal.aborted, meta.scope),
+      );
     } catch (e) {
       return rethrowForIpc(e);
     } finally {
@@ -509,11 +538,21 @@ export function registerIpc({
     });
     let cancelled = false;
     try {
-      return await studioServices[target].generate(studioInput, {
-        onProgress,
-        signal,
-        ...(onToken ? { onToken } : {}),
-      });
+      const run = () =>
+        studioServices[target].generate(studioInput, {
+          onProgress,
+          signal,
+          ...(onToken ? { onToken } : {}),
+        });
+      if (!audit || !describeModel) return await run();
+      const meta = studioMeta(
+        studioInput,
+        describeModel(target),
+        notebookNameOf,
+      );
+      return await audit.runInteraction(meta, run, (r) =>
+        studioOutcome(r, meta.scope),
+      );
     } catch (e) {
       cancelled = e instanceof UserFacingError && e.code === "studioCancelled";
       return rethrowForIpc(e);
@@ -553,18 +592,28 @@ export function registerIpc({
     return studioServices.active.deleteVersion(notebookId, id);
   });
   // studio export (025, 232) — xuất kết quả ra .md, .docx hoặc .pdf qua save dialog (main). KHÔNG log content.
-  safeHandle(CHANNELS.studioExport, (input) => {
+  safeHandle(CHANNELS.studioExport, async (input) => {
     const exportInput = (input ?? {}) as StudioExportInput;
     if (exportInput.format === "docx" || exportInput.format === "pdf") {
       if (licenseService && !licenseService.gate.hasFeature("brandedExport")) {
         throw new UserFacingError("licenseRequireProExport");
       }
     }
-    return exportFormattedDocument(
+    const result = await exportFormattedDocument(
       BrowserWindow.getFocusedWindow(),
       exportInput,
       uiLanguage.translator(),
     );
+    // 236 (FR-015): chỉ khi đã lưu thật; best-effort (lỗi ⇒ audit blocked cho lượt AI sau). Trường renderer không tin cậy.
+    if (audit && result.saved && result.path) {
+      await audit.recordExport({
+        format: exportInput.format ?? "md",
+        notebookId: exportInput.notebookId,
+        studioKind: exportInput.studioKind,
+        fileName: result.path,
+      });
+    }
+    return result;
   });
 
   // vault-backup (085) — FS/crypto/hộp thoại CHỈ ở main; renderer không gửi path (token thay path).

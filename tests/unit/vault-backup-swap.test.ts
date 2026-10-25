@@ -261,3 +261,19 @@ describe("vault-backup restore swap (boot)", () => {
     expect(await consumeRestoreResult(data)).toBeNull();
   });
 });
+
+// T022 (236) — khôi phục vault KHÔNG được đụng/thay thư mục audit/ (FR-021).
+describe("vault-backup restore swap — audit/", () => {
+  it("audit/ đang sống giữ nguyên byte sau hoán đổi; audit/ trong bản staged bị bỏ qua", async () => {
+    mkdirSync(join(data, "audit"), { recursive: true });
+    writeFileSync(join(data, "audit", "audit-000000000000.jsonl"), "live\n");
+    await stage();
+    mkdirSync(join(data, "restore", "staged", "audit"), { recursive: true });
+    writeFileSync(
+      join(data, "restore", "staged", "audit", "audit-000000000000.jsonl"),
+      "evil\n",
+    );
+    expect(await applyPendingRestore(data)).toBe("swapped");
+    expect(read("audit/audit-000000000000.jsonl")).toBe("live\n");
+  });
+});
