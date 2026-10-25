@@ -111,3 +111,22 @@ describe("vault-backup snapshot", () => {
     expect(existsSync(join(dest, "insightvault.db"))).toBe(true);
   });
 });
+
+// T022 (236) — nhật ký kiểm toán là của tổ chức: KHÔNG vào bản sao lưu vault (FR-021, research F5).
+describe("vault-backup snapshot — audit/", () => {
+  it("thư mục audit/ trong dataDir không được sao chép vào snapshot", async () => {
+    mkdirSync(join(dataDir, "audit"), { recursive: true });
+    writeFileSync(join(dataDir, "audit", "audit-000000000000.jsonl"), "{}\n");
+    const dest = join(root, "snap-audit");
+    await createSnapshot({
+      db,
+      dataDir,
+      config: {},
+      destDir: dest,
+      appVersion: "0.3.0",
+      encrypted: false,
+      now: new Date("2026-10-25T00:00:00Z"),
+    });
+    expect(existsSync(join(dest, "audit"))).toBe(false);
+  });
+});

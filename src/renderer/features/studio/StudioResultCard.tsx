@@ -80,6 +80,8 @@ export function StudioResultCard({
     try {
       const res = await window.api.studioExport({
         content: result.content,
+        notebookId: result.notebookId,
+        studioKind: result.kind,
         suggestedName: t.t("studio.exportName", {
           kind: kindLabel,
           date: isoDate(result.createdAt),

@@ -102,6 +102,12 @@ export const coreVi = {
       "Tệp gói sổ tay (.scnb) bị hỏng hoặc không khớp mã kiểm tra SHA-256.",
     notebookReadOnly:
       "Sổ tay này đang ở chế độ dùng chung (Chỉ đọc). Bạn không thể thay đổi hoặc thêm/xoá nguồn.",
+    auditWriteFailed:
+      "Không ghi được nhật ký kiểm toán theo chính sách của tổ chức, nên AI tạm thời bị khoá. Hãy giải phóng dung lượng đĩa hoặc liên hệ bộ phận IT.",
+    auditPolicyInvalid:
+      "Chính sách nhật ký kiểm toán của tổ chức bị cấu hình sai, nên AI tạm thời bị khoá. Hãy liên hệ bộ phận IT.",
+    auditKeyUnavailable:
+      "Không truy cập được khoá ký nhật ký kiểm toán trong kho khoá của hệ điều hành, nên AI tạm thời bị khoá. Hãy liên hệ bộ phận IT.",
   },
   online: {
     auth: "Khóa API không hợp lệ hoặc đã hết hạn.",
@@ -296,6 +302,12 @@ export const coreEn: Widen<typeof coreVi> = {
       "The notebook package (.scnb) file is corrupted or failed SHA-256 verification.",
     notebookReadOnly:
       "This notebook is in Shared (Read-Only) mode. You cannot modify, add, or remove sources.",
+    auditWriteFailed:
+      "The audit log required by your organization could not be written, so AI is temporarily locked. Free up disk space or contact your IT department.",
+    auditPolicyInvalid:
+      "Your organization's audit log policy is misconfigured, so AI is temporarily locked. Please contact your IT department.",
+    auditKeyUnavailable:
+      "The audit log signing key in the operating system keychain could not be accessed, so AI is temporarily locked. Please contact your IT department.",
   },
   online: {
     auth: "The API key is invalid or has expired.",

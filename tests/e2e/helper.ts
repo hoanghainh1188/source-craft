@@ -139,3 +139,103 @@ export async function openNewWorkspace(
   await win.getByTestId("workspace").waitFor({ state: "visible" });
   return id;
 }
+
+/**
+ * 236: app với nhật ký kiểm toán bật — policy "hệ thống" giả (seam IV_E2E_POLICY_SYSTEM_PATH) + khoá ký trong bộ nhớ
+ * (IV_E2E_AUDIT_KEYSTORE=memory). Khoá tổ chức sinh lúc chạy (không commit khoá bí mật). Seam chỉ có hiệu lực ở bản dev.
+ */
+export interface AuditLaunch {
+  app: ElectronApplication;
+  userData: string;
+  auditDir: string;
+  policyPath: string;
+  orgPrivateKeyPem: string;
+}
+
+export async function writeAuditPolicy(
+  dir: string,
+  opts: { auditDir?: string; broken?: boolean; enable?: boolean } = {},
+): Promise<{ policyPath: string; orgPrivateKeyPem: string }> {
+  const { generateKeyPairSync } = await import("node:crypto");
+  const { writeFile } = await import("node:fs/promises");
+  const { privateKey, publicKey } = generateKeyPairSync("x25519");
+  const policyPath = join(dir, "enterprise-policy.json");
+  await writeFile(
+    policyPath,
+    opts.broken
+      ? "{broken"
+      : JSON.stringify({
+          schemaVersion: 1,
+          policyId: "pol-e2e",
+          organization: "Ngân hàng E2E",
+          forceLocalOnly: true,
+          enableAuditLogging: opts.enable ?? true,
+          auditPublicKey: publicKey.export({ type: "spki", format: "pem" }),
+          ...(opts.auditDir ? { auditLogDirectory: opts.auditDir } : {}),
+        }),
+  );
+  return {
+    policyPath,
+    orgPrivateKeyPem: privateKey.export({
+      type: "pkcs8",
+      format: "pem",
+    }) as string,
+  };
+}
+
+export async function launchAudit(
+  env: Record<string, string>,
+  opts: {
+    auditDir?: string;
+    brokenPolicy?: boolean;
+    userData?: string;
+    policyPath?: string;
+  } = {},
+): Promise<AuditLaunch> {
+  const root = await mkdtemp(join(tmpdir(), "sc-audit-e2e-"));
+  const auditDir = opts.auditDir ?? join(root, "audit");
+  const policy = opts.policyPath
+    ? { policyPath: opts.policyPath, orgPrivateKeyPem: "" }
+    : await writeAuditPolicy(root, {
+        auditDir,
+        broken: opts.brokenPolicy ?? false,
+      });
+  const { app, userData } = await launchFreshAt(
+    {
+      IV_E2E_POLICY_SYSTEM_PATH: policy.policyPath,
+      IV_E2E_AUDIT_KEYSTORE: "memory",
+      ...env,
+    },
+    opts.userData,
+  );
+  return { app, userData, auditDir, ...policy };
+}
+
+/** Đọc mọi bản ghi kiểm toán (bỏ dòng dở). */
+export async function readAuditRecords(
+  auditDir: string,
+): Promise<Record<string, unknown>[]> {
+  const { readdir, readFile } = await import("node:fs/promises");
+  let names: string[] = [];
+  try {
+    names = (await readdir(auditDir))
+      .filter((n) => n.endsWith(".jsonl"))
+      .sort();
+  } catch {
+    return [];
+  }
+  const out: Record<string, unknown>[] = [];
+  for (const n of names) {
+    for (const line of (await readFile(join(auditDir, n), "utf8")).split(
+      "\n",
+    )) {
+      if (!line) continue;
+      try {
+        out.push(JSON.parse(line) as Record<string, unknown>);
+      } catch {
+        /* dòng dở */
+      }
+    }
+  }
+  return out;
+}

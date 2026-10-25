@@ -15,9 +15,12 @@ type NoticeKey = "copyFailed" | "exported" | "exportFailed";
 export function MessageBubble({
   message,
   onCite,
+  notebookId,
 }: {
   message: ChatMessage;
   onCite?: (c: Citation) => void;
+  /** 236: ngữ cảnh cho bản ghi kiểm toán khi xuất (main tra tên sổ tay, không tin renderer). */
+  notebookId?: string;
 }): JSX.Element {
   const t = useT();
   const isUser = message.role === "user";
@@ -57,6 +60,7 @@ export function MessageBubble({
       const res = await window.api.studioExport({
         content: exportMd(),
         suggestedName: t.t("chat.exportName", { date: isoDate(Date.now()) }),
+        ...(notebookId ? { notebookId } : {}),
       });
       if (res.saved) flash("exported");
     } catch {
