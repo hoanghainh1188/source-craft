@@ -2,7 +2,8 @@
 
 - Ngày: 2026-10-25
 - Feature liên quan: `248-pro-repo-split` (issue #248). Kế hoạch chi tiết: [`docs/pro-repo-split-plan.md`](../pro-repo-split-plan.md).
-- Trạng thái: **Đã chấp nhận** — chủ dự án (Harry Nguyen) trả lời Q1–Q7 qua bảng câu hỏi ngày 2026-10-25.
+- Trạng thái: **Đã chấp nhận** — chủ dự án (Harry Nguyen) trả lời Q1–Q7 qua bảng câu hỏi ngày 2026-10-25; **Q7 sửa lại**
+  cùng ngày sau khi PR A của audit log (#249) đã merge vào `main` public.
 - Bối cảnh: repo `hoanghainh1188/source-craft` public, giấy phép MIT, đang chứa mã chức năng trả phí; cổng bản quyền chỉ nằm
   trong code nên fork là gỡ được.
 
@@ -22,7 +23,10 @@
    để cộng đồng tự build từ repo public; không bắt buộc phát hành bộ cài Community.
 6. **Q6 — Issue & đánh số:** issue chức năng Pro đặt ở **repo Pro**, branch `pro-NNN-slug` (NNN = số issue repo Pro) để không
    trùng số với core. Issue về điểm cắm/hợp đồng ở core vẫn ở repo public theo `NNN-slug`.
-7. **Q7 — Audit log (#236):** **dừng** worktree hiện tại; làm lại ở repo Pro sau khi xong giai đoạn 1 (khung extension).
+7. **Q7 — Audit log (#236)** (sửa lại): PR A (#249, lõi ghi + fail-closed, `src/main/services/audit/`) đã merge vào `main`
+   public trước khi đóng băng ⇒ **tạm ở lại core**, theo Q1 phần này là mã MIT. **Dời sang repo Pro ở giai đoạn 2** cùng LAN AI,
+   xuất DOCX/PDF, IT policy. **PR B** (CLI audit, đang làm ở worktree `source-craft-236-audit`) **không merge vào repo public**;
+   làm tiếp ở repo Pro sau giai đoạn 1.
 
 ## Hệ quả
 

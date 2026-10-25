@@ -14,22 +14,21 @@ nằm trong code (`feature-gate.ts`), nên ai cũng fork được rồi gỡ c�
 
 ## 2. Hiện trạng (đo trên `main` @ `137e1e6`)
 
-| Cờ bản quyền          | Mã cài đặt chính                                                                                                      | Mức gắn với lõi                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `lanAi`               | `src/main/services/ai-runtime/lan/` (~535 dòng) + `SettingsLanAiSection.tsx`                                          | Thấp — đã là provider riêng                 |
-| `brandedExport`       | `src/main/services/studio/export/` (~813 dòng) + nút xuất                                                             | Thấp                                        |
-| `itPolicy`            | `src/main/services/policy/` (~164 dòng)                                                                               | Thấp                                        |
-| `specialistAiModes`   | nhánh `domainMode` trong `rag/prompt.ts` + `DomainToggle.tsx`                                                         | Trung bình — chen giữa prompt RAG           |
-| `studioPro`           | 7 loại Studio + `documentDiff` trong `studio/prompt.ts`, `map-reduce.ts`, `studio-service.ts`, `StudioDiffPicker.tsx` | Cao — `Record<StudioKind, …>`, CHECK của DB |
-| `crossNotebookSearch` | `rag/scope-gate.ts` + nhánh `scope === "all"` trong RAG/search                                                        | Cao — nằm trong luồng RAG                   |
-| `multimedia`          | `ingestion/audio                                                                                                      | video                                       | image/`(~700 dòng) + FFmpeg, Whisper, tesseract trong`electron-builder.yml` | Cao — kéo theo binary native |
-| `meetingLong`         | chỉ là hạn mức; `meeting-capture/` (~5.200 dòng) dùng cho cả Free (15 phút)                                           | Không tách được — là chức năng lõi          |
-| `sharedNotebooks`     | chưa có mã                                                                                                            | —                                           |
-| (audit log, #236)     | đang làm ở worktree riêng, chưa vào `main`                                                                            | Nên làm thẳng ở repo Pro                    |
-
-Điểm nối hiện có: `register.ts` (798 dòng) và `main/index.ts` (1.337 dòng) gọi trực tiếp mọi service; `preload/index.ts`
-whitelist cứng mọi kênh; `StudioKind`/`LicenseFeature` là union cố định trong `src/shared/ipc/types.ts`; CHECK của
-`studio_result.kind` (migration v13) liệt kê cứng từng loại.
+| Cờ bản quyền                                                                                                             | Mã cài đặt chính                                                                                                      | Mức gắn với lõi                             |
+| ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `lanAi`                                                                                                                  | `src/main/services/ai-runtime/lan/` (~535 dòng) + `SettingsLanAiSection.tsx`                                          | Thấp — đã là provider riêng                 |
+| `brandedExport`                                                                                                          | `src/main/services/studio/export/` (~813 dòng) + nút xuất                                                             | Thấp                                        |
+| `itPolicy`                                                                                                               | `src/main/services/policy/` (~164 dòng)                                                                               | Thấp                                        |
+| `specialistAiModes`                                                                                                      | nhánh `domainMode` trong `rag/prompt.ts` + `DomainToggle.tsx`                                                         | Trung bình — chen giữa prompt RAG           |
+| `studioPro`                                                                                                              | 7 loại Studio + `documentDiff` trong `studio/prompt.ts`, `map-reduce.ts`, `studio-service.ts`, `StudioDiffPicker.tsx` | Cao — `Record<StudioKind, …>`, CHECK của DB |
+| `crossNotebookSearch`                                                                                                    | `rag/scope-gate.ts` + nhánh `scope === "all"` trong RAG/search                                                        | Cao — nằm trong luồng RAG                   |
+| `multimedia`                                                                                                             | `ingestion/audio                                                                                                      | video                                       | image/`(~700 dòng) + FFmpeg, Whisper, tesseract trong`electron-builder.yml` | Cao — kéo theo binary native |
+| `meetingLong`                                                                                                            | chỉ là hạn mức; `meeting-capture/` (~5.200 dòng) dùng cho cả Free (15 phút)                                           | Không tách được — là chức năng lõi          |
+| `sharedNotebooks`                                                                                                        | chưa có mã                                                                                                            | —                                           |
+| (audit log, #236)                                                                                                        | `src/main/services/audit/` (17 file, PR A #249 đã merge) + nối trong `main/index.ts`; PR B (CLI) chưa merge           | Thấp–trung bình — móc vào luồng hỏi đáp     |
+| Điểm nối hiện có: `register.ts` (798 dòng) và `main/index.ts` (1.337 dòng) gọi trực tiếp mọi service; `preload/index.ts` |
+| whitelist cứng mọi kênh; `StudioKind`/`LicenseFeature` là union cố định trong `src/shared/ipc/types.ts`; CHECK của       |
+| `studio_result.kind` (migration v13) liệt kê cứng từng loại.                                                             |
 
 ## 3. Ràng buộc phải nói rõ trước
 
@@ -112,7 +111,8 @@ export interface ProModule {
 | Tìm kiếm toàn cục (`crossNotebookSearch`)       | Có                                                               | 4               | Cần `ragScopes`; đụng sâu RAG                                                                            |
 | Đa phương tiện (`multimedia`)                   | Có                                                               | 5               | Kéo theo FFmpeg/Whisper/tesseract ⇒ bản Community nhẹ hơn; cấu hình `electron-builder` tách theo edition |
 | Ghi cuộc họp                                    | Không                                                            | —               | Lõi; hạn mức 15 phút giữ ở core                                                                          |
-| Audit log (#236), shared notebooks              | Làm mới ở repo Pro                                               | sau giai đoạn 1 | Không đưa thêm mã Pro mới vào repo public                                                                |
+| Audit log (#236)                                | Có                                                               | 2               | PR A đã ở core (MIT) — dời qua registry; PR B làm ở repo Pro sau giai đoạn 1 (Q7)                        |
+| Shared notebooks                                | Làm mới ở repo Pro                                               | sau giai đoạn 1 | Không đưa thêm mã Pro mới vào repo public                                                                |
 | Bản quyền, upsell, `issue-license.mjs`          | Verifier + upsell ở core; **script cấp bản quyền sang repo Pro** | 1               | Khoá riêng đã `.gitignore` (`*.pem`); vẫn nên dời công cụ phát hành                                      |
 
 ## 7. Lộ trình
@@ -121,7 +121,7 @@ export interface ProModule {
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | 0. Chốt            | Trả lời mục 9; tạo issue + ADR; **đóng băng mã Pro mới** trên repo public                                                                                                                                        | ADR được duyệt                                            |
 | 1. Khung           | Tạo `source-craft-pro` (private); `ProModule` + `MainHost`/`RendererHost` rỗng; alias `@pro` + stub; preload sinh whitelist; CI repo Pro: checkout core theo tag (submodule) + chạy toàn bộ test core + test Pro | Hai bản build xanh, hành vi y hệt hiện nay                |
-| 2. Module ít gắn   | Dời LAN AI, xuất DOCX/PDF, IT policy qua registry                                                                                                                                                                | Bản Community không còn các thư mục này; test chuyển theo |
+| 2. Module ít gắn   | Dời LAN AI, xuất DOCX/PDF, IT policy, audit log (PR A) qua registry                                                                                                                                              | Bản Community không còn các thư mục này; test chuyển theo |
 | 3. Prompt & Studio | Registry `studioKinds` + `ragPromptDirectives`; migration bỏ CHECK; dời loại Studio Pro + chế độ chuyên gia                                                                                                      | Thêm loại Studio không cần sửa core                       |
 | 4. RAG toàn cục    | Registry `ragScopes`; dời tìm kiếm toàn cục                                                                                                                                                                      | Luồng RAG core chỉ biết phạm vi notebook                  |
 | 5. Đa phương tiện  | Registry `sourceParsers`; `electron-builder` theo edition                                                                                                                                                        | Bản Community không đóng gói FFmpeg/Whisper/tesseract     |
@@ -144,15 +144,15 @@ core theo commit/tag mới.
 
 Chi tiết: [`docs/04-decisions/2026-10-25-pro-repo-split.md`](04-decisions/2026-10-25-pro-repo-split.md).
 
-| Câu                    | Quyết định                                                                                   |
-| ---------------------- | -------------------------------------------------------------------------------------------- |
-| Q1 — Phạm vi bảo vệ    | Chỉ bảo vệ mã từ nay; không viết lại lịch sử git                                             |
-| Q2 — Mô hình           | B. Open-core + extension API; core là submodule (theo tag) trong repo Pro                    |
-| Q3 — Hạn mức Community | Giữ hạn mức gói Free (3 notebook, 10 nguồn, 15 phút họp); sửa câu "unlimited" ở README       |
-| Q4 — Studio Community  | Chỉ `summary`, `keyPoints`; `custom` và các loại khác sang repo Pro                          |
-| Q5 — Phát hành         | Bản Pro là bộ cài chính (chưa có bản quyền ⇒ chạy như Free); Community để cộng đồng tự build |
-| Q6 — Issue             | Issue Pro ở repo Pro, branch `pro-NNN-slug`; issue điểm cắm core ở repo public               |
-| Q7 — Audit log #236    | Dừng worktree hiện tại; làm lại ở repo Pro sau giai đoạn 1                                   |
+| Câu                    | Quyết định                                                                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1 — Phạm vi bảo vệ    | Chỉ bảo vệ mã từ nay; không viết lại lịch sử git                                                                                        |
+| Q2 — Mô hình           | B. Open-core + extension API; core là submodule (theo tag) trong repo Pro                                                               |
+| Q3 — Hạn mức Community | Giữ hạn mức gói Free (3 notebook, 10 nguồn, 15 phút họp); sửa câu "unlimited" ở README                                                  |
+| Q4 — Studio Community  | Chỉ `summary`, `keyPoints`; `custom` và các loại khác sang repo Pro                                                                     |
+| Q5 — Phát hành         | Bản Pro là bộ cài chính (chưa có bản quyền ⇒ chạy như Free); Community để cộng đồng tự build                                            |
+| Q6 — Issue             | Issue Pro ở repo Pro, branch `pro-NNN-slug`; issue điểm cắm core ở repo public                                                          |
+| Q7 — Audit log #236    | (sửa lại) PR A đã merge ⇒ tạm ở core, dời sang repo Pro ở giai đoạn 2; PR B không merge vào repo public, làm ở repo Pro sau giai đoạn 1 |
 
 ## 10. Rủi ro
 
