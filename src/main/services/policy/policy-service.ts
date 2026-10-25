@@ -1,5 +1,7 @@
 import { join } from "node:path";
 import type { EnterprisePolicy, PreconfiguredLanAi } from "@shared/ipc/types";
+import { parseAuditPolicy } from "../audit/audit-policy";
+import type { AuditPolicyState } from "../audit/audit-types";
 
 // 228 — Enterprise IT Policy Service: reads read-only enterprise-policy.json from system or userData paths.
 // Enforces IT governance (e.g. forceLocalOnly to disable public cloud APIs, preconfigured LAN AI).
@@ -17,6 +19,8 @@ export interface PolicyService {
   isCloudDisabled(): boolean;
   getAllowedLanHosts(): string[];
   getPreconfiguredLanAi(): PreconfiguredLanAi | null;
+  /** 236: phần nhật ký kiểm toán — CHỈ từ tệp hệ thống, không rơi xuống userData (C1). Nạp 1 lần. */
+  getAuditPolicy(): AuditPolicyState;
 }
 
 export function getDefaultSystemPolicyPath(
@@ -146,8 +150,32 @@ export function createPolicyService(deps: PolicyServiceDeps): PolicyService {
     return null;
   };
 
+  // 236 (R9): nhánh đọc RIÊNG tệp hệ thống cho audit — tệp hỏng ⇒ policyError (không rơi xuống userData như loadPolicy).
+  let auditPolicy: AuditPolicyState | null = null;
+  const loadAuditPolicy = (): AuditPolicyState => {
+    if (auditPolicy) return auditPolicy;
+    let raw: string | null = null;
+    try {
+      if (systemPath && systemPath.trim() && fileExists(systemPath)) {
+        raw = readFileText(systemPath);
+      }
+    } catch {
+      raw = "";
+    }
+    auditPolicy = parseAuditPolicy(raw);
+    if (auditPolicy.status === "policyError") {
+      logEvent?.("policy.auditError", { reason: auditPolicy.reason });
+    } else if (auditPolicy.status === "configured") {
+      logEvent?.("policy.auditLoaded", {
+        custom: auditPolicy.directory !== null,
+      });
+    }
+    return auditPolicy;
+  };
+
   return {
     getPolicy: () => loadPolicy(),
+    getAuditPolicy: () => loadAuditPolicy(),
     isCloudDisabled: () => {
       const p = loadPolicy();
       return p !== null && p.forceLocalOnly === true;

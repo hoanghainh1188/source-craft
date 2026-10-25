@@ -104,6 +104,8 @@ export default defineConfig({
         "src/main/services/vault-backup/dialogs.ts",
         // 088: adapter node:fs cho sink nhật ký (I/O thuần; logic xoay vòng ở log-file.ts đã tính coverage).
         "src/main/services/app-log/log-fs.ts",
+        // 236: I/O mỏng của nhật ký kiểm toán (append + fsync) — phủ bởi audit-writer-perf (đĩa thật) + e2e.
+        "src/main/services/audit/node-audit-fs.ts",
         // 093: adapter node:fs cho báo lỗi (tệp đánh dấu phiên, đọc đuôi nhật ký, liệt kê minidump).
         "src/main/services/crash-report/crash-fs.ts",
         // 101: hộp thoại Electron chọn lại tệp gốc (I/O native) — phủ bởi e2e (IV_E2E_DIALOG_PATH).

@@ -106,7 +106,12 @@ export function ChatColumn({
           <p className="chat-empty">{t.t("chat.empty")}</p>
         )}
         {messages.map((m, i) => (
-          <MessageBubble key={i} message={m} onCite={onCite} />
+          <MessageBubble
+            key={i}
+            message={m}
+            onCite={onCite}
+            notebookId={notebookId}
+          />
         ))}
         {loading && !streamingId && (
           <div
