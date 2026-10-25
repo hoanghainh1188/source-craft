@@ -45,6 +45,7 @@ export const DEFAULT_PRO_FEATURES: readonly LicenseFeature[] = [
   "sharedNotebooks",
   "crossNotebookSearch",
   "brandedExport",
+  "specialistAiModes",
 ];
 
 export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
@@ -56,6 +57,7 @@ export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
   "itPolicy",
   "crossNotebookSearch",
   "brandedExport",
+  "specialistAiModes",
 ];
 
 /**

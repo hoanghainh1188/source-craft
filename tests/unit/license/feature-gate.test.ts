@@ -42,6 +42,7 @@ describe("feature-gate & entitlements matrix", () => {
       "sharedNotebooks",
       "crossNotebookSearch",
       "brandedExport",
+      "specialistAiModes",
     ]);
   });
 
@@ -58,6 +59,7 @@ describe("feature-gate & entitlements matrix", () => {
       "itPolicy",
       "crossNotebookSearch",
       "brandedExport",
+      "specialistAiModes",
     ]);
   });
 

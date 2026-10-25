@@ -27,6 +27,7 @@ export interface AnthropicRequestBody {
   max_tokens: number;
   system?: string;
   messages: { role: "user" | "assistant"; content: string }[];
+  temperature?: number;
 }
 
 /** THUẦN: ChatMessage[] → body Anthropic. Gộp mọi 'system' thành field `system`; còn lại user/assistant. */
@@ -34,6 +35,7 @@ export function toAnthropicRequest(
   messages: ChatMessage[],
   model: string,
   maxTokens: number = DEFAULT_MAX_TOKENS,
+  temperature?: number,
 ): AnthropicRequestBody {
   const system = messages
     .filter((m) => m.role === "system")
@@ -51,6 +53,7 @@ export function toAnthropicRequest(
     messages: turns,
   };
   if (system) body.system = system;
+  if (temperature !== undefined) body.temperature = temperature;
   return body;
 }
 
@@ -94,7 +97,15 @@ export class AnthropicProvider implements LLMProvider {
         {
           url: ENDPOINT,
           headers,
-          body: { ...toAnthropicRequest(req.messages, model), stream: true },
+          body: {
+            ...toAnthropicRequest(
+              req.messages,
+              model,
+              DEFAULT_MAX_TOKENS,
+              req.temperature,
+            ),
+            stream: true,
+          },
           fetchFn: this.deps.fetchFn,
           signal: opts.signal,
           providerLabel: LABEL,
@@ -114,7 +125,12 @@ export class AnthropicProvider implements LLMProvider {
     const json = await callJson({
       url: ENDPOINT,
       headers,
-      body: toAnthropicRequest(req.messages, model),
+      body: toAnthropicRequest(
+        req.messages,
+        model,
+        DEFAULT_MAX_TOKENS,
+        req.temperature,
+      ),
       fetchFn: this.deps.fetchFn,
       timeoutMs: this.deps.timeoutMs,
       providerLabel: LABEL,

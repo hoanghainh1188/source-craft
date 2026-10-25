@@ -45,7 +45,10 @@ import type { VectorStore } from "../services/ingestion/vector-store";
 import type { UiLanguageService } from "../services/ui-language";
 import type { RagService } from "../services/rag/rag-service";
 import type { ChatRepo } from "../services/rag/chat-repo";
-import { assertRagScopeAllowed } from "../services/rag/scope-gate";
+import {
+  assertDomainModeAllowed,
+  assertRagScopeAllowed,
+} from "../services/rag/scope-gate";
 import type { StudioService } from "../services/studio/studio-service";
 import type { ContentSearch } from "../services/search/content-search";
 import { exportFormattedDocument } from "../services/studio/export";
@@ -373,10 +376,12 @@ export function registerIpc({
   // rag-qa (013) — embed/search/chat CHỈ ở đây (main). KHÔNG log payload (câu hỏi/nội dung — Constitution III).
   // 098: đích AI theo lượt (input.target) + lỗi provider online gắn thẻ để renderer hiện nút "AI cục bộ".
   // 231: tìm kiếm toàn cục đa sổ tay (scope === 'all') yêu cầu bản quyền Pro/Enterprise.
+  // 238: chế độ chuyên gia (domainMode === 'legal' | 'medical') yêu cầu bản quyền Pro/Enterprise.
   safeHandle(CHANNELS.ragAsk, async (input) => {
     const target = parseAiTarget(input);
     const askInput = input as RagAskInput;
     assertRagScopeAllowed(askInput, licenseService?.gate);
+    assertDomainModeAllowed(askInput, licenseService?.gate);
     try {
       return await ragServices[target].ask(askInput);
     } catch (e) {
@@ -399,6 +404,7 @@ export function registerIpc({
     }
     const askInput = input as RagAskStreamInput;
     assertRagScopeAllowed(askInput, licenseService?.gate);
+    assertDomainModeAllowed(askInput, licenseService?.gate);
     // Kiểm đích AI TRƯỚC khi giữ controller — ném ở đây không để lại entry mồ côi trong streamControllers.
     const target = parseAiTarget(input);
     const controller = new AbortController();
@@ -452,6 +458,7 @@ export function registerIpc({
   safeHandleWithSender(CHANNELS.studioGenerate, async (sender, input) => {
     const target = parseAiTarget(input);
     const studioInput = input as StudioGenerateInput;
+    assertDomainModeAllowed(studioInput, licenseService?.gate);
     if (licenseService && studioInput && typeof studioInput.kind === "string") {
       licenseService.gate.assertCanGenerateStudio(studioInput.kind);
     }

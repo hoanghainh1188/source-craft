@@ -11,6 +11,7 @@ const UPSELL_CODES: ReadonlySet<UserErrorCode> = new Set<UserErrorCode>([
   "lanAiRequireEnterprise",
   "licenseRequireProCrossSearch",
   "licenseRequireProExport",
+  "licenseRequireProSpecialistModes",
 ]);
 
 export function isUpsellCode(code: string | undefined): boolean {

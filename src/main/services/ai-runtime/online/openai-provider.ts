@@ -23,17 +23,30 @@ const LABEL = PROVIDER_LABELS.openai;
 export interface OpenAIRequestBody {
   model: string;
   messages: { role: "system" | "user" | "assistant"; content: string }[];
+  temperature?: number;
+}
+
+/**
+ * 238: model reasoning (o1/o3/o4…, gpt-5…) chỉ nhận temperature mặc định — gửi giá trị khác ⇒ HTTP 400.
+ * Với các model này bỏ temperature (chế độ chuyên gia vẫn chạy, chỉ không ép 0.1).
+ */
+export function openAISupportsTemperature(model: string): boolean {
+  return !/^(o\d|gpt-5)/i.test(model);
 }
 
 /** THUẦN: ChatMessage[] → body OpenAI (messages nguyên dạng). */
 export function toOpenAIRequest(
   messages: ChatMessage[],
   model: string,
+  temperature?: number,
 ): OpenAIRequestBody {
-  return {
+  const body: OpenAIRequestBody = {
     model,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
   };
+  if (temperature !== undefined && openAISupportsTemperature(model))
+    body.temperature = temperature;
+  return body;
 }
 
 /** THUẦN: parse response OpenAI → chuỗi content của choice đầu. */
@@ -66,7 +79,10 @@ export class OpenAIProvider implements LLMProvider {
         {
           url: ENDPOINT,
           headers,
-          body: { ...toOpenAIRequest(req.messages, model), stream: true },
+          body: {
+            ...toOpenAIRequest(req.messages, model, req.temperature),
+            stream: true,
+          },
           fetchFn: this.deps.fetchFn,
           signal: opts.signal,
           providerLabel: LABEL,
@@ -86,7 +102,7 @@ export class OpenAIProvider implements LLMProvider {
     const json = await callJson({
       url: ENDPOINT,
       headers,
-      body: toOpenAIRequest(req.messages, model),
+      body: toOpenAIRequest(req.messages, model, req.temperature),
       fetchFn: this.deps.fetchFn,
       timeoutMs: this.deps.timeoutMs,
       providerLabel: LABEL,

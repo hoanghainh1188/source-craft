@@ -261,9 +261,10 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* 231 — phạm vi "Toàn bộ kho": huy hiệu PRO (token, không style inline); khoá với gói Free = mờ nhưng vẫn bấm
+/* 231, 238 — phạm vi "Toàn bộ kho" & chế độ chuyên gia: huy hiệu PRO (token, không style inline); khoá với gói Free = mờ nhưng vẫn bấm
    được để mở lời mời nâng cấp. */
-.segscope .seg {
+.segscope .seg,
+.segdomain .seg {
   display: inline-flex;
   align-items: center;
   gap: 4px;
