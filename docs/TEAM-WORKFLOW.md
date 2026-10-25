@@ -15,11 +15,12 @@ conflict** và **không lệch ngữ cảnh** (glossary, constitution, design g�
 
 ## 1. Repo & branch model
 
-- **1 repo chung**, nhánh mặc định `main` luôn xanh (CI pass, deploy được).
-- Mỗi feature = **1 branch ngắn hạn** tách từ `main`, merge lại qua **Pull Request**.
-- Merge vào `main` chỉ khi: **CI xanh** + **review pass** (code-owner nếu đụng file gác cổng).
-- **Ưu tiên branch sống ngắn** (gộp trong vài ngày). Branch càng sống lâu, càng dễ lệch ngữ cảnh
-  so với glossary/constitution mới trên `main`.
+- **Hệ thống repo:**
+  - **Repo Public (Core & App):** https://github.com/hoanghainh1188/source-craft (app chính, UI, build, stub Pro).
+  - **Repo Private (Pro Modules):** https://github.com/hoanghainh1188/source-craft-pro (chỉ chứa cài đặt module Pro, xem chi tiết tại [`docs/pro-repo-split-plan.md`](pro-repo-split-plan.md)).
+  - **Quản lý Task & Issue tập trung:** [GitHub Project #8](https://github.com/users/hoanghainh1188/projects/8) theo dõi tiến độ của cả 2 repo.
+- Nhánh mặc định `main` luôn xanh (CI pass, deploy được).
+- Mỗi feature = **1 branch ngắn hạn** tách từ `main`, merge lại qua **Pull Request**. Với các đợt phát triển tính năng Pro, sử dụng **cùng tên branch `NNN-<slug>`** ở cả 2 repo.
 
 ---
 

@@ -1,6 +1,8 @@
 # Kế hoạch tách chức năng Pro sang repo riêng
 
 - Ngày: 2026-10-25 · Trạng thái: **Đã chốt hướng đi (mục 9)** · Issue: #248.
+- **Repo Pro (private):** https://github.com/hoanghainh1188/source-craft-pro
+- **GitHub Project (quản lý task cả 2 repo):** https://github.com/users/hoanghainh1188/projects/8
 - Mô hình theo cách đã làm ở Sheafly (`sheafly` public + `sheafly-pro` private): **repo Pro chỉ chứa code**; build và phát
   hành vẫn ở repo public.
 
