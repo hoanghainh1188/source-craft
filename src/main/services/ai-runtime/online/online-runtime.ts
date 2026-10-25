@@ -7,6 +7,7 @@ import type {
   SetProviderKeyInput,
   SetProviderModelInput,
 } from "@shared/ipc/types";
+import type { PolicyService } from "../../policy/policy-service";
 import type { LLMProvider } from "../provider";
 import type { ProviderRegistry } from "../registry";
 import type { StoreLike } from "../model-selection";
@@ -42,6 +43,8 @@ export interface OnlineRuntimeDeps {
   /** Cập nhật cờ privacy (true = có provider online active → badge 'online'). */
   onActiveChange: (onlineActive: boolean) => void;
   timeoutMs?: number;
+  /** 228 (SC-003): chính sách IT — forceLocalOnly khoá mọi provider đám mây công cộng ở main. */
+  policy?: Pick<PolicyService, "isCloudDisabled" | "getPolicy">;
 }
 
 export interface OnlineRuntime {
@@ -72,6 +75,17 @@ export function createOnlineRuntime(deps: OnlineRuntimeDeps): OnlineRuntime {
   providers.set("openai", new OpenAIProvider(makeDeps("openai")));
   for (const p of providers.values()) registry.register(p);
 
+  // Tên tổ chức khoá AI đám mây (forceLocalOnly), null = không khoá. Đọc mỗi lần — policy tự cache.
+  function cloudLockedBy(): string | null {
+    if (!deps.policy?.isCloudDisabled()) return null;
+    return deps.policy.getPolicy()?.organization ?? "";
+  }
+
+  function assertCloudAllowed(): void {
+    const org = cloudLockedBy();
+    if (org !== null) throw new UserFacingError("policyCloudDisabled", { org });
+  }
+
   function applyActive(config: OnlineConfig): void {
     const id = config.activeOnlineId;
     registry.setActive(id ?? LOCAL_ID);
@@ -91,7 +105,11 @@ export function createOnlineRuntime(deps: OnlineRuntimeDeps): OnlineRuntime {
         active: config.activeOnlineId === id,
       });
     }
-    return { providers: views, activeOnlineId: config.activeOnlineId };
+    return {
+      providers: views,
+      activeOnlineId: config.activeOnlineId,
+      cloudLockedBy: cloudLockedBy(),
+    };
   }
 
   return {
@@ -140,6 +158,8 @@ export function createOnlineRuntime(deps: OnlineRuntimeDeps): OnlineRuntime {
       if (id !== null && !isOnlineProviderId(id)) {
         throw new Error("Invalid provider.");
       }
+      // 228: policy khoá đám mây → chặn TRƯỚC kiểm tra key (tắt về local vẫn được).
+      if (id !== null) assertCloudAllowed();
       // Bật provider online → yêu cầu đã có key (không bật provider rỗng key).
       if (id !== null && !(await secretStore.hasKey(id))) {
         throw new UserFacingError("apiKeyMissing", {
@@ -159,6 +179,7 @@ export function createOnlineRuntime(deps: OnlineRuntimeDeps): OnlineRuntime {
           reason: "Invalid provider.",
         };
       }
+      assertCloudAllowed(); // 228: kiểm tra kết nối cũng là egress ra đám mây.
       return providers.get(id)!.test();
     },
 
@@ -168,8 +189,12 @@ export function createOnlineRuntime(deps: OnlineRuntimeDeps): OnlineRuntime {
         applyActive(config);
         return;
       }
-      // Provider active nhưng mất key (VD keychain bị xoá) → về local để badge không lệch.
-      if (await secretStore.hasKey(config.activeOnlineId)) {
+      // Provider active nhưng mất key (VD keychain bị xoá) hoặc policy IT khoá đám mây (228) → về local
+      // để badge không lệch và không có egress.
+      if (
+        cloudLockedBy() === null &&
+        (await secretStore.hasKey(config.activeOnlineId))
+      ) {
         applyActive(config);
       } else {
         applyActive(

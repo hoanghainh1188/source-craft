@@ -21,6 +21,7 @@ import {
   type OnlineRuntime,
 } from "./online/online-runtime";
 import { setOnlineProviderActive } from "../app-shell/privacy-state";
+import type { PolicyService } from "../policy/policy-service";
 
 // Ghép runtime AI ở main: Ollama client + registry + model-selection + 3 provider online (031).
 // Đây là bề mặt mà IPC handler gọi (renderer chỉ chạm qua kênh ai:* whitelisted).
@@ -36,7 +37,10 @@ export interface AiRuntime {
   online: OnlineRuntime;
 }
 
-export function createAiRuntime(store: StoreLike): AiRuntime {
+export function createAiRuntime(
+  store: StoreLike,
+  policy?: PolicyService,
+): AiRuntime {
   const client = createOllamaClient();
   const registry = new ProviderRegistry();
   const ollama = new OllamaProvider(client, () => getSelectedModels(store));
@@ -48,6 +52,7 @@ export function createAiRuntime(store: StoreLike): AiRuntime {
     registry,
     fetchFn: fetch,
     onActiveChange: setOnlineProviderActive,
+    policy, // 228: forceLocalOnly khoá AI đám mây ở main.
   });
   // Khôi phục provider active đã lưu (nếu có key) — best-effort, không chặn khởi động.
   void online.syncActiveFromConfig();
