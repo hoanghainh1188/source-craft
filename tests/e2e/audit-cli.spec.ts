@@ -17,6 +17,12 @@ function cli(args: string[], userData: string) {
       timeout: 60_000,
     },
   );
+  // Tiến trình chết vì signal / không spawn được ⇒ status null; in đủ ngữ cảnh để chẩn đoán trên CI (Linux + xvfb).
+  if (r.status === null) {
+    console.error(
+      `[audit-cli] status=null signal=${r.signal} error=${r.error?.message ?? "-"}\nstderr:\n${r.stderr}`,
+    );
+  }
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
 
