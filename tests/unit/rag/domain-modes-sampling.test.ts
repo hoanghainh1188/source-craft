@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ChatOptions } from "../../../src/main/services/rag/rag-service";
 import { createRagService } from "../../../src/main/services/rag/rag-service";
+import {
+  MEDICAL_DISCLAIMER_EN,
+  MEDICAL_DISCLAIMER_VI,
+} from "../../../src/main/services/rag/prompt";
+import { toOpenAIRequest } from "../../../src/main/services/ai-runtime/online/openai-provider";
 
 describe("238 — Domain-specific AI modes sampling temperature", () => {
   const baseDeps = {
@@ -92,5 +97,52 @@ describe("238 — Domain-specific AI modes sampling temperature", () => {
     });
 
     expect(capturedOptions?.temperature).toBeUndefined();
+  });
+
+  it("chế độ medical ⇒ app gắn disclaimer vào câu trả lời dù model không viết", async () => {
+    const rag = createRagService({
+      ...baseDeps,
+      chat: async () => "",
+      chatStream: async () => "Liều dùng theo phác đồ [1].",
+    });
+    const res = await rag.askStream(
+      {
+        notebookId: "nb-1",
+        question: "Liều dùng paracetamol cho người lớn là bao nhiêu?",
+        mode: "grounded",
+        history: [],
+        domainMode: "medical",
+      },
+      {},
+    );
+    expect(res.notFound).toBe(false);
+    expect(res.answer.endsWith(MEDICAL_DISCLAIMER_VI)).toBe(true);
+  });
+
+  it("chế độ legal/general ⇒ không gắn disclaimer y khoa", async () => {
+    const rag = createRagService({
+      ...baseDeps,
+      chat: async () => "Theo Điều 15 [1], mức phạt là 8%.",
+      chatStream: async () => "",
+    });
+    const res = await rag.ask({
+      notebookId: "nb-1",
+      question: "Phạt vi phạm thế nào?",
+      mode: "grounded",
+      history: [],
+      domainMode: "legal",
+    });
+    expect(res.answer).not.toContain(MEDICAL_DISCLAIMER_VI);
+    expect(res.answer).not.toContain(MEDICAL_DISCLAIMER_EN);
+  });
+
+  it("OpenAI: model reasoning (o1/o3/o4, gpt-5) ⇒ bỏ temperature để tránh HTTP 400", () => {
+    for (const model of ["o1", "o3-mini", "o4-mini", "gpt-5", "gpt-5-mini"]) {
+      expect(toOpenAIRequest([], model, 0.1)).not.toHaveProperty("temperature");
+    }
+    for (const model of ["gpt-4o", "gpt-4o-mini", "gpt-4.1"]) {
+      expect(toOpenAIRequest([], model, 0.1).temperature).toBe(0.1);
+    }
+    expect(toOpenAIRequest([], "gpt-4o")).not.toHaveProperty("temperature");
   });
 });

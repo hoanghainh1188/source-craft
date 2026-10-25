@@ -32,6 +32,25 @@ export const MEDICAL_DISCLAIMER_VI =
 export const MEDICAL_DISCLAIMER_EN =
   "The information provided is for medical reference from ingested documents only and does not replace professional clinical diagnosis or medical advice.";
 
+/**
+ * 238: gắn disclaimer y khoa CỐ ĐỊNH ở cuối câu trả lời (ngôn ngữ theo câu hỏi). Gỡ bản model tự chép (nếu có)
+ * để không lặp. Hàm THUẦN.
+ */
+export function withMedicalDisclaimer(
+  answer: string,
+  lang?: LanguageCode,
+): string {
+  const disclaimer =
+    lang === "vi" ? MEDICAL_DISCLAIMER_VI : MEDICAL_DISCLAIMER_EN;
+  const body = [MEDICAL_DISCLAIMER_VI, MEDICAL_DISCLAIMER_EN]
+    .reduce(
+      (text, d) => text.split(`"${d}"`).join("").split(d).join(""),
+      answer,
+    )
+    .trimEnd();
+  return body ? `${body}\n\n${disclaimer}` : disclaimer;
+}
+
 function notFoundInstruction(lang?: LanguageCode): string {
   return lang === "vi"
     ? `If the passages do not contain the answer, reply with exactly one sentence: "${NOT_FOUND_REPLY_VI}" — with NO [n] and nothing else.`
@@ -73,12 +92,11 @@ export function domainDirectives(
   }
 
   if (domainMode === "medical") {
-    const disclaimer =
-      lang === "vi" ? MEDICAL_DISCLAIMER_VI : MEDICAL_DISCLAIMER_EN;
+    // Disclaimer do app gắn cố định sau khi nhận câu trả lời (withMedicalDisclaimer) — không phó mặc cho model.
     return [
       "SPECIALIST ROLE: You are a specialized Medical and Clinical Knowledge AI assistant operating under evidence-based clinical grounding.",
       "CLINICAL GROUNDING: Rigorously cite source passages for clinical facts, symptoms, contraindications, dosages, and treatment guidelines. Never fabricate medical advice or extrapolate beyond documented evidence.",
-      `MANDATORY CLINICAL DISCLAIMER: You MUST conclude your response with this exact disclaimer on a new line at the very end:\n"${disclaimer}"`,
+      "Do NOT write a medical disclaimer yourself — the application appends one to your answer.",
     ];
   }
 

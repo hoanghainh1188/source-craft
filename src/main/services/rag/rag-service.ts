@@ -14,7 +14,7 @@ import {
 import { retrieve, type RetrievalDeps } from "./retrieval";
 import type { RelevanceConfig } from "./relevance-filter";
 import { buildContext } from "./context-builder";
-import { systemPromptFor } from "./prompt";
+import { systemPromptFor, withMedicalDisclaimer } from "./prompt";
 import { postprocessCitations } from "./citation";
 import {
   MAX_HISTORY_TURNS,
@@ -131,10 +131,11 @@ export function createRagService(deps: RagServiceDeps) {
     const built = buildContext(scored);
     // 123 (FR-017): trả lời theo ngôn ngữ câu hỏi — chỉ định rõ khi nhận diện chắc chắn vi/en.
     // 238: áp dụng persona và grounding chuyên gia (Pháp lý / Y tế) theo domainMode.
+    const questionLanguage = detectQuestionLanguage(question);
     const system = systemPromptFor(
       mode,
       built.contextText,
-      detectQuestionLanguage(question),
+      questionLanguage,
       input.domainMode,
     );
     const recent = history.slice(-MAX_HISTORY_TURNS);
@@ -152,7 +153,12 @@ export function createRagService(deps: RagServiceDeps) {
 
     const raw = await chatFn(messages, { temperature });
     const processed = postprocessCitations(raw, built.map);
-    const answer = processed.answer;
+    // 238: chế độ Y tế ⇒ app tự gắn disclaimer (không phụ thuộc model tuân lệnh). Lượt "không tìm thấy" bên dưới
+    // dùng notFoundResult() nên không mang disclaimer.
+    const answer =
+      input.domainMode === "medical"
+        ? withMedicalDisclaimer(processed.answer, questionLanguage)
+        : processed.answer;
     // 231: CHỈ khi tìm toàn cục mới gắn sổ tay vào trích dẫn (phân biệt nguồn giữa các sổ tay). Trong 1 sổ tay,
     // nhãn giữ nguyên "[n] Nguồn · trang X" như trước.
     const citations = isAllScope

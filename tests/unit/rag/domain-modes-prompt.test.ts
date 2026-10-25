@@ -4,6 +4,7 @@ import {
   groundedSystemPrompt,
   openSystemPrompt,
   systemPromptFor,
+  withMedicalDisclaimer,
   MEDICAL_DISCLAIMER_VI,
   MEDICAL_DISCLAIMER_EN,
 } from "../../../src/main/services/rag/prompt";
@@ -43,20 +44,20 @@ describe("238 — Domain-specific prompts & directives", () => {
       expect(text).not.toMatch(VI);
     });
 
-    it("chế độ medical (tiếng Việt) → chứa chỉ dẫn y khoa và disclaimer tiếng Việt", () => {
+    it("chế độ medical (tiếng Việt) → chỉ dẫn y khoa, KHÔNG bắt model tự chép disclaimer", () => {
       const dirs = domainDirectives("medical", "vi");
       const text = dirs.join("\n");
       expect(text).toContain("Medical and Clinical Knowledge AI assistant");
       expect(text).toContain("CLINICAL GROUNDING");
-      expect(text).toContain(MEDICAL_DISCLAIMER_VI);
+      expect(text).not.toContain(MEDICAL_DISCLAIMER_VI);
     });
 
-    it("chế độ medical (tiếng Anh) → chứa chỉ dẫn y khoa và disclaimer tiếng Anh", () => {
+    it("chế độ medical (tiếng Anh) → chỉ dẫn y khoa thuần tiếng Anh", () => {
       const dirs = domainDirectives("medical", "en");
       const text = dirs.join("\n");
       expect(text).toContain("Medical and Clinical Knowledge AI assistant");
       expect(text).toContain("CLINICAL GROUNDING");
-      expect(text).toContain(MEDICAL_DISCLAIMER_EN);
+      expect(text).not.toContain(MEDICAL_DISCLAIMER_EN);
       const VI =
         /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
       expect(text).not.toMatch(VI);
@@ -71,25 +72,23 @@ describe("238 — Domain-specific prompts & directives", () => {
       expect(prompt).toContain("Không tìm thấy trong nguồn.");
     });
 
-    it("grounded với medical mode chèn đầy đủ disclaimer", () => {
+    it("grounded với medical mode chèn persona y khoa", () => {
       const prompt = groundedSystemPrompt(
         "[1] Phác đồ điều trị",
         "vi",
         "medical",
       );
       expect(prompt).toContain("Medical and Clinical Knowledge AI assistant");
-      expect(prompt).toContain(MEDICAL_DISCLAIMER_VI);
       expect(prompt).toContain("[1] Phác đồ điều trị");
     });
 
-    it("open mode với medical mode chèn đầy đủ disclaimer và nhãn ngoài nguồn", () => {
+    it("open mode với medical mode chèn persona y khoa và nhãn ngoài nguồn", () => {
       const prompt = openSystemPrompt(
         "[1] Hướng dẫn lâm sàng",
         "en",
         "medical",
       );
       expect(prompt).toContain("Medical and Clinical Knowledge AI assistant");
-      expect(prompt).toContain(MEDICAL_DISCLAIMER_EN);
       expect(prompt).toContain("(not based on sources)");
     });
 
@@ -101,6 +100,29 @@ describe("238 — Domain-specific prompts & directives", () => {
       const o = systemPromptFor("open", "context", "vi", "medical");
       expect(o).toContain("Medical and Clinical Knowledge AI assistant");
       expect(o).toContain("(không dựa trên nguồn)");
+    });
+  });
+
+  describe("withMedicalDisclaimer — app gắn cố định", () => {
+    it("gắn disclaimer theo ngôn ngữ câu hỏi ở cuối câu trả lời", () => {
+      expect(withMedicalDisclaimer("Liều 500mg [1].", "vi")).toBe(
+        `Liều 500mg [1].\n\n${MEDICAL_DISCLAIMER_VI}`,
+      );
+      expect(withMedicalDisclaimer("Dose 500mg [1].", "en")).toBe(
+        `Dose 500mg [1].\n\n${MEDICAL_DISCLAIMER_EN}`,
+      );
+      expect(withMedicalDisclaimer("Dose [1].")).toBe(
+        `Dose [1].\n\n${MEDICAL_DISCLAIMER_EN}`,
+      );
+    });
+
+    it("model đã tự chép disclaimer (có/không ngoặc kép) ⇒ không lặp", () => {
+      const out = withMedicalDisclaimer(
+        `Liều 500mg [1].\n"${MEDICAL_DISCLAIMER_VI}"\n${MEDICAL_DISCLAIMER_EN}`,
+        "vi",
+      );
+      expect(out).toBe(`Liều 500mg [1].\n\n${MEDICAL_DISCLAIMER_VI}`);
+      expect(out.split(MEDICAL_DISCLAIMER_VI)).toHaveLength(2);
     });
   });
 });

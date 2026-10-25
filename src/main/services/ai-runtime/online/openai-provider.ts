@@ -26,6 +26,14 @@ export interface OpenAIRequestBody {
   temperature?: number;
 }
 
+/**
+ * 238: model reasoning (o1/o3/o4…, gpt-5…) chỉ nhận temperature mặc định — gửi giá trị khác ⇒ HTTP 400.
+ * Với các model này bỏ temperature (chế độ chuyên gia vẫn chạy, chỉ không ép 0.1).
+ */
+export function openAISupportsTemperature(model: string): boolean {
+  return !/^(o\d|gpt-5)/i.test(model);
+}
+
 /** THUẦN: ChatMessage[] → body OpenAI (messages nguyên dạng). */
 export function toOpenAIRequest(
   messages: ChatMessage[],
@@ -36,7 +44,8 @@ export function toOpenAIRequest(
     model,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
   };
-  if (temperature !== undefined) body.temperature = temperature;
+  if (temperature !== undefined && openAISupportsTemperature(model))
+    body.temperature = temperature;
   return body;
 }
 

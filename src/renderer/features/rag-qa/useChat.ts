@@ -286,7 +286,8 @@ export function useChat(notebookId: string) {
         setLoading(false);
       }
     },
-    [canSend, messages, mode, notebookId],
+    // 238: scope/domainMode PHẢI có ở đây — thiếu ⇒ send giữ giá trị cũ, đổi toggle rồi hỏi ngay vẫn gửi lựa chọn trước.
+    [canSend, messages, mode, notebookId, scope, domainMode],
   );
 
   /** 098: chạy lại lượt lỗi online — "local" (Ollama) hoặc "active" (thử lại provider đang bật). */
