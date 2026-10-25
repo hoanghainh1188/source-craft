@@ -42,7 +42,7 @@ Quản trị viên IT của một ngân hàng phân phối `enterprise-policy.js
 **Acceptance Scenarios**:
 
 1. **Given** chính sách hệ thống có `enableAuditLogging: true` và bản quyền Enterprise hợp lệ, **When** người dùng hỏi một câu trong hỏi đáp RAG và nhận câu trả lời có trích dẫn `[1]`, `[2]`, **Then** nhật ký kiểm toán có thêm đúng một tương tác kiểm toán chứa thời điểm, tài khoản OS, câu hỏi (đã mã hoá), nhà cung cấp + tên model đã sinh câu trả lời và hai trích dẫn tương ứng (nguồn, sổ tay, vị trí).
-2. **Given** audit đang bật và người dùng dùng LAN AI, **When** người dùng hỏi một câu, **Then** bản ghi phân biệt được mô hình là LAN AI (khác Local) và có tên model. _(Kiểm đầu-cuối được sau khi LAN AI được nối vào đường chat — hiện chỉ dùng để thử kết nối, xem research F2; trước đó kiểm bằng unit test ánh xạ provider.)_
+2. **Given** audit đang bật và người dùng dùng LAN AI, **When** người dùng hỏi một câu, **Then** bản ghi phân biệt được mô hình là LAN AI (khác Local) và có tên model. _(LAN AI đã được nối vào đường chat ở #244; kiểm ở mức unit bằng ánh xạ provider.)_
 3. **Given** audit đang bật, **When** người dùng tạo một kết quả AI Studio, **Then** nhật ký có một tương tác kiểm toán cho lượt Studio đó với loại Studio, phạm vi nguồn, mô hình và trích dẫn của kết quả.
 4. **Given** audit đang bật, **When** người dùng dùng tìm kiếm & hỏi đáp toàn cục (mọi sổ tay), **Then** bản ghi thể hiện phạm vi toàn cục và mỗi trích dẫn mang sổ tay của nó.
 5. **Given** chính sách không có `enableAuditLogging` (hoặc `false`), **When** người dùng dùng AI, **Then** không có bản ghi kiểm toán nào được tạo và không có tệp kiểm toán mới.
