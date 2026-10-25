@@ -1,4 +1,5 @@
 import type { ChatRequest, ChatResult } from "@shared/ipc/types";
+import { LanHttpError, type LanChatOptions } from "./lan-http-error";
 
 // 228 — LAN Ollama Client: connects to an internal Ollama server with optional Bearer token.
 
@@ -9,8 +10,8 @@ export interface LanOllamaClientOptions {
 }
 
 export interface LanOllamaClient {
-  listModels(): Promise<string[]>;
-  chat(request: ChatRequest): Promise<ChatResult>;
+  listModels(opts?: LanChatOptions): Promise<string[]>;
+  chat(request: ChatRequest, opts?: LanChatOptions): Promise<ChatResult>;
 }
 
 export function createLanOllamaClient(
@@ -30,19 +31,23 @@ export function createLanOllamaClient(
   };
 
   return {
-    async listModels(): Promise<string[]> {
+    async listModels(opts?: LanChatOptions): Promise<string[]> {
       const res = await fetchFn(`${cleanUrl}/api/tags`, {
         method: "GET",
         headers: makeHeaders(),
+        signal: opts?.signal,
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        throw new LanHttpError(res.status, res.statusText);
       }
       const data = (await res.json()) as { models?: { name: string }[] };
       return Array.isArray(data.models) ? data.models.map((m) => m.name) : [];
     },
 
-    async chat(request: ChatRequest): Promise<ChatResult> {
+    async chat(
+      request: ChatRequest,
+      opts?: LanChatOptions,
+    ): Promise<ChatResult> {
       const res = await fetchFn(`${cleanUrl}/api/chat`, {
         method: "POST",
         headers: makeHeaders(),
@@ -50,10 +55,14 @@ export function createLanOllamaClient(
           model: request.model,
           messages: request.messages,
           stream: false,
+          ...(request.temperature !== undefined
+            ? { options: { temperature: request.temperature } }
+            : {}),
         }),
+        signal: opts?.signal,
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        throw new LanHttpError(res.status, res.statusText);
       }
       const data = (await res.json()) as { message?: { content: string } };
       return {
