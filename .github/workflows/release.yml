@@ -3,15 +3,99 @@ name: release
 # Đóng gói + phát hành khi đẩy tag v* (VD v0.1.0). Mỗi nền tảng build trên runner của chính nó — BẮT BUỘC
 # vì native module (@lancedb/lancedb, keytar) có binary theo nền tảng, KHÔNG cross-build được.
 # v0.1: unsigned (chưa code-sign/notarize). macOS runner = Apple Silicon → dmg arm64.
+#
+# 248 — mô hình stub như Sheafly (docs/pro-repo-split-plan.md §4.2): job `pro` dùng deploy key CHỈ-ĐỌC
+# SOURCECRAFT_PRO_DEPLOY_KEY lấy repo private source-craft-pro, kiểm khớp stub và chốt MỘT commit cho mọi nền tảng;
+# job build chép đè src/main/pro/ bằng đúng commit đó rồi build.
+#   - Tag v* thiếu key ⇒ FAIL (không bao giờ phát hành nhầm bản thiếu Pro).
+#   - Chạy tay (workflow_dispatch) / fork thiếu key ⇒ cảnh báo, build bằng stub; chạy tay KHÔNG tạo GitHub Release.
+#   - Mã Pro KHÔNG bao giờ thành artifact (artifact của repo public ai cũng tải được) — chỉ upload bộ cài; mọi checkout
+#     repo Pro dùng persist-credentials: false. Lỗi tsc/test của bản Pro chỉ báo tóm tắt ở đây (log repo public là
+#     public — chi tiết xem ở CI repo source-craft-pro).
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      pro_ref:
+        description: "Branch / tag / SHA của repo source-craft-pro (mặc định master)"
+        required: false
+        default: master
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  pro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    steps:
+      - name: Kiểm deploy key repo Pro
+        id: key
+        env:
+          KEY: ${{ secrets.SOURCECRAFT_PRO_DEPLOY_KEY }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "present=false" >> "$GITHUB_OUTPUT"
+          if [ "$IS_TAG" = "true" ]; then
+            echo "::error::Tag phát hành $GITHUB_REF_NAME thiếu secret SOURCECRAFT_PRO_DEPLOY_KEY — không phát hành bản thiếu Pro."
+            exit 1
+          fi
+          echo "::warning::Thiếu SOURCECRAFT_PRO_DEPLOY_KEY (chạy tay / fork) — build bằng stub, KHÔNG có chức năng Pro."
+          echo "### Bản build: stub (không có chức năng Pro)" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          persist-credentials: false
+
+      - name: Lấy repo Pro
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: hoanghainh1188/source-craft-pro
+          ref: ${{ inputs.pro_ref || 'master' }}
+          ssh-key: ${{ secrets.SOURCECRAFT_PRO_DEPLOY_KEY }}
+          persist-credentials: false
+          path: .pro
+
+      - name: Kiểm khớp stub (api-types.test.ts + deps.json) và chốt commit
+        id: pin
+        if: steps.key.outputs.present == 'true'
+        run: |
+          node .pro/scripts/check-stub.mjs --public .
+          sha="$(git -C .pro rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "### Bản build: Pro @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Cài dependencies (từ lockfile)
+        if: steps.key.outputs.present == 'true'
+        run: npm ci
+
+      # Chép đè thử + tsc + test của bản Pro một lần trước khi build đa nền tảng. Ẩn chi tiết lỗi (có thể chứa mã Pro).
+      - name: Kiểm bản Pro trên mã public (chép đè, tsc, test)
+        if: steps.key.outputs.present == 'true'
+        run: |
+          node scripts/pro-overlay.mjs apply .pro
+          npx tsc --noEmit --pretty false -p tsconfig.node.json > /dev/null 2>&1 \
+            || { echo "::error::tsc thất bại với bản Pro — xem CI repo source-craft-pro."; exit 1; }
+          npx vitest run src/main/pro > /dev/null 2>&1 \
+            || { echo "::error::Test bản Pro thất bại — xem CI repo source-craft-pro."; exit 1; }
+
   build:
+    needs: pro
     strategy:
       fail-fast: false
       matrix:
@@ -23,6 +107,34 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # 248: đúng commit job `pro` đã chốt (mọi nền tảng cùng một bản Pro).
+      - name: Lấy repo Pro (commit đã chốt)
+        if: needs.pro.outputs.sha != ''
+        uses: actions/checkout@v4
+        with:
+          repository: hoanghainh1188/source-craft-pro
+          ref: ${{ needs.pro.outputs.sha }}
+          ssh-key: ${{ secrets.SOURCECRAFT_PRO_DEPLOY_KEY }}
+          persist-credentials: false
+          path: .pro
+
+      # pro-overlay.mjs chỉ chép src/ + tests/ + 2 tệp ghim (không bao giờ .git/.github), kiểm dấu
+      # LicenseRef-SourceCraft-Pro trên mọi tệp mã; sau đó xoá hẳn .pro kèm .git/.github của nó.
+      - name: Chép đè src/main/pro/ bằng bản Pro
+        if: needs.pro.outputs.sha != ''
+        shell: bash
+        run: |
+          node scripts/pro-overlay.mjs apply .pro
+          rm -rf .pro
+          grep -q "LicenseRef-SourceCraft-Pro" src/main/pro/index.ts
+
+      - name: Build bằng stub (không có chức năng Pro)
+        if: needs.pro.outputs.sha == ''
+        shell: bash
+        run: echo "::warning::Không có bản Pro — bộ cài này dùng stub src/main/pro/."
 
       - name: Cài MSYS2 (toolchain MinGW cho FFmpeg)
         if: matrix.platform == 'win'
@@ -65,9 +177,13 @@ jobs:
             release/*.dmg
             release/*.exe
           if-no-files-found: error
+          # Chạy tay chỉ để kiểm thử ⇒ giữ ngắn.
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/v') && 90 || 7 }}
 
   release:
     needs: build
+    # Chỉ phát hành khi đẩy tag v* — chạy tay (workflow_dispatch) chỉ build.
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write

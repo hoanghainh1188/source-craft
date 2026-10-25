@@ -108,6 +108,8 @@ export const coreVi = {
       "Chính sách nhật ký kiểm toán của tổ chức bị cấu hình sai, nên AI tạm thời bị khoá. Hãy liên hệ bộ phận IT.",
     auditKeyUnavailable:
       "Không truy cập được khoá ký nhật ký kiểm toán trong kho khoá của hệ điều hành, nên AI tạm thời bị khoá. Hãy liên hệ bộ phận IT.",
+    proUnavailable:
+      "Bản này không có chức năng Pro — hãy dùng bản phát hành chính thức của SourceCraft.",
   },
   online: {
     auth: "Khóa API không hợp lệ hoặc đã hết hạn.",
@@ -308,6 +310,8 @@ export const coreEn: Widen<typeof coreVi> = {
       "Your organization's audit log policy is misconfigured, so AI is temporarily locked. Please contact your IT department.",
     auditKeyUnavailable:
       "The audit log signing key in the operating system keychain could not be accessed, so AI is temporarily locked. Please contact your IT department.",
+    proUnavailable:
+      "This build does not include Pro features — please use an official SourceCraft release.",
   },
   online: {
     auth: "The API key is invalid or has expired.",

@@ -9,13 +9,17 @@ export default defineConfig({
   resolve: { alias: { "@shared": resolve("src/shared") } },
   test: {
     environment: "node",
-    include: ["tests/unit/**/*.test.ts"],
+    // 248: test của module Pro nằm cạnh mã trong src/main/pro/ (stub: api-types + stub; bản Pro: thêm tests/) vì cả
+    // thư mục được chép đè lúc build release.
+    include: ["tests/unit/**/*.test.ts", "src/main/pro/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       include: [
         "src/main/services/**/*.ts",
         "src/main/db/**/*.ts",
+        "src/main/pro/**/*.ts",
+        "scripts/pro-chunk.ts",
         "src/main/logging.ts",
         "src/shared/ipc/**/*.ts",
         "src/shared/i18n/**/*.ts",
@@ -97,6 +101,7 @@ export default defineConfig({
       // Chỉ loại các adapter I/O native / composition root (không test được thuần). pipeline.ts GIỮ
       // trong ngưỡng vì chứa business logic (cancel/resume/error-by-step) đã phủ test bằng DI.
       exclude: [
+        "src/main/pro/**/*.test.ts",
         // 186: entry utilityProcess (Whisper/transformers.js, parentPort) — chỉ chạy trong Electron, phủ bởi e2e
         // (IV_ASR_FAKE). Phần thuần (giao thức, ASR giả) đã tính coverage.
         "src/main/services/meeting-capture/asr-worker.ts",

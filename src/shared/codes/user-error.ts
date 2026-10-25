@@ -67,6 +67,8 @@ export const USER_ERROR_CODES = [
   "auditWriteFailed",
   "auditPolicyInvalid",
   "auditKeyUnavailable",
+  // 248 — bản build không có chức năng Pro (stub src/main/pro/)
+  "proUnavailable",
 ] as const;
 
 export type UserErrorCode = (typeof USER_ERROR_CODES)[number];

@@ -69,6 +69,7 @@ import { resolveLegacyUserDataPath } from "./services/app-shell/user-data-path";
 import { buildAboutPanelOptions } from "./services/app-shell/about-panel";
 import { loadLibraries } from "./services/app-shell/about-licenses";
 import { registerIpc } from "./ipc/register";
+import * as pro from "./pro";
 import { openDatabase } from "./db/database";
 import { runMigrations } from "./db/migrations";
 import { createNotebookRepo } from "./services/notebooks/notebook-repo";
@@ -433,6 +434,8 @@ if (gotSingleInstanceLock) {
     platform: process.platform,
     arch: process.arch,
     packaged: app.isPackaged,
+    // 248: bản build có chức năng Pro không (stub repo public ⇒ false; bản phát hành chính thức ⇒ true).
+    pro: pro.available(),
   });
 
   // 093: crash native ghi minidump CHỈ trên máy (ADR crash-report-clarify) — không bao giờ tự tải lên; dump có

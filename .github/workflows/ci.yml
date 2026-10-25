@@ -21,6 +21,11 @@ jobs:
       - name: Cài dependencies (từ lockfile)
         run: npm ci
 
+      # 248: src/main/pro/ của repo public PHẢI là stub MIT — chặn lọt mã repo private source-craft-pro (dấu SPDX
+      # LicenseRef-SourceCraft-Pro) và phụ thuộc Pro chưa khai ở package.json.
+      - name: Kiểm stub src/main/pro (không chứa mã Pro)
+        run: node scripts/pro-overlay.mjs check-stub
+
       - name: Lint (prettier --check + eslint + tsc)
         run: npm run lint
 
