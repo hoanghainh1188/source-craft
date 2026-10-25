@@ -571,3 +571,93 @@ describe("runMapReduce — kiểm huỷ ở đầu mỗi lần thử (review N5)
     expect(chat).toHaveBeenCalledTimes(1);
   });
 });
+
+// 233 (T010, FR-007, D4): map-reduce documentDiff — đóng lô theo nguồn + map prompt diff + nhãn vai trò
+describe("233: map-reduce documentDiff", () => {
+  it("đóng lô theo từng nguồn, map prompt riêng trích gần nguyên văn và gắn nhãn vai trò", async () => {
+    const calls: ChatMessage[][] = [];
+    const chat = vi.fn(async (messages: ChatMessage[]) => {
+      calls.push(messages);
+      const sys = messages[0].content;
+      const user = messages[1].content;
+      const ns = [...user.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]));
+      if (sys.includes("CLAUSES")) {
+        return ns
+          .map(
+            (n) => `- Điều khoản số ${n} giá trị 100tr thời hạn 30 ngày [${n}]`,
+          )
+          .join("\n");
+      }
+      return `Kết quả đối chiếu [${ns[0]}].`;
+    });
+
+    const diffGroups = [
+      [chunk("A", 0, "A0 ".repeat(60)), chunk("A", 1, "A1 ".repeat(60))],
+      [chunk("B", 0, "B0 ".repeat(60)), chunk("B", 1, "B1 ".repeat(60))],
+    ];
+
+    const out = await runMapReduce({
+      kind: "documentDiff",
+      groups: diffGroups,
+      budget: 300,
+      chat,
+      outputLanguage: "vi",
+      diffPair: {
+        baseTitle: "HopDong_Goc.pdf",
+        revisedTitle: "HopDong_SuaDoi.pdf",
+      },
+    });
+
+    expect(out.parts).toBeGreaterThan(1);
+    const mapCalls = calls.slice(0, -1);
+    const finalCall = calls[calls.length - 1];
+
+    // Không lô nào trộn đoạn của cả hai nguồn
+    for (const c of mapCalls) {
+      const userContent = c[1].content;
+      const hasA = userContent.includes("Tài liệu A");
+      const hasB = userContent.includes("Tài liệu B");
+      expect(hasA && hasB).toBe(false);
+
+      // Map prompt trích gần nguyên văn
+      expect(c[0].content).toContain("CLAUSES");
+      expect(c[0].content).toMatch(/near-verbatim|exact clause/i);
+    }
+
+    // Ghi chú bước cuối có gắn nhãn vai trò
+    const finalUser = finalCall[1].content;
+    expect(finalUser).toContain("[Bản gốc]");
+    expect(finalUser).toContain("[Bản sửa đổi]");
+    // Khối <pair> xuất hiện
+    expect(finalUser).toContain("<pair>");
+    expect(finalUser).toContain("HopDong_Goc.pdf");
+    expect(finalUser).toContain("HopDong_SuaDoi.pdf");
+  });
+
+  it("loại khác (summary) không bị ảnh hưởng: dùng mapPrompt thường và không gắn nhãn vai trò", async () => {
+    const calls: ChatMessage[][] = [];
+    const chat = vi.fn(async (messages: ChatMessage[]) => {
+      calls.push(messages);
+      const ns = [...messages[1].content.matchAll(/\[(\d+)\]/g)].map((m) =>
+        Number(m[1]),
+      );
+      if (messages[0].content.startsWith("Extract NOTES")) {
+        return `- ý [${ns[0]}]`;
+      }
+      return `Kết quả [${ns[0]}].`;
+    });
+
+    await runMapReduce({
+      kind: "summary",
+      groups: groups(2),
+      budget: 300,
+      chat,
+    });
+
+    expect(calls[0][0].content).toContain("Extract NOTES");
+    expect(calls[0][0].content).not.toContain("CLAUSES");
+    const finalUser = calls[calls.length - 1][1].content;
+    expect(finalUser).not.toContain("[Bản gốc]");
+    expect(finalUser).not.toContain("[Bản sửa đổi]");
+  });
+});

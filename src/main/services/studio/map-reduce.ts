@@ -8,10 +8,12 @@ import type { RetrievedChunk, ScoredChunk } from "../rag/rag-types";
 import { citationBlock } from "../rag/context-builder";
 import { postprocessCitations } from "../rag/citation";
 import {
+  DIFF_ROLE_LABELS,
   finalUserContent,
   languageReminder,
   outputLanguageLine,
   systemPromptFor,
+  type DiffPairTitles,
 } from "./prompt";
 import type { LanguageCode } from "@shared/i18n";
 import {
@@ -67,6 +69,16 @@ const notesRules = (lang: LanguageCode): string =>
 
 const mapPrompt = (lang: LanguageCode): string =>
   `Extract NOTES of the main points from the source passages NUMBERED [n] below. ${notesRules(lang)}`;
+
+// 233 (FR-007, D4): map prompt riêng cho documentDiff — trích gần nguyên văn các điều khoản và số liệu
+const mapPromptDiff = (lang: LanguageCode): string =>
+  [
+    "Extract near-verbatim CLAUSES and obligations from the source passages NUMBERED [n] below.",
+    "Preserve exact clause numbers, section headings, monetary amounts, dates, deadlines, percentages, obligor/obligee entities, and negation words.",
+    "DO NOT summarize away or round numbers.",
+    notesRules(lang),
+  ].join(" ");
+
 const condensePrompt = (lang: LanguageCode): string =>
   `Condense the NOTES below: merge duplicate points, drop minor details, KEEP the [n] chip of every point. ${notesRules(lang)}`;
 const FROM_NOTES =
@@ -214,6 +226,8 @@ export interface MapReduceInput {
    * Nhánh stream bị huỷ TRẢ phần dở, KHÔNG ném ⇒ ngay sau lượt này phải `assertNotAborted`.
    */
   writeChat?: Chat;
+  /** 233 (FR-006, D3): thông tin cặp so sánh [bản gốc, bản sửa đổi] cho khối <pair> ở bước cuối. */
+  diffPair?: DiffPairTitles;
 }
 
 export interface MapReduceOutput {
@@ -227,6 +241,11 @@ export interface MapReduceOutput {
   truncated: boolean;
 }
 
+interface BatchWithRole {
+  items: NumberedBlock[];
+  role?: "base" | "revised";
+}
+
 export async function runMapReduce({
   kind,
   groups,
@@ -238,6 +257,7 @@ export async function runMapReduce({
   signal,
   customPrompt,
   writeChat = chat,
+  diffPair,
 }: MapReduceInput): Promise<MapReduceOutput> {
   // 149: không phát tiến độ sau khi đã huỷ.
   const report = safeProgress(onProgress);
@@ -245,21 +265,43 @@ export async function runMapReduce({
     if (!signal?.aborted) report(step);
   };
   const { blocks, map } = numberAll(groups);
-  const allBatches = packBatches(blocks, budget);
+
+  // 233 (FR-007, D4): với documentDiff, đóng lô riêng theo từng nguồn để không trộn lẫn đoạn gốc và sửa đổi
+  let allBatches: BatchWithRole[];
+  if (kind === "documentDiff" && groups.length === 2) {
+    const group0Count = groups[0].length;
+    const group0Blocks = blocks.filter((b) => b.n <= group0Count);
+    const group1Blocks = blocks.filter((b) => b.n > group0Count);
+    const b0: BatchWithRole[] = packBatches(group0Blocks, budget).map(
+      (items) => ({ items, role: "base" as const }),
+    );
+    const b1: BatchWithRole[] = packBatches(group1Blocks, budget).map(
+      (items) => ({ items, role: "revised" as const }),
+    );
+    allBatches = [...b0, ...b1];
+  } else {
+    allBatches = packBatches(blocks, budget).map((items) => ({ items }));
+  }
+
   const batches = allBatches.slice(0, maxMapCalls);
+  const prompt =
+    kind === "documentDiff"
+      ? mapPromptDiff(outputLanguage)
+      : mapPrompt(outputLanguage);
 
   let notes: string[] = [];
   let emptyBatches = 0;
-  for (const [i, batch] of batches.entries()) {
+  for (const [i, batchObj] of batches.entries()) {
     assertNotAborted(signal); // 149: đầu mỗi phần
     // 146: một sự kiện mỗi phần, TRƯỚC lượt map đầu tiên (thử lại trong cùng phần không phát thêm).
     progress({ phase: "reading", index: i + 1, total: batches.length });
+    const batch = batchObj.items;
     const input = joined(batch);
     const batchMap = new Map(
       batch.map((b) => [b.n, map.get(b.n)!] as [number, RetrievedChunk]),
     );
     const messages: ChatMessage[] = [
-      { role: "system", content: mapPrompt(outputLanguage) },
+      { role: "system", content: prompt },
       {
         role: "user",
         content: `${input}\n\n${languageReminder(outputLanguage)}`,
@@ -278,6 +320,11 @@ export async function runMapReduce({
       }
     }
     if (got.length === 0) emptyBatches += 1;
+    // 233 (D4): gắn nhãn vai trò cho ghi chú trước khi vào bước viết cuối
+    if (batchObj.role) {
+      const roleLabel = DIFF_ROLE_LABELS[outputLanguage][batchObj.role];
+      got = got.map((note) => `- [${roleLabel}] ${note.replace(/^- /, "")}`);
+    }
     notes.push(...got);
   }
   if (notes.length === 0) {
@@ -306,7 +353,13 @@ export async function runMapReduce({
     },
     {
       role: "user",
-      content: finalUserContent(kind, customPrompt, finalInput, outputLanguage),
+      content: finalUserContent(
+        kind,
+        customPrompt,
+        finalInput,
+        outputLanguage,
+        diffPair,
+      ),
     },
   ]);
   // 178 (PR 4): lượt viết có thể là stream — bị huỷ thì TRẢ phần dở (không ném) ⇒ chặn ngay, không trả kết quả dở.

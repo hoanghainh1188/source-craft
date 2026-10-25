@@ -273,6 +273,15 @@ export function StudioResultCard({
           {scopeNote(result.sourceIds, knownSourceIds, t)}
         </p>
       )}
+      {/* 233 (FR-008, D7): Ghi chú pháp lý cố định cho kết quả so sánh văn bản */}
+      {result.kind === "documentDiff" && (
+        <p
+          className="studio-diff-disclaimer"
+          data-testid="studio-diff-disclaimer"
+        >
+          {t.t("studio.diff.disclaimer")}
+        </p>
+      )}
       {notice && (
         <p
           className="studio-notice"

@@ -15,6 +15,7 @@ export const STUDIO_KINDS = [
   "briefing",
   "timeline",
   "keyTerms",
+  "documentDiff",
 ] as const;
 
 // 178: mọi giá trị `kind` DB chấp nhận (khớp CHECK của migration v11) — mở sẵn cho 4 loại mới + yêu cầu tuỳ chỉnh để
@@ -29,6 +30,7 @@ export const STUDIO_ALL_KINDS = [
   "timeline",
   "keyTerms",
   "custom",
+  "documentDiff",
 ] as const;
 
 // 178: trần phiên bản dùng chung main + renderer.

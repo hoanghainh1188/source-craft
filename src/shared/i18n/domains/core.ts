@@ -51,6 +51,8 @@ export const coreVi = {
     studioCustomPromptInvalid: "Yêu cầu không hợp lệ.",
     studioSourcesInvalid:
       "Phạm vi nguồn không hợp lệ (tối đa {max} nguồn của notebook này).",
+    studioDiffNeedTwoSources:
+      "So sánh văn bản cần chọn đúng 2 tài liệu khác nhau (bản gốc và bản sửa đổi) đã sẵn sàng và có nội dung.",
     chatModelNotSelected: "Chưa chọn mô hình trả lời (chat model).",
     embeddingModelNotSelected: "Chưa chọn mô hình embedding.",
     ollamaHttp: "Ollama trả lỗi {status}.",
@@ -237,6 +239,8 @@ export const coreEn: Widen<typeof coreVi> = {
     studioCustomPromptInvalid: "The request is not valid.",
     studioSourcesInvalid:
       "The source selection isn't valid (up to {max} sources from this notebook).",
+    studioDiffNeedTwoSources:
+      "Document comparison needs exactly 2 different ready sources with content (original and revised).",
     chatModelNotSelected: "No answer model selected.",
     embeddingModelNotSelected: "No embedding model selected.",
     ollamaHttp: "Ollama returned error {status}.",

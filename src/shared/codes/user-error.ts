@@ -28,6 +28,7 @@ export const USER_ERROR_CODES = [
   "studioCustomPromptTooLong",
   "studioCustomPromptInvalid",
   "studioSourcesInvalid", // 178 (PR 4): phạm vi nhiều nguồn sai
+  "studioDiffNeedTwoSources", // 233: documentDiff cần đúng 2 nguồn khác nhau, ready và có nội dung
   "chatModelNotSelected",
   "embeddingModelNotSelected",
   "ollamaHttp",

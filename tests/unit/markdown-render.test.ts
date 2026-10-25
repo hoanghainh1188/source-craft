@@ -103,4 +103,43 @@ describe("#129: trích dẫn gộp trong nội dung đã lưu", () => {
       host.querySelector('button.cite[data-testid="cite-2"]'),
     ).toBeTruthy();
   });
+
+  // 233 (T018, FR-004, FR-006): chip [n] trong ô bảng GFM của documentDiff
+  it("chip [n] trong ô bảng GFM bấm được và kích hoạt onCite", () => {
+    const onCite = vi.fn();
+    const cite2: Citation = {
+      n: 2,
+      chunkId: "c2",
+      sourceId: "s2",
+      sourceTitle: "HopDong_SuaDoi.pdf",
+      locator: { page: 2, charStart: 10, charEnd: 20 },
+    };
+    const tableMarkdown = [
+      "| Điều khoản | Bản gốc | Bản sửa đổi | Ảnh hưởng / rủi ro |",
+      "| --- | --- | --- | --- |",
+      "| Điều 5: Thanh toán | 30 ngày [1] | 15 ngày [2] | Rút ngắn thời gian thanh toán [1, 2] |",
+    ].join("\n");
+
+    const host = render(
+      tableMarkdown,
+      onCite,
+      new Map([
+        [1, cite],
+        [2, cite2],
+      ]),
+    );
+
+    const table = host.querySelector("table");
+    expect(table).toBeTruthy();
+
+    const chips = host.querySelectorAll<HTMLButtonElement>("table button.cite");
+    expect(chips.length).toBeGreaterThanOrEqual(4); // [1] ở gốc, [2] ở sửa đổi, [1] và [2] ở rủi ro
+
+    const chip2 = host.querySelector<HTMLButtonElement>(
+      'table button.cite[data-testid="cite-2"]',
+    );
+    expect(chip2).toBeTruthy();
+    chip2!.click();
+    expect(onCite).toHaveBeenCalledWith(cite2);
+  });
 });
