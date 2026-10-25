@@ -870,18 +870,23 @@ app
                 })
               ).content,
           ),
-        chat: async (messages) =>
+        chat: async (messages, options) =>
           (
             await pickProvider(target).chat({
               messages,
               numCtx: await chatNumCtx(target),
+              temperature: options?.temperature,
             })
           ).content,
         // Streaming (039): cùng provider active, truyền onToken/signal xuống chat.
-        chatStream: async (messages, opts) =>
+        chatStream: async (messages, opts, options) =>
           (
             await pickProvider(target).chat(
-              { messages, numCtx: await chatNumCtx(target) },
+              {
+                messages,
+                numCtx: await chatNumCtx(target),
+                temperature: options?.temperature,
+              },
               opts,
             )
           ).content,

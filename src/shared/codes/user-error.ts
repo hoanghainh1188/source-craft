@@ -56,6 +56,7 @@ export const USER_ERROR_CODES = [
   "licenseRequireProSharedNotebooks",
   "licenseRequireProCrossSearch",
   "licenseRequireProExport",
+  "licenseRequireProSpecialistModes",
   "packageCorrupted",
   "notebookReadOnly",
 ] as const;

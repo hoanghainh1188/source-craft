@@ -16,6 +16,7 @@ const DEFAULT_PRO_FEATURES = [
   "sharedNotebooks",
   "crossNotebookSearch",
   "brandedExport",
+  "specialistAiModes",
 ];
 const DEFAULT_ENTERPRISE_FEATURES = [
   "multimedia",
@@ -26,6 +27,7 @@ const DEFAULT_ENTERPRISE_FEATURES = [
   "itPolicy",
   "crossNotebookSearch",
   "brandedExport",
+  "specialistAiModes",
 ];
 
 /**

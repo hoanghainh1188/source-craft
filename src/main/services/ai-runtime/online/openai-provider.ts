@@ -23,17 +23,21 @@ const LABEL = PROVIDER_LABELS.openai;
 export interface OpenAIRequestBody {
   model: string;
   messages: { role: "system" | "user" | "assistant"; content: string }[];
+  temperature?: number;
 }
 
 /** THUẦN: ChatMessage[] → body OpenAI (messages nguyên dạng). */
 export function toOpenAIRequest(
   messages: ChatMessage[],
   model: string,
+  temperature?: number,
 ): OpenAIRequestBody {
-  return {
+  const body: OpenAIRequestBody = {
     model,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
   };
+  if (temperature !== undefined) body.temperature = temperature;
+  return body;
 }
 
 /** THUẦN: parse response OpenAI → chuỗi content của choice đầu. */
@@ -66,7 +70,10 @@ export class OpenAIProvider implements LLMProvider {
         {
           url: ENDPOINT,
           headers,
-          body: { ...toOpenAIRequest(req.messages, model), stream: true },
+          body: {
+            ...toOpenAIRequest(req.messages, model, req.temperature),
+            stream: true,
+          },
           fetchFn: this.deps.fetchFn,
           signal: opts.signal,
           providerLabel: LABEL,
@@ -86,7 +93,7 @@ export class OpenAIProvider implements LLMProvider {
     const json = await callJson({
       url: ENDPOINT,
       headers,
-      body: toOpenAIRequest(req.messages, model),
+      body: toOpenAIRequest(req.messages, model, req.temperature),
       fetchFn: this.deps.fetchFn,
       timeoutMs: this.deps.timeoutMs,
       providerLabel: LABEL,

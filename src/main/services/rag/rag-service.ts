@@ -24,13 +24,18 @@ import {
 
 // Điều phối hỏi đáp (rag:ask). DI: retrieval deps + chat. KHÔNG log câu hỏi/nội dung (Constitution III).
 
+export interface ChatOptions {
+  temperature?: number;
+}
+
 export interface RagServiceDeps extends RetrievalDeps {
   /** Gọi LLM chat với messages[], trả nội dung câu trả lời (wrap LLMProvider.chat → content). */
-  chat: (messages: ChatMessage[]) => Promise<string>;
+  chat: (messages: ChatMessage[], options?: ChatOptions) => Promise<string>;
   /** Bản streaming (039): gọi onToken mỗi delta, trả nội dung ĐẦY ĐỦ (hoặc phần đã nhận nếu huỷ). */
   chatStream: (
     messages: ChatMessage[],
     opts: ChatStreamOpts,
+    options?: ChatOptions,
   ) => Promise<string>;
   /**
    * 059: notebook NÀY có đang tái lập chỉ mục (chưa nhúng đủ vector) không? true → trả thông báo "đang tái
@@ -89,7 +94,7 @@ export function createRagService(deps: RagServiceDeps) {
   // cho non-stream (deps.chat) và stream (deps.chatStream + onToken) — 039.
   async function compute(
     input: RagAskInput,
-    chatFn: (messages: ChatMessage[]) => Promise<string>,
+    chatFn: (messages: ChatMessage[], options?: ChatOptions) => Promise<string>,
   ): Promise<RagAnswer> {
     const question = validateQuestion(input.question);
     const mode = validateMode(input.mode);
@@ -125,10 +130,12 @@ export function createRagService(deps: RagServiceDeps) {
 
     const built = buildContext(scored);
     // 123 (FR-017): trả lời theo ngôn ngữ câu hỏi — chỉ định rõ khi nhận diện chắc chắn vi/en.
+    // 238: áp dụng persona và grounding chuyên gia (Pháp lý / Y tế) theo domainMode.
     const system = systemPromptFor(
       mode,
       built.contextText,
       detectQuestionLanguage(question),
+      input.domainMode,
     );
     const recent = history.slice(-MAX_HISTORY_TURNS);
     const messages: ChatMessage[] = [
@@ -137,7 +144,13 @@ export function createRagService(deps: RagServiceDeps) {
       { role: "user", content: question },
     ];
 
-    const raw = await chatFn(messages);
+    // 238: chế độ chuyên gia yêu cầu tính chính xác cao, giảm suy diễn tùy tiện (temperature 0.1).
+    const temperature =
+      input.domainMode === "legal" || input.domainMode === "medical"
+        ? 0.1
+        : undefined;
+
+    const raw = await chatFn(messages, { temperature });
     const processed = postprocessCitations(raw, built.map);
     const answer = processed.answer;
     // 231: CHỈ khi tìm toàn cục mới gắn sổ tay vào trích dẫn (phân biệt nguồn giữa các sổ tay). Trong 1 sổ tay,
@@ -178,7 +191,9 @@ export function createRagService(deps: RagServiceDeps) {
   return {
     async ask(input: RagAskInput): Promise<RagAnswer> {
       // deps.chat ném ở compute → ask ném TRƯỚC persist → không lưu lượt lỗi (đúng A2).
-      const result = await compute(input, deps.chat);
+      const result = await compute(input, (messages, options) =>
+        deps.chat(messages, options),
+      );
       persist(input, result);
       return result;
     },
@@ -191,8 +206,8 @@ export function createRagService(deps: RagServiceDeps) {
       input: RagAskInput,
       opts: ChatStreamOpts,
     ): Promise<RagAnswer> {
-      const result = await compute(input, (messages) =>
-        deps.chatStream(messages, opts),
+      const result = await compute(input, (messages, options) =>
+        deps.chatStream(messages, opts, options),
       );
       persist(input, result);
       return result;

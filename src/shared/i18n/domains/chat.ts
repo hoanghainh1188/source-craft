@@ -35,6 +35,17 @@ export const chatVi = {
     lockedTooltip:
       "Tìm kiếm toàn cục đa sổ tay yêu cầu bản quyền Pro hoặc Enterprise",
   },
+  domain: {
+    groupLabel: "Chuyên ngành",
+    general: "Chung",
+    legal: "Pháp lý & Hợp đồng",
+    medical: "Y tế & Lâm sàng",
+    proBadge: "PRO",
+    proTooltip: "Chế độ chuyên gia (Bản quyền Pro/Enterprise)",
+    lockedTooltip: "Chế độ chuyên gia yêu cầu bản quyền Pro hoặc Enterprise",
+    disclaimerMedical:
+      "Thông tin trên chỉ mang tính chất tham khảo y khoa từ tài liệu nạp, không thay thế chẩn đoán hoặc chỉ định trực tiếp từ bác sĩ chuyên khoa.",
+  },
   ungroundedBadge: "Mở rộng · có thể ngoài nguồn",
   ungroundedTitle:
     "Câu trả lời ở chế độ Mở rộng có thể chứa kiến thức ngoài tài liệu nguồn.",
@@ -94,6 +105,17 @@ export const chatEn: Widen<typeof chatVi> = {
     proTooltip:
       "Cross-notebook search across all notebooks (Pro/Enterprise license)",
     lockedTooltip: "Cross-notebook search requires a Pro or Enterprise license",
+  },
+  domain: {
+    groupLabel: "Domain",
+    general: "General",
+    legal: "Legal & Contracts",
+    medical: "Medical & Clinical",
+    proBadge: "PRO",
+    proTooltip: "Specialist mode (Pro/Enterprise license)",
+    lockedTooltip: "Specialist mode requires a Pro or Enterprise license",
+    disclaimerMedical:
+      "The information provided is for medical reference from ingested documents only and does not replace professional clinical diagnosis or medical advice.",
   },
   ungroundedBadge: "Extended · may go beyond sources",
   ungroundedTitle:

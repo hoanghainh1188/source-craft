@@ -6,7 +6,13 @@ import {
   useSyncExternalStore,
 } from "react";
 import { runtimeStatusStore } from "../ai-runtime/runtime-status-store";
-import type { AiTarget, Citation, RagMode, RagTurn } from "@shared/ipc/types";
+import type {
+  AiTarget,
+  Citation,
+  DomainMode,
+  RagMode,
+  RagTurn,
+} from "@shared/ipc/types";
 import type { Translator } from "@shared/i18n";
 import type { ParsedIpcError } from "@shared/online-error-tag";
 import { announce } from "../../shared/a11y/announcer";
@@ -66,6 +72,7 @@ export function useChat(notebookId: string) {
   const [mode, setMode] = useState<RagMode>("grounded");
   const [scope, setScope] =
     useState<import("@shared/ipc/types").RagSearchScope>("current");
+  const [domainMode, setDomainMode] = useState<DomainMode>("general");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ChatError | null>(null);
   const [failedTurn, setFailedTurn] = useState<FailedTurn | null>(null);
@@ -218,6 +225,7 @@ export function useChat(notebookId: string) {
           history,
           streamId,
           scope,
+          domainMode,
           ...(local ? { target: "local" as const } : {}),
         });
         // Lượt đã bị huỷ/đổi notebook giữa chừng → không ghi đè (streamId không còn active).
@@ -312,6 +320,8 @@ export function useChat(notebookId: string) {
     setMode,
     scope,
     setScope,
+    domainMode,
+    setDomainMode,
     loading,
     error,
     failedTurn,

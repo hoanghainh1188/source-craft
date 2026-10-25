@@ -141,6 +141,8 @@ export interface ChatRequest {
   model?: string;
   /** 105: cửa sổ ngữ cảnh (token) ép cho Ollama (`options.num_ctx`); provider online bỏ qua. */
   numCtx?: number;
+  /** 238: nhiệt độ lấy mẫu (temperature) — chuyên ngành như pháp lý/y tế dùng 0.1 để tăng độ chính xác. */
+  temperature?: number;
 }
 export interface ChatResult {
   content: string;
@@ -363,6 +365,9 @@ export type AiTarget = "active" | "local";
 
 export type RagSearchScope = "current" | "all";
 
+/** 238: Chế độ AI chuyên môn theo lĩnh vực */
+export type DomainMode = "general" | "legal" | "medical";
+
 export interface RagAskInput {
   notebookId: string;
   question: string;
@@ -370,6 +375,7 @@ export interface RagAskInput {
   history: RagTurn[];
   target?: AiTarget;
   scope?: RagSearchScope;
+  domainMode?: DomainMode;
 }
 
 /** Trích dẫn: số [n] trong câu trả lời → chunk/nguồn/vị trí thật (dữ liệu cho source-viewer 006). */
@@ -503,6 +509,8 @@ export interface StudioGenerateInput {
   outputLanguage?: "vi" | "en";
   /** 146: định danh lượt tạo (renderer sinh) — thiếu/không hợp lệ ⇒ main không phát tiến độ. */
   generationId?: string;
+  /** 238: Chế độ AI chuyên môn theo lĩnh vực */
+  domainMode?: DomainMode;
 }
 
 /** 146: pha tiến độ Studio — thứ tự tăng dần (renderer bỏ sự kiện lùi). */
@@ -804,7 +812,8 @@ export type LicenseFeature =
   | "sharedNotebooks"
   | "itPolicy"
   | "crossNotebookSearch"
-  | "brandedExport";
+  | "brandedExport"
+  | "specialistAiModes";
 
 /** Signed payload inside a `.sclicense` file. */
 export interface LicensePayload {

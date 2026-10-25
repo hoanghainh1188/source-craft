@@ -1,0 +1,96 @@
+import { describe, expect, it } from "vitest";
+import type { ChatOptions } from "../../../src/main/services/rag/rag-service";
+import { createRagService } from "../../../src/main/services/rag/rag-service";
+
+describe("238 — Domain-specific AI modes sampling temperature", () => {
+  const baseDeps = {
+    embed: async () => [0.1, 0.2, 0.3],
+    search: async () => [
+      {
+        id: "chk-1",
+        sourceId: "src-1",
+        score: 0.1,
+      },
+    ],
+    searchBm25: () => [{ id: "chk-1", score: -5.0 }],
+    getChunksByIds: () => [
+      {
+        id: "chk-1",
+        sourceId: "src-1",
+        ordinal: 0,
+        text: "Điều 15 Hợp đồng quy định phạt vi phạm 8% giá trị vi phạm.",
+        locator: { page: 2, charStart: 0, charEnd: 80 },
+      },
+    ],
+    sourceTitle: () => "HopDongDichVu.pdf",
+  };
+
+  it("chế độ legal → chat nhận temperature = 0.1", async () => {
+    let capturedOptions: ChatOptions | undefined;
+    const rag = createRagService({
+      ...baseDeps,
+      chat: async (_messages, options) => {
+        capturedOptions = options;
+        return "Theo Điều 15 [1], mức phạt là 8%.";
+      },
+      chatStream: async () => "",
+    });
+
+    await rag.ask({
+      notebookId: "nb-1",
+      question: "Phạt vi phạm thế nào?",
+      mode: "grounded",
+      history: [],
+      domainMode: "legal",
+    });
+
+    expect(capturedOptions?.temperature).toBe(0.1);
+  });
+
+  it("chế độ medical → chatStream nhận temperature = 0.1", async () => {
+    let capturedOptions: ChatOptions | undefined;
+    const rag = createRagService({
+      ...baseDeps,
+      chat: async () => "",
+      chatStream: async (_messages, _opts, options) => {
+        capturedOptions = options;
+        return "Liều dùng [1].";
+      },
+    });
+
+    await rag.askStream(
+      {
+        notebookId: "nb-1",
+        question: "Liều dùng paracetamol?",
+        mode: "grounded",
+        history: [],
+        domainMode: "medical",
+      },
+      {},
+    );
+
+    expect(capturedOptions?.temperature).toBe(0.1);
+  });
+
+  it("chế độ general hoặc mặc định → temperature là undefined", async () => {
+    let capturedOptions: ChatOptions | undefined;
+    const rag = createRagService({
+      ...baseDeps,
+      chat: async (_messages, options) => {
+        capturedOptions = options;
+        return "Câu trả lời thông thường [1].";
+      },
+      chatStream: async () => "",
+    });
+
+    await rag.ask({
+      notebookId: "nb-1",
+      question: "Nội dung chung?",
+      mode: "grounded",
+      history: [],
+      domainMode: "general",
+    });
+
+    expect(capturedOptions?.temperature).toBeUndefined();
+  });
+});

@@ -89,6 +89,8 @@ export const coreVi = {
       "Tính năng Tìm kiếm & Hỏi đáp RAG Toàn bộ kho tri thức yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt bản quyền trong Cài đặt.",
     licenseRequireProExport:
       "Tính năng Xuất báo cáo Word (.docx) & PDF chuyên nghiệp yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt bản quyền trong Cài đặt.",
+    licenseRequireProSpecialistModes:
+      "Chế độ AI Chuyên gia (Pháp lý & Y tế) yêu cầu bản quyền Pro hoặc Enterprise. Vui lòng kích hoạt bản quyền trong Cài đặt.",
     packageCorrupted:
       "Tệp gói sổ tay (.scnb) bị hỏng hoặc không khớp mã kiểm tra SHA-256.",
     notebookReadOnly:
@@ -273,6 +275,8 @@ export const coreEn: Widen<typeof coreVi> = {
       "Cross-Notebook Search & RAG across all notebooks requires a Pro or Enterprise license. Please activate a license in Settings.",
     licenseRequireProExport:
       "Professional Word (.docx) and PDF export requires a Pro or Enterprise license. Please activate a license in Settings.",
+    licenseRequireProSpecialistModes:
+      "Specialist AI Modes (Legal & Medical) require a Pro or Enterprise license. Please activate a license in Settings.",
     packageCorrupted:
       "The notebook package (.scnb) file is corrupted or failed SHA-256 verification.",
     notebookReadOnly:

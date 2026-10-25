@@ -23,10 +23,14 @@ const LABEL = PROVIDER_LABELS.gemini;
 export interface GeminiRequestBody {
   systemInstruction?: { parts: { text: string }[] };
   contents: { role: "user" | "model"; parts: { text: string }[] }[];
+  generationConfig?: { temperature?: number };
 }
 
 /** THUẦN: ChatMessage[] → body Gemini. Gộp system → systemInstruction; user giữ 'user', assistant → 'model'. */
-export function toGeminiRequest(messages: ChatMessage[]): GeminiRequestBody {
+export function toGeminiRequest(
+  messages: ChatMessage[],
+  temperature?: number,
+): GeminiRequestBody {
   const system = messages
     .filter((m) => m.role === "system")
     .map((m) => m.content)
@@ -39,6 +43,7 @@ export function toGeminiRequest(messages: ChatMessage[]): GeminiRequestBody {
     }));
   const body: GeminiRequestBody = { contents };
   if (system) body.systemInstruction = { parts: [{ text: system }] };
+  if (temperature !== undefined) body.generationConfig = { temperature };
   return body;
 }
 
@@ -81,7 +86,7 @@ export class GeminiProvider implements LLMProvider {
         {
           url: `${BASE}/${m}:streamGenerateContent?alt=sse`,
           headers: { "x-goog-api-key": key },
-          body: toGeminiRequest(req.messages),
+          body: toGeminiRequest(req.messages, req.temperature),
           fetchFn: this.deps.fetchFn,
           signal: opts.signal,
           providerLabel: LABEL,
@@ -101,7 +106,7 @@ export class GeminiProvider implements LLMProvider {
     const json = await callJson({
       url: `${BASE}/${m}:generateContent`,
       headers: { "x-goog-api-key": key },
-      body: toGeminiRequest(req.messages),
+      body: toGeminiRequest(req.messages, req.temperature),
       fetchFn: this.deps.fetchFn,
       timeoutMs: this.deps.timeoutMs,
       providerLabel: LABEL,

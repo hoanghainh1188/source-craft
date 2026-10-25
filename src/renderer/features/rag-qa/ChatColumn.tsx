@@ -5,6 +5,8 @@ import { MessageBubble } from "./MessageBubble";
 import { ModeToggle, MODE_HINTS } from "./ModeToggle";
 import { ScopeToggle } from "./ScopeToggle";
 import { CROSS_SEARCH_UPSELL, useScopeGate } from "./useScopeGate";
+import { DomainToggle } from "./DomainToggle";
+import { SPECIALIST_MODES_UPSELL, useDomainGate } from "./useDomainGate";
 import { UpgradePrompt } from "../license-upsell/UpgradePrompt";
 import { IconSend } from "../../shared/icons";
 import { useT } from "../../shared/i18n/i18n-context";
@@ -25,6 +27,8 @@ export function ChatColumn({
     setMode,
     scope,
     setScope,
+    domainMode,
+    setDomainMode,
     loading,
     error,
     failedTurn,
@@ -39,6 +43,8 @@ export function ChatColumn({
   } = useChat(notebookId);
   // 231: gói Free ⇒ khoá "Toàn bộ kho" + mời nâng cấp ngay tại composer.
   const scopeGate = useScopeGate(scope, setScope);
+  // 238: gói Free ⇒ khoá Chế độ Chuyên gia (Pháp lý / Y tế) + mời nâng cấp.
+  const domainGate = useDomainGate(domainMode, setDomainMode);
   const t = useT();
   const [draft, setDraft] = useState("");
   // 098: khối lỗi (chứa nút vừa bấm) biến mất khi hỏi lại ⇒ đưa focus về vùng hội thoại, không để rơi ra <body>.
@@ -179,6 +185,13 @@ export function ChatColumn({
                   locked={scopeGate.locked}
                   onLockedClick={scopeGate.showUpsell}
                 />
+                <DomainToggle
+                  domainMode={domainMode}
+                  onChange={domainGate.changeDomain}
+                  disabled={loading}
+                  locked={domainGate.locked}
+                  onLockedClick={domainGate.showUpsell}
+                />
                 <span
                   className="model-chip"
                   title={t.t("chat.modelChipTitle")}
@@ -214,6 +227,9 @@ export function ChatColumn({
             </div>
             {scopeGate.upsellVisible && (
               <UpgradePrompt error={CROSS_SEARCH_UPSELL} />
+            )}
+            {domainGate.upsellVisible && (
+              <UpgradePrompt error={SPECIALIST_MODES_UPSELL} />
             )}
             <p className="modehint" data-testid="mode-hint">
               {t.t(MODE_HINTS[mode])}

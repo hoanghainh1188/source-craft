@@ -83,9 +83,15 @@ interface RawTag {
   size?: number;
 }
 
-/** 105: num_ctx tường minh khi có (Ollama mặc định cửa sổ nhỏ — prompt dài bị cắt đầu âm thầm). */
-const ctxOptions = (req: ChatRequest): { options?: { num_ctx: number } } =>
-  req.numCtx ? { options: { num_ctx: req.numCtx } } : {};
+/** 105: num_ctx tường minh khi có. 238: temperature deterministic cho chế độ chuyên gia. */
+const modelOptions = (
+  req: ChatRequest,
+): { options?: { num_ctx?: number; temperature?: number } } => {
+  const options: { num_ctx?: number; temperature?: number } = {};
+  if (req.numCtx) options.num_ctx = req.numCtx;
+  if (req.temperature !== undefined) options.temperature = req.temperature;
+  return Object.keys(options).length > 0 ? { options } : {};
+};
 
 /** Giá trị `think` gửi Ollama: false = tắt suy luận; "low" = mức thấp nhất (gpt-oss bỏ qua false). */
 export type ThinkSetting = false | "low";
@@ -209,7 +215,7 @@ export function createOllamaClient(
               messages: req.messages,
               stream: true,
               ...think,
-              ...ctxOptions(req),
+              ...modelOptions(req),
             },
             fetchFn,
             signal: opts.signal,
@@ -249,7 +255,7 @@ export function createOllamaClient(
             messages: req.messages,
             stream: false,
             ...think,
-            ...ctxOptions(req),
+            ...modelOptions(req),
           }),
           signal: controller.signal,
         });
