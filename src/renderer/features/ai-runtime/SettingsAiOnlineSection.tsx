@@ -32,6 +32,8 @@ export function SettingsAiOnlineSection(): JSX.Element {
   const onError = (e: unknown): void => setError(toParsedError(e));
 
   const confirmProvider = state?.providers.find((p) => p.id === confirmId);
+  // 228: chính sách IT forceLocalOnly — main đã chặn; UI khoá toggle/kiểm tra để không mời thao tác vô ích.
+  const lockedBy = state?.cloudLockedBy ?? null;
 
   return (
     <section
@@ -50,6 +52,16 @@ export function SettingsAiOnlineSection(): JSX.Element {
         {t.t("ai.online.egressNote")}
       </p>
 
+      {lockedBy !== null && (
+        <p
+          className="ai-note ai-error"
+          data-testid="online-policy-lock"
+          role="note"
+        >
+          {t.t("errors.policyCloudDisabled", { org: lockedBy })}
+        </p>
+      )}
+
       {error && (
         <div
           className="ai-note ai-error"
@@ -64,6 +76,7 @@ export function SettingsAiOnlineSection(): JSX.Element {
         <ProviderRow
           key={p.id}
           view={p}
+          locked={lockedBy !== null}
           onSaveKey={(k) => setKey(p.id, k).catch(onError)}
           onDeleteKey={() => deleteKey(p.id).catch(onError)}
           onSetModel={(m) => setModel(p.id, m).catch(onError)}
@@ -76,7 +89,7 @@ export function SettingsAiOnlineSection(): JSX.Element {
         />
       ))}
 
-      {confirmProvider && (
+      {confirmProvider && lockedBy === null && (
         <div
           className="online-confirm"
           role="alertdialog"
@@ -117,6 +130,7 @@ export function SettingsAiOnlineSection(): JSX.Element {
 
 function ProviderRow({
   view,
+  locked,
   onSaveKey,
   onDeleteKey,
   onSetModel,
@@ -125,6 +139,7 @@ function ProviderRow({
   onTest,
 }: {
   view: OnlineProviderView;
+  locked: boolean;
   onSaveKey: (key: string) => void;
   onDeleteKey: () => void;
   onSetModel: (model: string | null) => void;
@@ -154,7 +169,7 @@ function ProviderRow({
           <input
             type="checkbox"
             checked={view.active}
-            disabled={!view.hasKey && !view.active}
+            disabled={locked || (!view.hasKey && !view.active)}
             data-testid={`online-toggle-${view.id}`}
             onChange={(e) =>
               e.target.checked ? onRequestActivate() : onDeactivate()
@@ -234,6 +249,7 @@ function ProviderRow({
           <button
             type="button"
             className="btn-sm"
+            disabled={locked}
             data-testid={`online-test-${view.id}`}
             onClick={() => {
               setTestState({ kind: "testing" });

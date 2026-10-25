@@ -83,6 +83,11 @@ export const coreVi = {
       "Địa chỉ máy chủ AI ({url}) không thuộc dải mạng nội bộ hợp lệ (RFC1918) hoặc tên miền nội bộ được phép.",
     lanAiRequireEnterprise:
       "Tính năng kết nối Máy chủ AI Mạng nội bộ (LAN) yêu cầu bản quyền Enterprise. Vui lòng nâng cấp bản quyền.",
+    lanAiUnreachable:
+      "Không kết nối được tới máy chủ AI nội bộ (LAN). Kiểm tra mạng nội bộ hoặc liên hệ quản trị viên.",
+    lanAiTimeout:
+      "Máy chủ AI nội bộ (LAN) phản hồi quá lâu (hết thời gian chờ).",
+    lanAiHttp: "Máy chủ AI nội bộ (LAN) báo lỗi (mã {status}).",
     policyCloudDisabled:
       "Tính năng AI Đám mây công cộng đã bị khoá bởi Chính sách Quản trị IT của Tổ chức ({org}).",
     licenseRequireProSharedNotebooks:
@@ -271,6 +276,12 @@ export const coreEn: Widen<typeof coreVi> = {
       "The AI server address ({url}) is not a valid private network (RFC1918) or allowed internal domain.",
     lanAiRequireEnterprise:
       "Connecting to a Local Area Network (LAN) AI Server requires an Enterprise license. Please upgrade your license.",
+    lanAiUnreachable:
+      "Couldn't reach the internal (LAN) AI server. Check your internal network or contact your administrator.",
+    lanAiTimeout:
+      "The internal (LAN) AI server took too long to respond (timed out).",
+    lanAiHttp:
+      "The internal (LAN) AI server returned an error (code {status}).",
     policyCloudDisabled:
       "Public Cloud AI features have been disabled by your Organization's IT Policy ({org}).",
     licenseRequireProSharedNotebooks:

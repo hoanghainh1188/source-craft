@@ -38,7 +38,11 @@ import { readFile, realpath } from "node:fs/promises";
 import { createLicenseService } from "./services/license/license-service";
 import { createPolicyService } from "./services/policy/policy-service";
 import { createPackageService } from "./services/notebooks/package/package-service";
-import { setLanProviderActive } from "./services/app-shell/privacy-state";
+import {
+  setLanProviderActive,
+  withEgress,
+} from "./services/app-shell/privacy-state";
+import { createLanRuntime } from "./services/ai-runtime/lan/lan-runtime";
 import {
   app,
   BrowserWindow,
@@ -458,9 +462,6 @@ app
     runMigrations(db);
     const notebookRepo = createNotebookRepo(db);
 
-    // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
-    const aiRuntime = createAiRuntime(store);
-
     // 228 — Enterprise IT Policy Service (reads enterprise-policy.json)
     const policyService = createPolicyService({
       userDataPath: join(dataDir.path, "enterprise-policy.json"),
@@ -473,11 +474,22 @@ app
         ),
     });
 
-    const lanConfigRaw = store.get("lanAi.config") as
-      Record<string, unknown> | undefined;
-    if (lanConfigRaw && Boolean(lanConfigRaw["enabled"])) {
-      setLanProviderActive(true);
-    }
+    // ai-runtime (007) — một instance dùng chung cho kênh ai:* và pipeline embed.
+    // 228: nhận policyService để forceLocalOnly khoá AI đám mây ngay ở main (SC-003).
+    const aiRuntime = createAiRuntime(store, policyService);
+
+    // #228: LAN AI là provider THẬT trong registry (không chỉ cờ badge). hasLicense đọc licenseService (khởi tạo ngay
+    // dưới) — sync() chỉ chạy sau khi licenseService sẵn sàng. Request LAN nằm trong egress "lanAi" (badge "đang gửi").
+    const lanRuntime = createLanRuntime({
+      store,
+      registry: aiRuntime.registry,
+      hasLicense: () => licenseService.gate.hasFeature("lanAi"),
+      getAllowedHosts: () => policyService.getAllowedLanHosts(),
+      getPolicyDefault: () => policyService.getPreconfiguredLanAi(),
+      fetchFn: fetch,
+      onActiveChange: setLanProviderActive,
+      egress: (fn) => withEgress(fn, "lanAi"),
+    });
 
     // 226 — Enterprise License & Feature Gate (100% offline Ed25519 signature verification).
     // E2E seam (unpackaged only): IV_E2E_LICENSE_TIER allows existing feature E2E suites (Studio, Ingestion, etc.)
@@ -512,6 +524,8 @@ app
       readFileBytes: async (filePath) =>
         new Uint8Array(await readFile(filePath)),
       broadcast: (status) => {
+        // #228: kích hoạt/huỷ bản quyền ⇒ LAN AI bật/tắt theo tính năng lanAi (badge khớp provider thật).
+        lanRuntime.sync();
         for (const w of BrowserWindow.getAllWindows()) {
           if (!w.isDestroyed())
             w.webContents.send(CHANNELS.licenseChanged, status);
@@ -519,6 +533,7 @@ app
       },
       logEvent: (event, meta) => logEvent(event, meta ?? {}),
     });
+    lanRuntime.sync();
 
     // ingestion (011): LanceDB + pipeline. Progress push tới mọi cửa sổ qua source:progress.
     // 109: bộ chấm độ liên quan (cross-encoder in-process) — chỉ khi bản ghi hiệu chuẩn bật. Tải nền một lần vào data dir
@@ -1073,7 +1088,7 @@ app
       recommendChatModel: () => recommendChatModel(totalmem()),
       ollamaHealth: () =>
         checkOllama({
-          ping: async () => (await aiRuntime.getRuntimeStatus()).reachable,
+          ping: async () => (await aiRuntime.testConnection()).reachable,
           listModels: () => aiRuntime.listModels(),
           selectedChatModel: () =>
             aiRuntime.getSelectedModels().chatModel ?? undefined,
@@ -1110,6 +1125,7 @@ app
         now: Date.now,
       }),
       policyService,
+      lanRuntime,
       packageService: createPackageService({
         getNotebook: (id) =>
           notebookRepo.list().find((n) => n.id === id) ?? null,
