@@ -32,6 +32,12 @@
 7. **Q7 — Audit log (#236)** (sửa lại): PR A (#249) đã merge vào `main` public trước khi đóng băng ⇒ **tạm ở lại public** (mã
    MIT theo Q1). Lõi audit (định dạng bản ghi, chuỗi băm, ký, mã hoá câu hỏi) **dời sang repo Pro ở đợt 4**, I/O qua
    `AuditFs`/keystore do core truyền vào. **PR B** (CLI audit) **không merge vào repo public**; làm ở repo Pro.
+   - **Ghi nhận sai lệch (2026-10-25):** PR B (#253) vẫn bị làm và merge vào `main` public, trái quyết định trên (PR C #254
+     — UI, IPC, i18n, tài liệu — đúng ranh giới 4.1 nên không vi phạm). Chủ dự án **giữ nguyên Q7**: CLI audit
+     (`src/main/services/audit/cli/` — verify, decrypt, keygen, report-text, run-cli) **dời sang repo Pro ở đợt 4 cùng lõi
+     audit**; core giữ phần rẽ nhánh dòng lệnh ở `main/index.ts`, `cli-args.ts` (phân tích tham số) và I/O `node-cli-fs.ts`,
+     gọi `pro.*`. Bản stub: lệnh `--audit-*` in thông báo không có chức năng Pro, mã thoát 2. Theo Q1, mã CLI đã nằm trong
+     lịch sử git public; việc dời chỉ bảo vệ các thay đổi về sau.
 
 ## Hệ quả
 
