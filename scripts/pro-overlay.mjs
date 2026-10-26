@@ -13,9 +13,10 @@ import {
   existsSync,
   mkdtempSync,
   readdirSync,
+  lstatSync,
   readFileSync,
+  renameSync,
   rmSync,
-  statSync,
 } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,14 +26,24 @@ export const STUB_DIR = join("src", "main", "pro");
 /** Hai tệp GIỐNG HỆT ở hai repo (check-stub.mjs của repo Pro so khớp) — không mang dấu bản quyền riêng. */
 export const PINNED_FILES = ["api-types.test.ts", "deps.json"];
 const CODE_EXT = /\.(ts|tsx|mts|cts|js|mjs|cjs)$/;
+const HEADER_RE = new RegExp(`^// SPDX-License-Identifier: ${PRO_MARKER}$`);
 
-/** Liệt kê tệp (đường dẫn tương đối, phân cách "/") dưới dir. */
+/** Tệp mã Pro mở đầu bằng header SPDX của bản Pro (trong 3 dòng đầu — chừa chỗ cho shebang). */
+export function hasProHeader(text) {
+  return text.split(/\r?\n/, 3).some((line) => HEADER_RE.test(line.trimEnd()));
+}
+
+/** Liệt kê tệp (đường dẫn tương đối, phân cách "/") dưới dir. Từ chối symlink (không đi theo liên kết ra ngoài). */
 export function listFiles(dir) {
   const out = [];
   const walk = (d) => {
     for (const name of readdirSync(d)) {
       const p = join(d, name);
-      if (statSync(p).isDirectory()) walk(p);
+      const st = lstatSync(p);
+      if (st.isSymbolicLink()) {
+        throw new Error(`không chấp nhận symlink: ${relative(dir, p)}`);
+      }
+      if (st.isDirectory()) walk(p);
       else out.push(relative(dir, p).split(sep).join("/"));
     }
   };
@@ -40,7 +51,10 @@ export function listFiles(dir) {
   return out.sort();
 }
 
-/** Tệp trong stub mang dấu bản Pro (phải rỗng ở repo public). */
+/**
+ * Tệp dưới dir có chuỗi dấu bản Pro ở BẤT KỲ đâu (ở repo public: phải rỗng trên toàn bộ src/). Cố ý rộng hơn
+ * hasProHeader: dò lọt mã thì bắt nhầm còn hơn bỏ sót.
+ */
 export function checkStub(dir) {
   return listFiles(dir).filter((f) =>
     readFileSync(join(dir, f), "utf8").includes(PRO_MARKER),
@@ -77,9 +91,14 @@ function assertDeps(depsPath, pkg) {
 /**
  * Thay toàn bộ targetDir bằng bản Pro ở proDir. Kiểm hết TRƯỚC khi đụng vào targetDir (lỗi ⇒ stub còn nguyên).
  * Chỉ ĐỌC proDir (không bao giờ chép .git/.github) ⇒ dùng được với bản clone local; release.yml tự xoá cả .pro sau đó.
- * Trả về danh sách tệp đã chép (tương đối với targetDir).
+ * Trả về danh sách tệp đã chép (tương đối với targetDir). `fsOps.rename` chỉ để test tiêm lỗi.
  */
-export function applyOverlay(proDir, targetDir, pkg) {
+export function applyOverlay(
+  proDir,
+  targetDir,
+  pkg,
+  fsOps = { rename: renameSync },
+) {
   const srcDir = join(proDir, "src");
   if (!existsSync(join(srcDir, "index.ts"))) {
     throw new Error("repo Pro thiếu src/index.ts");
@@ -98,7 +117,7 @@ export function applyOverlay(proDir, targetDir, pkg) {
   }
   const unmarked = plan
     .filter(({ to }) => CODE_EXT.test(to))
-    .filter(({ from }) => !readFileSync(from, "utf8").includes(PRO_MARKER))
+    .filter(({ from }) => !hasProHeader(readFileSync(from, "utf8")))
     .map(({ to }) => to);
   if (unmarked.length > 0) {
     throw new Error(
@@ -107,15 +126,24 @@ export function applyOverlay(proDir, targetDir, pkg) {
   }
   for (const f of PINNED_FILES) plan.push({ from: join(proDir, f), to: f });
 
-  // Dựng ở thư mục tạm cạnh đích rồi mới thay ⇒ không để lại stub nửa vời nếu chép lỗi giữa chừng.
+  // Dựng ở thư mục tạm cạnh đích, rồi tráo bằng rename (cùng ổ đĩa): đích cũ → backup, tạm → đích. Lỗi ở bất kỳ
+  // bước nào ⇒ trả backup về chỗ cũ ⇒ không bao giờ để lại stub nửa vời; thư mục tạm/backup luôn được dọn.
   const parent = dirname(resolve(targetDir));
   const staging = mkdtempSync(join(parent, ".pro-staging-"));
+  const backup = `${staging}-old`;
+  let movedOld = false;
   try {
     for (const { from, to } of plan) cpSync(from, join(staging, to));
-    rmSync(targetDir, { recursive: true, force: true });
-    cpSync(staging, targetDir, { recursive: true });
+    if (existsSync(targetDir)) {
+      fsOps.rename(targetDir, backup);
+      movedOld = true;
+    }
+    fsOps.rename(staging, targetDir);
+    movedOld = false;
   } finally {
+    if (movedOld) fsOps.rename(backup, targetDir);
     rmSync(staging, { recursive: true, force: true });
+    rmSync(backup, { recursive: true, force: true });
   }
   return plan.map(({ to }) => to);
 }
@@ -133,10 +161,11 @@ export function runCli(
   const stubDir = join(cwd, STUB_DIR);
   try {
     if (cmd === "check-stub") {
-      const marked = checkStub(stubDir);
+      // Quét cả src/ (không chỉ stub): mã Pro chép nhầm ra chỗ khác cũng bị chặn.
+      const marked = checkStub(join(cwd, "src")).map((f) => `src/${f}`);
       if (marked.length > 0) {
         log(
-          `${STUB_DIR} của repo public chứa mã Pro (${PRO_MARKER}): ${marked.join(", ")}. ` +
+          `src/ của repo public chứa mã Pro (${PRO_MARKER}): ${marked.join(", ")}. ` +
             "Khôi phục stub: git checkout -- src/main/pro && git clean -fd src/main/pro",
         );
         return 1;

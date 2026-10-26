@@ -2,8 +2,11 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -13,6 +16,7 @@ import {
   PRO_MARKER,
   applyOverlay,
   checkStub,
+  hasProHeader,
   missingDeps,
   parseDeps,
   runCli,
@@ -126,6 +130,68 @@ describe("applyOverlay", () => {
     expect(readFileSync(join(target, "index.ts"), "utf8")).toBe("// stub\n");
   });
 
+  it("repo Pro có symlink ⇒ lỗi (không đi theo liên kết ra ngoài)", () => {
+    const pro = makePro();
+    symlinkSync(join(root, "outside"), join(pro, "src", "link"));
+    expect(() =>
+      applyOverlay(pro, join(root, "target"), { dependencies: {} }),
+    ).toThrow(/symlink/);
+  });
+
+  it("dấu bản quyền phải ở header (3 dòng đầu), không phải giữa tệp", () => {
+    const pro = makePro();
+    write("pro/src/helper.ts", `export const a = 1;\n\n\n// ${PRO_MARKER}\n`);
+    expect(() =>
+      applyOverlay(pro, join(root, "target"), { dependencies: {} }),
+    ).toThrow(/helper\.ts/);
+  });
+
+  it("header sau shebang vẫn hợp lệ", () => {
+    expect(hasProHeader(`#!/usr/bin/env node\n${PRO_HEADER}x`)).toBe(true);
+    expect(hasProHeader(PRO_HEADER)).toBe(true);
+    expect(hasProHeader(`// x: ${PRO_MARKER}\n`)).toBe(false);
+    expect(hasProHeader("a\nb\nc\n" + PRO_HEADER)).toBe(false);
+  });
+
+  it("chép lỗi giữa chừng ⇒ stub cũ còn nguyên, không để lại thư mục tạm", () => {
+    const pro = makePro();
+    write("target/index.ts", "// stub\n");
+    const target = join(root, "target");
+    // Đổi tên thất bại (VD khác ổ đĩa) ⇒ lỗi.
+    expect(() =>
+      applyOverlay(
+        pro,
+        target,
+        { dependencies: {} },
+        {
+          rename: () => {
+            throw new Error("EXDEV giả");
+          },
+        },
+      ),
+    ).toThrow(/EXDEV/);
+    expect(readFileSync(join(target, "index.ts"), "utf8")).toBe("// stub\n");
+    expect(readdirSync(root).filter((n) => n.startsWith(".pro-"))).toEqual([]);
+  });
+
+  it("đã dời stub cũ mà đưa bản mới vào lỗi ⇒ trả stub cũ về chỗ", () => {
+    const pro = makePro();
+    write("target/index.ts", "// stub\n");
+    const target = join(root, "target");
+    let calls = 0;
+    const rename = (from: string, to: string) => {
+      calls += 1;
+      if (calls === 2) throw new Error("lỗi lần 2");
+      renameSync(from, to);
+    };
+    expect(() =>
+      applyOverlay(pro, target, { dependencies: {} }, { rename }),
+    ).toThrow(/lỗi lần 2/);
+    expect(calls).toBe(3);
+    expect(readFileSync(join(target, "index.ts"), "utf8")).toBe("// stub\n");
+    expect(readdirSync(root).filter((n) => n.startsWith(".pro-"))).toEqual([]);
+  });
+
   it("thiếu src/index.ts ⇒ lỗi", () => {
     const pro = makePro();
     rmSync(join(pro, "src/index.ts"));
@@ -153,7 +219,19 @@ describe("runCli", () => {
     expect(runCli(["check-stub"], { cwd: root, log })).toBe(0);
     write("src/main/pro/index.ts", PRO_HEADER);
     expect(runCli(["check-stub"], { cwd: root, log })).toBe(1);
-    expect(out.join("\n")).toMatch(/index\.ts/);
+    expect(out.join("\n")).toMatch(/src\/main\/pro\/index\.ts/);
+  });
+
+  it("check-stub: quét cả src/ (mã Pro lọt ra ngoài src/main/pro/ cũng bị chặn)", () => {
+    write("src/main/pro/index.ts", "// MIT\n");
+    write("src/main/pro/deps.json", "[]");
+    write("src/main/services/leak.ts", PRO_HEADER);
+    write("package.json", '{"dependencies":{}}');
+    const out: string[] = [];
+    expect(
+      runCli(["check-stub"], { cwd: root, log: (s: string) => out.push(s) }),
+    ).toBe(1);
+    expect(out.join("\n")).toMatch(/src\/main\/services\/leak\.ts/);
   });
 
   it("check-stub: deps.json của stub khai gói chưa có ⇒ 1", () => {

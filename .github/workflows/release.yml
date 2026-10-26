@@ -7,11 +7,13 @@ name: release
 # 248 — mô hình stub như Sheafly (docs/pro-repo-split-plan.md §4.2): job `pro` dùng deploy key CHỈ-ĐỌC
 # SOURCECRAFT_PRO_DEPLOY_KEY lấy repo private source-craft-pro, kiểm khớp stub và chốt MỘT commit cho mọi nền tảng;
 # job build chép đè src/main/pro/ bằng đúng commit đó rồi build.
-#   - Tag v* thiếu key ⇒ FAIL (không bao giờ phát hành nhầm bản thiếu Pro).
-#   - Chạy tay (workflow_dispatch) / fork thiếu key ⇒ cảnh báo, build bằng stub; chạy tay KHÔNG tạo GitHub Release.
-#   - Mã Pro KHÔNG bao giờ thành artifact (artifact của repo public ai cũng tải được) — chỉ upload bộ cài; mọi checkout
-#     repo Pro dùng persist-credentials: false. Lỗi tsc/test của bản Pro chỉ báo tóm tắt ở đây (log repo public là
-#     public — chi tiết xem ở CI repo source-craft-pro).
+#   - Đẩy tag v* (event push) thiếu key ⇒ FAIL (không bao giờ phát hành nhầm bản thiếu Pro).
+#   - Chạy tay (workflow_dispatch) / fork thiếu key ⇒ cảnh báo, build bằng stub.
+#   - Chạy tay CHỈ để kiểm build: KHÔNG upload bộ cài, KHÔNG tạo/ghi đè GitHub Release (kể cả khi chọn chạy từ một tag)
+#     — artifact của repo public ai cũng tải được, không để lộ bản Pro chưa phát hành (pro_ref tuỳ ý).
+#   - Mã Pro không bao giờ thành artifact; mọi checkout repo Pro dùng persist-credentials: false và nằm SAU npm ci
+#     (lifecycle script của gói npm không chạm được SSH key). Log repo public là public ⇒ khi có bản Pro, lỗi
+#     tsc/test/build chỉ báo tóm tắt (có thể in mã Pro) — chi tiết xem CI repo source-craft-pro / CI public (stub).
 on:
   push:
     tags: ["v*"]
@@ -36,7 +38,7 @@ jobs:
         id: key
         env:
           KEY: ${{ secrets.SOURCECRAFT_PRO_DEPLOY_KEY }}
-          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          IS_TAG: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
         run: |
           if [ -n "$KEY" ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
@@ -54,6 +56,16 @@ jobs:
         if: steps.key.outputs.present == 'true'
         with:
           persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Cài dependencies (từ lockfile)
+        if: steps.key.outputs.present == 'true'
+        run: npm ci
 
       - name: Lấy repo Pro
         if: steps.key.outputs.present == 'true'
@@ -73,16 +85,6 @@ jobs:
           sha="$(git -C .pro rev-parse HEAD)"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "### Bản build: Pro @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/setup-node@v4
-        if: steps.key.outputs.present == 'true'
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Cài dependencies (từ lockfile)
-        if: steps.key.outputs.present == 'true'
-        run: npm ci
 
       # Chép đè thử + tsc + test của bản Pro một lần trước khi build đa nền tảng. Ẩn chi tiết lỗi (có thể chứa mã Pro).
       - name: Kiểm bản Pro trên mã public (chép đè, tsc, test)
@@ -110,6 +112,33 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Cài MSYS2 (toolchain MinGW cho FFmpeg)
+        if: matrix.platform == 'win'
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            make diffutils curl xz mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Cài dependencies (từ lockfile)
+        run: npm ci
+
+      # FFmpeg LGPL tối giản (thay ffmpeg-static GPL/nonfree) — dựng từ mã nguồn đã ghim sha256. Windows: MSYS2/MinGW.
+      - name: Dựng FFmpeg LGPL (mac)
+        if: matrix.platform == 'mac'
+        run: npm run ffmpeg:build
+
+      - name: Dựng FFmpeg LGPL (win)
+        if: matrix.platform == 'win'
+        shell: msys2 {0}
+        run: bash scripts/build-ffmpeg-lgpl.sh
+
       # 248: đúng commit job `pro` đã chốt (mọi nền tảng cùng một bản Pro).
       - name: Lấy repo Pro (commit đã chốt)
         if: needs.pro.outputs.sha != ''
@@ -136,40 +165,27 @@ jobs:
         shell: bash
         run: echo "::warning::Không có bản Pro — bộ cài này dùng stub src/main/pro/."
 
-      - name: Cài MSYS2 (toolchain MinGW cho FFmpeg)
-        if: matrix.platform == 'win'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: false
-          install: >-
-            make diffutils curl xz mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Cài dependencies (từ lockfile)
-        run: npm ci
-
-      # FFmpeg LGPL tối giản (thay ffmpeg-static GPL/nonfree) — dựng từ mã nguồn đã ghim sha256. Windows: MSYS2/MinGW.
-      - name: Dựng FFmpeg LGPL (mac)
-        if: matrix.platform == 'mac'
-        run: npm run ffmpeg:build
-
-      - name: Dựng FFmpeg LGPL (win)
-        if: matrix.platform == 'win'
-        shell: msys2 {0}
-        run: bash scripts/build-ffmpeg-lgpl.sh
-
       - name: Build + đóng gói (electron-vite + electron-builder)
-        run: npm run dist:${{ matrix.platform }}
+        shell: bash
         env:
           # Bỏ qua ký macOS (v0.1 unsigned) — không tự dò chứng chỉ trên runner.
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          PLATFORM: ${{ matrix.platform }}
+          PRO_SHA: ${{ needs.pro.outputs.sha }}
+        run: |
+          if [ -z "$PRO_SHA" ]; then
+            npm run "dist:$PLATFORM"
+            echo "### $PLATFORM: build bằng stub" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Có bản Pro: ẩn output (lỗi bundle có thể in code frame mã Pro ra log public).
+          npm run "dist:$PLATFORM" > build.log 2>&1 \
+            || { echo "::error::Build với bản Pro thất bại — log bị ẩn để không lộ mã Pro; tái hiện bằng CI repo source-craft-pro hoặc build local."; exit 1; }
+          echo "### $PLATFORM: build bằng bản Pro @ \`$PRO_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload artifact
+        # Chỉ khi phát hành (đẩy tag) — chạy tay không upload bộ cài.
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.platform }}
@@ -177,13 +193,11 @@ jobs:
             release/*.dmg
             release/*.exe
           if-no-files-found: error
-          # Chạy tay chỉ để kiểm thử ⇒ giữ ngắn.
-          retention-days: ${{ startsWith(github.ref, 'refs/tags/v') && 90 || 7 }}
 
   release:
     needs: build
-    # Chỉ phát hành khi đẩy tag v* — chạy tay (workflow_dispatch) chỉ build.
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Chỉ phát hành khi ĐẨY tag v* — chạy tay (workflow_dispatch), kể cả chọn chạy từ tag, chỉ build.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -194,7 +208,7 @@ jobs:
           path: artifacts
 
       - name: Tạo GitHub pre-release + đính kèm dmg/exe
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           prerelease: false
           name: SourceCraft ${{ github.ref_name }} (pre-release)

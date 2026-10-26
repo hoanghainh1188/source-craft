@@ -36,9 +36,7 @@ export default defineConfig({
         input: {
           index: resolve("src/main/index.ts"),
           // 186: utilityProcess nhận dạng tiếng nói cho Ghi cuộc họp (tách khỏi việc ghi audio ở main).
-          "asr-worker": resolve(
-            "src/main/services/meeting-capture/asr-worker.ts",
-          ),
+          "asr-worker": resolve("src/main/services/meeting-capture/asr-worker.ts"),
         },
         // 248: mã src/main/pro/ (bản Pro chép đè lúc release) ở chunk riêng, chỉ chunk đó minify + không sourcemap.
         output: { manualChunks: proChunkOf },
