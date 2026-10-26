@@ -4,7 +4,12 @@ import type { AddressInfo } from "node:net";
 import { createServer, type Server } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { launchFresh, dismissOnboarding, sizedWindow } from "./helper";
+import {
+  launchFresh,
+  dismissOnboarding,
+  isProBuild,
+  sizedWindow,
+} from "./helper";
 
 // 178 (T033, FR-014, SC-008): 8 nút loại (lưới 2×4) ở cửa sổ 900 px — vi và en — không tràn / cuộn ngang; tạo một loại mới
 // với "Ollama" giả ⇒ thẻ kết quả có chip [n].
@@ -96,7 +101,7 @@ async function openNotebook(win: Page, file: string): Promise<string> {
 }
 
 for (const lang of ["vi", "en"] as const) {
-  test(`178 — 8 loại Studio vừa cột ở 900 px (${lang}); tạo Dòng thời gian`, async ({}, testInfo) => {
+  test(`178 — 8 loại Studio vừa cột ở 900 px (${lang}); tạo Dòng thời gian (stub: báo không có Pro)`, async ({}, testInfo) => {
     const fake = await fakeOllama();
     const app = await launchFresh({ OLLAMA_HOST: fake.url, IV_UI_LANG: lang });
     try {
@@ -140,9 +145,20 @@ for (const lang of ["vi", "en"] as const) {
       });
 
       await win.getByTestId("studio-btn-timeline").click();
-      const card = win.getByTestId("studio-card-timeline");
-      await expect(card).toBeVisible({ timeout: 15_000 });
-      await expect(card.locator(".cite").first()).toBeVisible();
+      if (isProBuild()) {
+        const card = win.getByTestId("studio-card-timeline");
+        await expect(card).toBeVisible({ timeout: 15_000 });
+        await expect(card.locator(".cite").first()).toBeVisible();
+      } else {
+        // 248 (đợt 2): bản stub ⇒ loại Pro báo "không có chức năng Pro" theo ngôn ngữ giao diện, không có kết quả.
+        await expect(win.getByTestId("studio-error-timeline")).toContainText(
+          lang === "vi"
+            ? "Bản này không có chức năng Pro"
+            : "This build does not include Pro features",
+          { timeout: 15_000 },
+        );
+        await expect(win.getByTestId("studio-card-timeline")).toHaveCount(0);
+      }
     } finally {
       await app.close();
       fake.server.close();

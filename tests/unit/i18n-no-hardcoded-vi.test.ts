@@ -94,8 +94,10 @@ export function findViLiterals(file: string, src: string): string[] {
 const EXEMPT = (rel: string): boolean =>
   rel === "src/shared/i18n/vi.ts" ||
   rel.startsWith("src/shared/i18n/domains/") ||
-  // 248: test của module Pro nằm trong src/main/pro/ (tên test, không phải chữ giao diện; không vào bản build).
-  (rel.startsWith("src/main/pro/") && rel.endsWith(".test.ts")) ||
+  // 248: module Pro (src/main/pro/, bản thật chép đè từ repo source-craft-pro) KHÔNG có chữ giao diện (§4.1: UI, i18n ở lại
+  // repo public) — chỉ có nội dung gửi model (nhãn trong lời nhắc theo ngôn ngữ đầu ra) và tên test. Tệp ở đó không nằm
+  // trong allowlist được vì không tồn tại ở repo public.
+  rel.startsWith("src/main/pro/") ||
   VI_LITERAL_ALLOWLIST.some((a) => a.file === rel);
 
 describe("không có chuỗi tiếng Việt viết cứng ngoài tệp dịch", () => {

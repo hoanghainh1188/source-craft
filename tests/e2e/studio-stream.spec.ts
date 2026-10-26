@@ -259,21 +259,21 @@ test("178 PR 4 — stream lượt viết: hiện dần không [n], ≤ 2 s, chip
     ).toEqual([]);
 
     // (2) Huỷ giữa stream ⇒ chữ tạm biến mất, không phiên bản mới, kết nối đóng.
-    const before = (await versionsOf(win, nbId, "faq")).length;
+    const before = (await versionsOf(win, nbId, "keyPoints")).length;
     fake.setStream({ count: 60, gapMs: 400 });
     const closedBefore = fake.stats.closed;
-    await win.getByTestId("studio-btn-faq").click();
-    const faqStream = win.getByTestId("studio-stream-faq");
-    await expect(faqStream).toBeVisible({ timeout: 15_000 });
-    await win.getByTestId("studio-cancel-faq").click();
-    await expect(faqStream).toHaveCount(0, { timeout: 2_000 });
+    await win.getByTestId("studio-btn-keyPoints").click();
+    const keyPointsStream = win.getByTestId("studio-stream-keyPoints");
+    await expect(keyPointsStream).toBeVisible({ timeout: 15_000 });
+    await win.getByTestId("studio-cancel-keyPoints").click();
+    await expect(keyPointsStream).toHaveCount(0, { timeout: 2_000 });
     await expect
       .poll(() => fake.stats.closed, { timeout: 5_000 })
       .toBeGreaterThan(closedBefore);
     await win.waitForTimeout(1_500);
-    await expect(win.getByTestId("studio-card-faq")).toHaveCount(0);
-    await expect(win.getByTestId("studio-error-faq")).toHaveCount(0);
-    expect((await versionsOf(win, nbId, "faq")).length).toBe(before);
+    await expect(win.getByTestId("studio-card-keyPoints")).toHaveCount(0);
+    await expect(win.getByTestId("studio-error-keyPoints")).toHaveCount(0);
+    expect((await versionsOf(win, nbId, "keyPoints")).length).toBe(before);
 
     // (3) Phạm vi 2/4 nguồn ⇒ chip chỉ trỏ 2 nguồn; phiên bản ghi "Phạm vi: 2 nguồn".
     fake.setStream({ count: 1, gapMs: 30 });
@@ -287,13 +287,13 @@ test("178 PR 4 — stream lượt viết: hiện dần không [n], ≤ 2 s, chip
     await expect(toggle).toHaveText("Phạm vi: 2 nguồn");
     await win.keyboard.press("Escape");
     await expect(toggle).toBeFocused();
-    await win.getByTestId("studio-btn-outline").click();
-    const outline = win.getByTestId("studio-card-outline");
-    await expect(outline).toBeVisible({ timeout: 30_000 });
-    await expect(win.getByTestId("studio-scope-note-outline")).toHaveText(
+    await win.getByTestId("studio-btn-keyPoints").click();
+    const keyPoints = win.getByTestId("studio-card-keyPoints");
+    await expect(keyPoints).toBeVisible({ timeout: 30_000 });
+    await expect(win.getByTestId("studio-scope-note-keyPoints")).toHaveText(
       "Phạm vi: 2 nguồn",
     );
-    const [saved] = await versionsOf(win, nbId, "outline");
+    const [saved] = await versionsOf(win, nbId, "keyPoints");
     const titles = await win.evaluate(
       async ([id, ids]) =>
         (await window.api.sourceListByNotebook(id))

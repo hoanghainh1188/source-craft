@@ -18,7 +18,7 @@ export const VI_LITERAL_ALLOWLIST: ReadonlyArray<{
   {
     file: "src/main/services/studio/prompt.ts",
     reason:
-      "Nhãn FAQ 'Hỏi/Đáp' trong lời nhắc khi ngôn ngữ đầu ra là tiếng Việt (nội dung gửi model, không phải UI).",
+      "Nhãn vai trò 'Bản gốc/Bản sửa đổi' gắn vào ghi chú So sánh văn bản khi ngôn ngữ đầu ra là tiếng Việt (nội dung gửi model, không phải UI).",
   },
   {
     file: "src/main/services/rag/prompt.ts",

@@ -16,6 +16,7 @@ import {
   type DiffPairTitles,
 } from "./prompt";
 import type { LanguageCode } from "@shared/i18n";
+import * as pro from "../../pro";
 import {
   ChatAbortedError,
   assertNotAborted,
@@ -76,28 +77,18 @@ const notesRules = (
 const mapPrompt = (lang: LanguageCode): string =>
   `Extract NOTES of the main points from the source passages NUMBERED [n] below. ${notesRules(lang)}`;
 
-// 233 (FR-007, D4): map prompt riêng cho documentDiff — trích gần nguyên văn các điều khoản và số liệu
+// 233 (FR-007, D4): map prompt riêng cho documentDiff — trích gần nguyên văn các điều khoản và số liệu.
+// 248 (đợt 2): phần chỉ dẫn riêng do module Pro trả; core chỉ nối quy tắc ghi chú chung.
 const mapPromptDiff = (lang: LanguageCode): string =>
-  [
-    "Extract near-verbatim CLAUSES and obligations from the source passages NUMBERED [n] below.",
-    "Preserve exact clause numbers, section headings, monetary amounts, dates, deadlines, percentages, obligor/obligee entities, and negation words.",
-    "DO NOT summarize away or round numbers.",
-    notesRules(lang, "verbatim"),
-  ].join(" ");
+  `${pro.studioDiffMapPrompt(lang)} ${notesRules(lang, "verbatim")}`;
 
 const condensePrompt = (lang: LanguageCode): string =>
   `Condense the NOTES below: merge duplicate points, drop minor details, KEEP the [n] chip of every point. ${notesRules(lang)}`;
 
 // 233 (review lỗi 2): rút gọn ghi chú diff — mỗi lần CHỈ ghi chú của MỘT bản (caller tách), không gộp điều khoản khác
-// nhau, giữ nguyên số liệu ⇒ không làm mất đúng chỗ khác biệt cần so.
+// nhau, giữ nguyên số liệu ⇒ không làm mất đúng chỗ khác biệt cần so. 248: chỉ dẫn riêng ở module Pro.
 const condensePromptDiff = (lang: LanguageCode): string =>
-  [
-    "Condense the clause NOTES below by shortening wording only.",
-    "Do NOT merge different clauses into one note and do NOT drop any clause.",
-    "Keep clause numbers, monetary amounts, dates, deadlines, percentages, parties and negation words EXACTLY as written.",
-    "KEEP the [n] chip of every note.",
-    notesRules(lang, "verbatim"),
-  ].join(" ");
+  `${pro.studioDiffCondensePrompt(lang)} ${notesRules(lang, "verbatim")}`;
 const FROM_NOTES =
   "NOTE: the input is NOTES already synthesized from many parts of the document; each note carries [n] chips pointing to the ORIGINAL source passages. When writing, KEEP the [n] chips of the points you use — do NOT create new numbers.";
 
@@ -266,17 +257,6 @@ interface BatchWithRole {
   role?: DiffRole;
 }
 
-/**
- * 233 (review lỗi 1): chia trần lượt map cho HAI bản — mỗi bản tối đa một nửa (bản gốc lấy phần lẻ), phần một bản không
- * dùng hết nhường cho bản kia. Mỗi bản có ≥ 1 lô ⇒ được đọc ít nhất 1 lượt (kể cả khi trần = 1).
- */
-function pickDiffBatches<T>(base: T[], revised: T[], max: number): [T[], T[]] {
-  let qBase = Math.min(base.length, Math.ceil(max / 2));
-  const qRevised = Math.min(revised.length, Math.max(1, max - qBase));
-  qBase = Math.min(base.length, Math.max(qBase, max - qRevised, 1));
-  return [base.slice(0, qBase), revised.slice(0, qRevised)];
-}
-
 export async function runMapReduce({
   kind,
   groups,
@@ -312,7 +292,7 @@ export async function runMapReduce({
       (items) => ({ items, role: "revised" as const }),
     );
     allBatches = [...b0, ...b1];
-    const [p0, p1] = pickDiffBatches(b0, b1, maxMapCalls);
+    const [p0, p1] = pro.pickDiffBatches(b0, b1, maxMapCalls);
     batches = [...p0, ...p1];
   } else {
     allBatches = packBatches(blocks, budget).map((items) => ({ items }));

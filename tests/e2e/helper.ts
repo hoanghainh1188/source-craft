@@ -5,9 +5,21 @@ import {
 } from "@playwright/test";
 import { join } from "node:path";
 import { mkdtemp } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 
 export const MAIN = join(process.cwd(), "out/main/index.js");
+
+/**
+ * 248: bản đang test có module Pro thật không (đã chép đè src/main/pro/ bằng repo source-craft-pro). Repo public chạy
+ * với stub ⇒ e2e của chức năng Pro (vd Studio "custom") bị bỏ qua; luồng chung dùng loại core (summary, keyPoints).
+ */
+export function isProBuild(): boolean {
+  return readFileSync(
+    join(process.cwd(), "src/main/pro/index.ts"),
+    "utf8",
+  ).includes("LicenseRef-SourceCraft-Pro");
+}
 
 /** Launch app với userData TẠM (cô lập trạng thái, không đụng store thật của người dùng). */
 export async function launchFresh(

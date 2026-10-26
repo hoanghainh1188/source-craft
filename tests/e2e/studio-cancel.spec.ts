@@ -177,31 +177,31 @@ test("149 — Huỷ giữa phần 2: ngắt kết nối, không request mới, k
 
     // (2) Có kết quả cũ ⇒ Tạo lại ⇒ Huỷ ⇒ card cũ nguyên vẹn.
     fake.setDelay(() => 30);
-    await win.getByTestId("studio-btn-faq").click();
-    const card = win.getByTestId("studio-card-faq");
+    await win.getByTestId("studio-btn-summary").click();
+    const card = win.getByTestId("studio-card-summary");
     await expect(card).toBeVisible({ timeout: 30_000 });
     const oldText = await card.innerText();
     const base = fake.stats.requests;
     fake.setDelay((n) => (n === base + 2 ? 20_000 : 30));
-    await win.getByTestId("studio-regen-faq").click();
-    await expect(win.getByTestId("studio-progress-faq")).toContainText(
+    await win.getByTestId("studio-regen-summary").click();
+    await expect(win.getByTestId("studio-progress-summary")).toContainText(
       "Đang đọc phần 2/",
     );
-    await win.getByTestId("studio-cancel-faq").focus();
+    await win.getByTestId("studio-cancel-summary").focus();
     await win.keyboard.press("Enter");
-    await expect(win.getByTestId("studio-cancel-faq")).toHaveCount(0, {
+    await expect(win.getByTestId("studio-cancel-summary")).toHaveCount(0, {
       timeout: 2_000,
     });
     // (review B1) có kết quả cũ ⇒ focus về "Tạo lại"
-    await expect(win.getByTestId("studio-regen-faq")).toBeFocused();
+    await expect(win.getByTestId("studio-regen-summary")).toBeFocused();
     expect(await card.innerText()).toBe(oldText);
-    await expect(win.getByTestId("studio-error-faq")).toHaveCount(0);
+    await expect(win.getByTestId("studio-error-summary")).toHaveCount(0);
 
     // (3) Đang tạo mà rời notebook ⇒ tự huỷ (kết nối đóng, không lưu).
     const closedBefore = fake.stats.closed;
     fake.setDelay(() => 20_000);
-    await win.getByTestId("studio-btn-outline").click();
-    await expect(win.getByTestId("studio-cancel-outline")).toBeVisible();
+    await win.getByTestId("studio-btn-keyPoints").click();
+    await expect(win.getByTestId("studio-cancel-keyPoints")).toBeVisible();
     await expect.poll(() => fake.stats.requests).toBeGreaterThan(base + 2);
     await win.evaluate(() => {
       window.location.hash = "#/notebooks";
@@ -212,7 +212,7 @@ test("149 — Huỷ giữa phần 2: ngắt kết nối, không request mới, k
     expect(
       await win.evaluate(
         async (id) =>
-          (await window.api.studioList(id)).some((r) => r.kind === "outline"),
+          (await window.api.studioList(id)).some((r) => r.kind === "keyPoints"),
         nbId,
       ),
     ).toBe(false);

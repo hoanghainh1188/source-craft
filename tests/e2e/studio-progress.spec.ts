@@ -130,15 +130,16 @@ for (const lang of ["vi", "en"] as const) {
 
       // (L1) giảm chuyển động ⇒ thanh bất định không có animation.
       await win.emulateMedia({ reducedMotion: "reduce" });
-      await win.getByTestId("studio-btn-faq").click();
+      // 248: loại core (bản stub không có loại Pro như faq).
+      await win.getByTestId("studio-btn-keyPoints").click();
       const fill = win
-        .getByTestId("studio-progress-faq")
+        .getByTestId("studio-progress-keyPoints")
         .locator(".studio-progress-fill");
       await expect(fill).toBeVisible();
       expect(
         await fill.evaluate((el) => getComputedStyle(el).animationName),
       ).toBe("none");
-      await expect(win.getByTestId("studio-card-faq")).toBeVisible({
+      await expect(win.getByTestId("studio-card-keyPoints")).toBeVisible({
         timeout: 20_000,
       });
     } finally {

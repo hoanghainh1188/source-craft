@@ -12,6 +12,7 @@ import { buildBalancedContext } from "./balanced-context";
 import { postprocessCitations, citationsFromMap } from "../rag/citation";
 import { STUDIO_ALL_KINDS, STUDIO_CONTEXT_BUDGET } from "./constants";
 import {
+  assertStudioKindAvailable,
   finalUserContent,
   systemPromptFor,
   type DiffPairTitles,
@@ -121,6 +122,8 @@ export function createStudioService(deps: StudioServiceDeps) {
     if (!notebookId || !isStudioKind(kind)) {
       throw new Error("Invalid Studio request.");
     }
+    // 248: loại Pro cần module Pro — bản stub từ chối trước mọi đọc nguồn / gọi AI.
+    assertStudioKindAvailable(kind, outputLanguage);
     // 178 (FR-021): yêu cầu tuỳ chỉnh kiểm TRƯỚC mọi đọc nguồn / gọi AI; loại khác ⇒ bỏ qua customPrompt. Không log văn bản.
     let customPrompt: string | undefined;
     if (kind === "custom") {

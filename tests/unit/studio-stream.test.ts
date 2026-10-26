@@ -3,6 +3,9 @@ import type { Chunk, ChatMessage, Source } from "@shared/ipc/types";
 import { UserFacingError } from "@shared/codes/user-error";
 import { ChatAbortedError } from "../../src/main/services/ai-runtime/abort";
 
+// 248 (đợt 2): prompt loại Pro / diff ở module Pro — dùng module Pro GIẢ (chuỗi đánh dấu) để kiểm điều phối của core.
+vi.mock("../../src/main/pro", () => import("./helpers/fake-pro"));
+
 // 178 (PR 4, T061, FR-040..FR-045, research R7): stream CHỈ lượt viết cuối. Chat giả mô phỏng ĐÚNG hợp đồng nhánh stream đã
 // xác minh ở cả 4 provider: có `onToken` ⇒ gọi onToken từng delta; abort giữa chừng ⇒ TRẢ phần đã nhận, KHÔNG ném. Không có
 // `onToken` ⇒ nhánh không-stream: abort ⇒ ném ChatAbortedError (149). Vì stream không ném, service PHẢI `assertNotAborted` ngay

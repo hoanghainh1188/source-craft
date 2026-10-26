@@ -1,6 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { createStudioService } from "../../src/main/services/studio/studio-service";
 import type { Chunk, ChatMessage, Source } from "@shared/ipc/types";
+
+// 248 (đợt 2): prompt loại Pro / diff ở module Pro — dùng module Pro GIẢ (chuỗi đánh dấu) để kiểm điều phối của core.
+vi.mock("../../src/main/pro", () => import("./helpers/fake-pro"));
+import { setFakeProAvailable } from "./helpers/fake-pro";
+import { ProUnavailableError } from "../../src/main/services/pro-bridge/pro-unavailable";
 
 // 105 — Studio theo cửa sổ ngữ cảnh của model: vừa ngân sách ⇒ 1 lượt (như cũ); vượt ⇒ map-reduce giữ [n] tới
 // ĐÚNG đoạn; truyền num_ctx tường minh cho mọi lượt; báo số phần.
@@ -939,5 +944,58 @@ describe("233: studio-service — documentDiff", () => {
       }),
     );
     expect(res.sourceIds).toEqual(["src-A", "src-B"]);
+  });
+});
+
+// 248 (đợt 2): bản build không có module Pro (stub) ⇒ loại Pro bị từ chối TRƯỚC mọi đọc nguồn / gọi AI / lưu; loại core vẫn chạy.
+describe("248: studio-service — bản không có module Pro", () => {
+  afterEach(() => setFakeProAvailable(true));
+
+  function make() {
+    const calls: ChatMessage[][] = [];
+    const listSources = vi.fn(() => [src("A"), src("B")]);
+    const insert = vi.fn((v: Record<string, unknown>) => ({
+      id: "v",
+      createdAt: 1,
+      ...v,
+    }));
+    const svc = createStudioService({
+      listSources,
+      listChunks: (id) => chunks(id, 2),
+      studioRepo: { insert, listByNotebook: () => [] } as never,
+      chat: async (m: ChatMessage[]) => {
+        calls.push(m);
+        return "Tóm tắt [1].";
+      },
+      contextInfo: async () => ({ budget: 50_000, numCtx: null }),
+    });
+    return { svc, calls, insert, listSources };
+  }
+
+  it.each(["faq", "timeline", "custom", "documentDiff"] as const)(
+    "%s ⇒ ProUnavailableError, KHÔNG đọc nguồn / gọi AI / lưu",
+    async (kind) => {
+      setFakeProAvailable(false);
+      const m = make();
+      await expect(
+        m.svc.generate({
+          notebookId: "nb1",
+          kind,
+          customPrompt: "Liệt kê rủi ro",
+          sourceIds: ["src-A", "src-B"],
+        }),
+      ).rejects.toBeInstanceOf(ProUnavailableError);
+      expect(m.listSources).not.toHaveBeenCalled();
+      expect(m.calls).toHaveLength(0);
+      expect(m.insert).not.toHaveBeenCalled();
+    },
+  );
+
+  it("summary vẫn tạo được khi không có module Pro", async () => {
+    setFakeProAvailable(false);
+    const m = make();
+    await m.svc.generate({ notebookId: "nb1", kind: "summary" });
+    expect(m.calls).toHaveLength(1);
+    expect(m.insert).toHaveBeenCalledTimes(1);
   });
 });

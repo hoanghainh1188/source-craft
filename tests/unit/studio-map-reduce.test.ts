@@ -8,6 +8,9 @@ import { postprocessCitations } from "../../src/main/services/rag/citation";
 import type { ScoredChunk } from "../../src/main/services/rag/rag-types";
 import type { ChatMessage } from "@shared/ipc/types";
 
+// 248 (đợt 2): prompt loại Pro / diff ở module Pro — dùng module Pro GIẢ (chuỗi đánh dấu) để kiểm điều phối của core.
+vi.mock("../../src/main/pro", () => import("./helpers/fake-pro"));
+
 // 105 — map-reduce GIỮ [n] tới ĐÚNG ĐOẠN (ADR studio-large-clarify): đánh số TOÀN CỤC, ghi chú theo lô kèm [n]
 // (hậu kiểm theo lô), bước cuối giữ nguyên [n] ⇒ chip trỏ đoạn thật — khác phương án đã bác (citation mức nguồn).
 
@@ -581,7 +584,7 @@ describe("233: map-reduce documentDiff", () => {
       const sys = messages[0].content;
       const user = messages[1].content;
       const ns = [...user.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]));
-      if (sys.includes("CLAUSES")) {
+      if (sys.includes("[fake-pro:diff-map")) {
         return ns
           .map(
             (n) => `- Điều khoản số ${n} giá trị 100tr thời hạn 30 ngày [${n}]`,
@@ -619,9 +622,9 @@ describe("233: map-reduce documentDiff", () => {
       const hasB = userContent.includes("Tài liệu B");
       expect(hasA && hasB).toBe(false);
 
-      // Map prompt trích gần nguyên văn
-      expect(c[0].content).toContain("CLAUSES");
-      expect(c[0].content).toMatch(/near-verbatim|exact clause/i);
+      // Map prompt riêng của diff (chỉ dẫn từ module Pro + quy tắc ghi chú "verbatim" của core)
+      expect(c[0].content.startsWith("[fake-pro:diff-map:vi] ")).toBe(true);
+      expect(c[0].content).toContain("One clause per note");
     }
 
     // Ghi chú bước cuối có gắn nhãn vai trò
@@ -655,7 +658,7 @@ describe("233: map-reduce documentDiff", () => {
     });
 
     expect(calls[0][0].content).toContain("Extract NOTES");
-    expect(calls[0][0].content).not.toContain("CLAUSES");
+    expect(calls[0][0].content).not.toContain("[fake-pro:diff-map");
     const finalUser = calls[calls.length - 1][1].content;
     expect(finalUser).not.toContain("[Bản gốc]");
     expect(finalUser).not.toContain("[Bản sửa đổi]");
@@ -684,16 +687,16 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
       calls.push(messages);
       const sys = messages[0].content;
       const ns = nsOf(messages[1].content);
-      if (sys.includes("CLAUSES")) {
+      if (sys.includes("[fake-pro:diff-map")) {
         return ns.map((n) => `- ${"x".repeat(noteLen)} [${n}]`).join("\n");
       }
-      if (sys.startsWith("Condense")) return `- gọn [${ns[0]}]`;
+      if (sys.startsWith("[fake-pro:diff-condense")) return `- gọn [${ns[0]}]`;
       return `Kết quả [${ns[0]}].`;
     });
     return { calls, chat };
   }
   const mapCallsOf = (calls: ChatMessage[][]) =>
-    calls.filter((c) => c[0].content.includes("CLAUSES"));
+    calls.filter((c) => c[0].content.includes("[fake-pro:diff-map"));
 
   it("bản gốc dài vượt trần ⇒ bản sửa đổi VẪN được đọc (chia trần lượt map cho hai bản)", async () => {
     const { calls, chat } = diffChat();
@@ -713,25 +716,7 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
     expect(out.parts).toBe(maps.length);
   });
 
-  it("một bản ngắn ⇒ lượt map còn dư nhường cho bản kia (không lãng phí trần)", async () => {
-    const { calls, chat } = diffChat();
-    await runMapReduce({
-      kind: "documentDiff",
-      groups: diffGroups(1, 20),
-      budget: 300,
-      chat,
-      maxMapCalls: 4,
-      diffPair: pair,
-    });
-    const maps = mapCallsOf(calls);
-    expect(maps).toHaveLength(4);
-    expect(
-      maps.filter((c) => c[1].content.includes("Tài liệu A")),
-    ).toHaveLength(1);
-    expect(
-      maps.filter((c) => c[1].content.includes("Tài liệu B")),
-    ).toHaveLength(3);
-  });
+  // 248: thuật toán chia trần (pickDiffBatches — phần một bản không dùng hết nhường bản kia) test ở repo source-craft-pro.
 
   it("rút gọn ghi chú TÁCH RIÊNG từng bản bằng prompt diff, rồi gắn lại nhãn vai trò", async () => {
     const { calls, chat } = diffChat(200);
@@ -744,7 +729,7 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
       diffPair: pair,
     });
     const condenseCalls = calls.filter((c) =>
-      c[0].content.startsWith("Condense"),
+      c[0].content.startsWith("[fake-pro:diff-condense"),
     );
     expect(condenseCalls.length).toBeGreaterThan(0);
     for (const c of condenseCalls) {
@@ -753,9 +738,7 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
       const allBase = ns.every((n) => n <= 3);
       const allRevised = ns.every((n) => n > 3);
       expect(allBase || allRevised).toBe(true);
-      // prompt rút gọn riêng cho diff: không gộp, giữ số liệu
-      expect(c[0].content).toMatch(/do NOT merge/i);
-      expect(c[0].content).toMatch(/amounts|dates/i);
+      // prompt rút gọn riêng cho diff (module Pro), không phải prompt rút gọn thường
       expect(c[0].content).not.toMatch(/drop minor details/i);
     }
     const finalUser = calls[calls.length - 1][1].content;
@@ -781,7 +764,7 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
     ).rejects.toThrow(/studioNoNotes/);
   });
 
-  it("map prompt diff yêu cầu trích gần nguyên văn, KHÔNG ép ghi chú 'short'", async () => {
+  it("map prompt diff dùng quy tắc ghi chú 'verbatim', KHÔNG ép ghi chú 'short'", async () => {
     const { calls, chat } = diffChat();
     await runMapReduce({
       kind: "documentDiff",
@@ -791,7 +774,7 @@ describe("233: map-reduce documentDiff — chia trần lượt map & rút gọn 
       diffPair: pair,
     });
     const sys = mapCallsOf(calls)[0][0].content;
-    expect(sys).toMatch(/near-verbatim/i);
+    expect(sys).toMatch(/One clause per note/);
     expect(sys).not.toMatch(/\bshort\b/i);
   });
 });
