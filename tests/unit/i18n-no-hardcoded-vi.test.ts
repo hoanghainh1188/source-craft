@@ -94,6 +94,8 @@ export function findViLiterals(file: string, src: string): string[] {
 const EXEMPT = (rel: string): boolean =>
   rel === "src/shared/i18n/vi.ts" ||
   rel.startsWith("src/shared/i18n/domains/") ||
+  // 248: test của module Pro nằm trong src/main/pro/ (tên test, không phải chữ giao diện; không vào bản build).
+  (rel.startsWith("src/main/pro/") && rel.endsWith(".test.ts")) ||
   VI_LITERAL_ALLOWLIST.some((a) => a.file === rel);
 
 describe("không có chuỗi tiếng Việt viết cứng ngoài tệp dịch", () => {

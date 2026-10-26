@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
+import { proChunkOf, proMinifyPlugin } from "./scripts/pro-chunk";
 
 // Inject CSP meta theo môi trường (Constitution I / R7). file:// prod không kích hoạt onHeadersReceived
 // đáng tin, nên meta tag là cơ chế chuẩn cho bản đóng gói.
@@ -37,8 +38,11 @@ export default defineConfig({
           // 186: utilityProcess nhận dạng tiếng nói cho Ghi cuộc họp (tách khỏi việc ghi audio ở main).
           "asr-worker": resolve("src/main/services/meeting-capture/asr-worker.ts"),
         },
+        // 248: mã src/main/pro/ (bản Pro chép đè lúc release) ở chunk riêng, chỉ chunk đó minify + không sourcemap.
+        output: { manualChunks: proChunkOf },
       },
     },
+    plugins: [proMinifyPlugin()],
     resolve: { alias: { "@shared": resolve("src/shared") } },
   },
   preload: {

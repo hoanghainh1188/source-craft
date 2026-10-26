@@ -38,6 +38,9 @@ nằm trong code (`feature-gate.ts`), nên ai cũng fork được rồi gỡ c�
 2. **Mã JS trong bộ cài đọc được.** Khác Sheafly (Rust biên dịch ra máy), bản Electron chứa JS trong `app.asar`; ai tải bộ
    cài cũng giải nén được. Phải biên dịch phần Pro sang **V8 bytecode** (`bytecodePlugin` của electron-vite, đã có trong
    `electron-vite@5`), tắt sourcemap cho phần đó. Đây là làm khó, không phải bảo vệ tuyệt đối.
+   **Đợt 1 (thực tế):** `bytecodePlugin` chỉ hỗ trợ output CommonJS, còn main build ra ESM (`"type": "module"`) ⇒ chưa
+   dùng được. Tạm thời mã `src/main/pro/` nằm ở chunk riêng `pro`, chỉ chunk đó được minify và không có sourcemap
+   (`scripts/pro-chunk.ts`). Chuyển main sang CJS để bật bytecode: làm sau, đo kỹ (đụng `import.meta`, deps chỉ-ESM).
 3. **README đang hứa** "Free forever, open-source (MIT), unlimited local usage" — phải sửa cho khớp hạn mức gói Free.
 4. **Feature ID = số issue** (rule 4): branch đặt theo issue của repo public, **cùng tên ở cả hai repo**.
 
@@ -84,8 +87,9 @@ pro.studioTask`); lệch chữ ký ⇒ `tsc` đỏ ở repo tương ứng.
 
 - CI nhỏ (repo private tốn phút Actions): chỉ ubuntu, bỏ qua thay đổi `*.md`, huỷ lượt cũ. Clone repo public ở **branch cùng
   tên** (không có thì `main`), chạy `check-stub.mjs`, chép đè `src/main/pro/`, `npm ci`, chạy `tsc` + test của Pro.
-- Làm việc local: trong checkout repo public, `rm -rf src/main/pro && git clone …source-craft-pro.git src/main/pro`; xong thì
-  `git checkout -- src/main/pro` và xoá `.git` lồng. `.gitignore` của repo public **không** được bỏ qua `src/main/pro/`
+- Làm việc local: clone repo Pro ra thư mục riêng (cạnh repo public), rồi trong checkout repo public chạy
+  `node scripts/pro-overlay.mjs apply ../source-craft-pro` (chỉ đọc bản clone, thay `src/main/pro/`); xong thì
+  `git checkout -- src/main/pro && git clean -fd src/main/pro` để về stub. `.gitignore` của repo public **không** được bỏ qua `src/main/pro/`
   (stub phải commit) ⇒ thêm kiểm tra CI: `src/main/pro/` của repo public không có dấu `LicenseRef-SourceCraft-Pro`.
 - `scripts/issue-license.mjs` (công cụ cấp bản quyền) dời sang repo Pro.
 

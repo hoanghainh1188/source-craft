@@ -27,6 +27,7 @@
     "tests/eval/**/*.ts",
     "tests/spike/**/*.ts",
     "electron.vite.config.ts",
+    "scripts/pro-chunk.ts",
     "vitest.config.ts",
     "vitest.eval.config.ts"
   ]
