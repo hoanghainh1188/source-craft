@@ -159,8 +159,8 @@ test("236 — bật audit: cặp start/end mỗi lượt, câu hỏi mã hoá, k
       (id) =>
         window.api.studioGenerate({
           notebookId: id,
-          kind: "custom",
-          customPrompt: "Liệt kê rủi ro pháp lý",
+          // 248: loại core (bản stub không có "custom"); mã hoá yêu cầu custom test ở unit (interaction-outcome).
+          kind: "summary",
         }),
       nbId,
     );
@@ -183,7 +183,7 @@ test("236 — bật audit: cặp start/end mỗi lượt, câu hỏi mã hoá, k
           suggestedName: "Bao cao",
           format: "md",
           notebookId: id,
-          studioKind: "custom",
+          studioKind: "summary",
         }),
       nbId,
     );
@@ -207,14 +207,18 @@ test("236 — bật audit: cặp start/end mỗi lượt, câu hỏi mã hoá, k
       model: "fake:1b",
     });
 
-    const plain = starts.map((s) =>
-      decryptQuestion(
-        s["question"] as EncryptedText,
-        run.orgPrivateKeyPem,
-        questionAad(s["seq"] as number, s["interactionId"] as string),
-      ),
-    );
-    expect(plain).toEqual([...QS, "Liệt kê rủi ro pháp lý"]);
+    // Tóm tắt (summary) không có câu hỏi người dùng ⇒ bản ghi Studio không mang trường question.
+    expect(starts[3]).not.toHaveProperty("question");
+    const plain = starts
+      .slice(0, 3)
+      .map((s) =>
+        decryptQuestion(
+          s["question"] as EncryptedText,
+          run.orgPrivateKeyPem,
+          questionAad(s["seq"] as number, s["interactionId"] as string),
+        ),
+      );
+    expect(plain).toEqual(QS);
 
     const raw = JSON.stringify(recs);
     expect(raw).not.toContain("Mức phạt vi phạm là bao nhiêu"); // câu hỏi chỉ ở dạng mã hoá
@@ -224,7 +228,7 @@ test("236 — bật audit: cặp start/end mỗi lượt, câu hỏi mã hoá, k
       type: "export.saved",
       format: "md",
       notebookName: "Hợp đồng 2026",
-      studioKind: "custom",
+      studioKind: "summary",
       fileName: "Bao cao.md",
     });
 

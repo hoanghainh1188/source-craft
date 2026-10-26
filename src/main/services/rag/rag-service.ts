@@ -14,7 +14,11 @@ import {
 import { retrieve, type RetrievalDeps } from "./retrieval";
 import type { RelevanceConfig } from "./relevance-filter";
 import { buildContext } from "./context-builder";
-import { systemPromptFor, withMedicalDisclaimer } from "./prompt";
+import {
+  assertDomainModeAvailable,
+  systemPromptFor,
+  withMedicalDisclaimer,
+} from "./prompt";
 import { postprocessCitations } from "./citation";
 import {
   MAX_HISTORY_TURNS,
@@ -99,6 +103,11 @@ export function createRagService(deps: RagServiceDeps) {
     const question = validateQuestion(input.question);
     const mode = validateMode(input.mode);
     const history = validateHistory(input.history);
+    // 248: chế độ chuyên gia cần module Pro — bản stub từ chối trước truy xuất / gọi AI.
+    assertDomainModeAvailable(
+      input.domainMode,
+      detectQuestionLanguage(question) ?? "vi",
+    );
 
     const isAllScope = input.scope === "all";
     // 231: null = toàn cục (mọi sổ tay) cho cả guard reindex lẫn truy xuất.

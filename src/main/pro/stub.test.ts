@@ -3,7 +3,15 @@
 // bằng bản ở repo source-craft-pro nên test này biến mất cùng stub.
 import { describe, expect, it } from "vitest";
 import { ProUnavailableError } from "../services/pro-bridge/pro-unavailable";
-import { available, unavailable } from "./index";
+import {
+  available,
+  domainDirectives,
+  pickDiffBatches,
+  studioDiffCondensePrompt,
+  studioDiffMapPrompt,
+  studioTask,
+  unavailable,
+} from "./index";
 
 describe("stub src/main/pro", () => {
   it("available() = false", () => {
@@ -14,5 +22,18 @@ describe("stub src/main/pro", () => {
     const e = unavailable("en");
     expect(e).toBeInstanceOf(ProUnavailableError);
     expect(e.text).toBe(new ProUnavailableError("en").text);
+  });
+});
+
+describe("stub src/main/pro — đợt 2 (prompt Studio Pro, chế độ chuyên gia)", () => {
+  it("mọi hàm Pro ném ProUnavailableError", () => {
+    const calls: (() => unknown)[] = [
+      () => studioTask("faq", "en"),
+      () => studioDiffMapPrompt("en"),
+      () => studioDiffCondensePrompt("en"),
+      () => pickDiffBatches([1], [2], 2),
+      () => domainDirectives("legal", "en"),
+    ];
+    for (const call of calls) expect(call).toThrow(ProUnavailableError);
   });
 });

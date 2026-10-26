@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChatOptions } from "../../../src/main/services/rag/rag-service";
 import { createRagService } from "../../../src/main/services/rag/rag-service";
 import {
@@ -6,6 +6,13 @@ import {
   MEDICAL_DISCLAIMER_VI,
 } from "../../../src/main/services/rag/prompt";
 import { toOpenAIRequest } from "../../../src/main/services/ai-runtime/online/openai-provider";
+import { ProUnavailableError } from "../../../src/main/services/pro-bridge/pro-unavailable";
+import { setFakeProAvailable } from "../helpers/fake-pro";
+
+// 248 (đợt 2): chỉ dẫn chuyên gia nằm ở module Pro — dùng module Pro GIẢ để kiểm phần core (nhiệt độ, disclaimer, cổng stub).
+vi.mock("../../../src/main/pro", () => import("../helpers/fake-pro"));
+
+afterEach(() => setFakeProAvailable(true));
 
 describe("238 — Domain-specific AI modes sampling temperature", () => {
   const baseDeps = {
@@ -144,5 +151,36 @@ describe("238 — Domain-specific AI modes sampling temperature", () => {
       expect(toOpenAIRequest([], model, 0.1).temperature).toBe(0.1);
     }
     expect(toOpenAIRequest([], "gpt-4o")).not.toHaveProperty("temperature");
+  });
+
+  it("248: bản không có Pro ⇒ chế độ chuyên gia bị từ chối TRƯỚC truy xuất / gọi AI", async () => {
+    setFakeProAvailable(false);
+    let embedded = false;
+    let chatted = false;
+    const rag = createRagService({
+      ...baseDeps,
+      embed: async () => {
+        embedded = true;
+        return [0.1, 0.2, 0.3];
+      },
+      chat: async () => {
+        chatted = true;
+        return "";
+      },
+      chatStream: async () => "",
+    });
+    for (const domainMode of ["legal", "medical"] as const) {
+      await expect(
+        rag.ask({
+          notebookId: "nb-1",
+          question: "Phạt vi phạm thế nào?",
+          mode: "grounded",
+          history: [],
+          domainMode,
+        }),
+      ).rejects.toBeInstanceOf(ProUnavailableError);
+    }
+    expect(embedded).toBe(false);
+    expect(chatted).toBe(false);
   });
 });

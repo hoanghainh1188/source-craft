@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import {
+  assertDomainModeAvailable,
   domainDirectives,
   groundedSystemPrompt,
   openSystemPrompt,
@@ -8,98 +9,87 @@ import {
   MEDICAL_DISCLAIMER_VI,
   MEDICAL_DISCLAIMER_EN,
 } from "../../../src/main/services/rag/prompt";
+import { ProUnavailableError } from "../../../src/main/services/pro-bridge/pro-unavailable";
+import { setFakeProAvailable } from "../helpers/fake-pro";
+
+// 248 (đợt 2): nội dung chỉ dẫn chuyên gia (Pháp lý / Y tế) nằm ở module Pro — test nội dung ở repo source-craft-pro.
+// Ở đây dùng module Pro GIẢ (chuỗi đánh dấu) để kiểm phần ghép prompt + cổng stub của core.
+vi.mock("../../../src/main/pro", () => import("../helpers/fake-pro"));
+
+afterEach(() => setFakeProAvailable(true));
 
 describe("238 — Domain-specific prompts & directives", () => {
   describe("domainDirectives", () => {
-    it("chế độ general hoặc undefined → trả về mảng rỗng", () => {
+    it("chế độ general hoặc undefined → trả về mảng rỗng (không gọi module Pro)", () => {
+      setFakeProAvailable(false);
       expect(domainDirectives(undefined)).toEqual([]);
       expect(domainDirectives("general")).toEqual([]);
     });
 
-    it("chế độ legal (tiếng Việt) → chứa chỉ dẫn trích dẫn Điều, Khoản, Điểm và phân biệt nghĩa vụ/quyền", () => {
-      const dirs = domainDirectives("legal", "vi");
-      expect(dirs.length).toBeGreaterThan(0);
-      const text = dirs.join("\n");
-      expect(text).toContain("Legal and Contract AI assistant");
-      expect(text).toContain("Điều");
-      expect(text).toContain("Khoản");
-      expect(text).toContain("Điểm");
-      expect(text).toContain("phải");
-      expect(text).toContain("được quyền");
-      expect(text).toContain("không được");
-      expect(text).toContain("ZERO EXTRAPOLATION");
-    });
-
-    it("chế độ legal (tiếng Anh) → chứa chỉ dẫn trích dẫn Article, Clause, Section thuần tiếng Anh", () => {
-      const dirs = domainDirectives("legal", "en");
-      const text = dirs.join("\n");
-      expect(text).toContain("Legal and Contract AI assistant");
-      expect(text).toContain("Article");
-      expect(text).toContain("Section");
-      expect(text).toContain("Clause");
-      expect(text).toContain("shall");
-      expect(text).toContain("ZERO EXTRAPOLATION");
-      const VI =
-        /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-      expect(text).not.toMatch(VI);
-    });
-
-    it("chế độ medical (tiếng Việt) → chỉ dẫn y khoa, KHÔNG bắt model tự chép disclaimer", () => {
-      const dirs = domainDirectives("medical", "vi");
-      const text = dirs.join("\n");
-      expect(text).toContain("Medical and Clinical Knowledge AI assistant");
-      expect(text).toContain("CLINICAL GROUNDING");
-      expect(text).not.toContain(MEDICAL_DISCLAIMER_VI);
-    });
-
-    it("chế độ medical (tiếng Anh) → chỉ dẫn y khoa thuần tiếng Anh", () => {
-      const dirs = domainDirectives("medical", "en");
-      const text = dirs.join("\n");
-      expect(text).toContain("Medical and Clinical Knowledge AI assistant");
-      expect(text).toContain("CLINICAL GROUNDING");
-      expect(text).not.toContain(MEDICAL_DISCLAIMER_EN);
-      const VI =
-        /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-      expect(text).not.toMatch(VI);
+    it("chế độ legal / medical → chỉ dẫn do module Pro trả theo ngôn ngữ", () => {
+      expect(domainDirectives("legal", "vi")).toEqual([
+        "[fake-pro:domain:legal:vi]",
+      ]);
+      expect(domainDirectives("medical", "en")).toEqual([
+        "[fake-pro:domain:medical:en]",
+      ]);
     });
   });
 
   describe("groundedSystemPrompt & openSystemPrompt với domainMode", () => {
-    it("grounded với legal mode chèn đầy đủ persona và context", () => {
-      const prompt = groundedSystemPrompt("[1] Điều 5 Hợp đồng", "vi", "legal");
-      expect(prompt).toContain("Legal and Contract AI assistant");
-      expect(prompt).toContain("[1] Điều 5 Hợp đồng");
-      expect(prompt).toContain("Không tìm thấy trong nguồn.");
-    });
-
-    it("grounded với medical mode chèn persona y khoa", () => {
-      const prompt = groundedSystemPrompt(
-        "[1] Phác đồ điều trị",
+    it("grounded: chỉ dẫn chuyên gia đứng ngay sau dòng vai trò, vẫn giữ context và câu không tìm thấy", () => {
+      const lines = groundedSystemPrompt(
+        "[1] Điều 5 Hợp đồng",
         "vi",
-        "medical",
-      );
-      expect(prompt).toContain("Medical and Clinical Knowledge AI assistant");
-      expect(prompt).toContain("[1] Phác đồ điều trị");
+        "legal",
+      ).split("\n");
+      expect(lines[0]).toContain("ONLY from the numbered source passages");
+      expect(lines[1]).toBe("[fake-pro:domain:legal:vi]");
+      expect(lines).toContain("[1] Điều 5 Hợp đồng");
+      expect(lines.join("\n")).toContain("Không tìm thấy trong nguồn.");
     });
 
-    it("open mode với medical mode chèn persona y khoa và nhãn ngoài nguồn", () => {
+    it("open: chỉ dẫn chuyên gia + nhãn ngoài nguồn", () => {
       const prompt = openSystemPrompt(
         "[1] Hướng dẫn lâm sàng",
         "en",
         "medical",
       );
-      expect(prompt).toContain("Medical and Clinical Knowledge AI assistant");
+      expect(prompt.split("\n")[1]).toBe("[fake-pro:domain:medical:en]");
       expect(prompt).toContain("(not based on sources)");
+    });
+
+    it("general ⇒ prompt không có dòng chuyên gia", () => {
+      expect(groundedSystemPrompt("x", "vi", "general")).toBe(
+        groundedSystemPrompt("x", "vi"),
+      );
     });
 
     it("systemPromptFor điều phối chính xác giữa grounded và open", () => {
       const g = systemPromptFor("grounded", "context", "vi", "legal");
-      expect(g).toContain("Legal and Contract AI assistant");
+      expect(g).toContain("[fake-pro:domain:legal:vi]");
       expect(g).toContain("ONLY from the numbered source passages");
 
       const o = systemPromptFor("open", "context", "vi", "medical");
-      expect(o).toContain("Medical and Clinical Knowledge AI assistant");
+      expect(o).toContain("[fake-pro:domain:medical:vi]");
       expect(o).toContain("(không dựa trên nguồn)");
+    });
+  });
+
+  describe("248: bản không có module Pro", () => {
+    it("chế độ chuyên gia ⇒ ProUnavailableError; general / không chọn vẫn chạy", () => {
+      setFakeProAvailable(false);
+      for (const mode of ["legal", "medical"] as const) {
+        expect(() => assertDomainModeAvailable(mode, "vi")).toThrow(
+          ProUnavailableError,
+        );
+        expect(() => groundedSystemPrompt("x", "vi", mode)).toThrow(
+          ProUnavailableError,
+        );
+      }
+      expect(() => assertDomainModeAvailable("general", "vi")).not.toThrow();
+      expect(() => assertDomainModeAvailable(undefined, "vi")).not.toThrow();
+      expect(groundedSystemPrompt("x", "vi", "general")).toContain("x");
     });
   });
 

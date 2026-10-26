@@ -1,5 +1,6 @@
 import type { RagMode, DomainMode } from "@shared/ipc/types";
 import type { LanguageCode } from "@shared/i18n";
+import * as pro from "../../pro";
 
 // System prompt 2 chế độ và 3 domain (ADR retrieval-strategy §3, Issue #238). Hàm THUẦN. KHÔNG log nội dung (Constitution III).
 // 123 (FR-017, FR-019, research R8): một bản lời nhắc ENGLISH + chỉ dẫn ngôn ngữ đầu ra theo câu hỏi. "Không tìm
@@ -67,40 +68,30 @@ function sources(contextText: string): string[] {
 }
 
 /**
- * Chỉ dẫn chuyên ngành cho Pháp lý (legal) và Y tế (medical).
- * Gói Pro/Enterprise: áp dụng personas chuyên sâu và grounding khắt khe.
+ * Chỉ dẫn chuyên ngành cho Pháp lý (legal) và Y tế (medical) — gói Pro/Enterprise (cờ specialistAiModes).
+ * 248 (đợt 2): nội dung chỉ dẫn ở module Pro; chế độ chung (hoặc không chọn) ⇒ không thêm dòng nào.
  */
 export function domainDirectives(
   domainMode?: DomainMode,
   lang?: LanguageCode,
 ): string[] {
-  if (domainMode === "legal") {
-    const isVi = lang === "vi";
-    const citationExamples = isVi
-      ? "(e.g. 'Điều', 'Khoản', 'Điểm' or 'Article', 'Section', 'Clause')"
-      : "(e.g. 'Article', 'Section', 'Clause', 'Item')";
-    const distinction = isVi
-      ? "Clearly distinguish between obligations ('phải', 'bắt buộc', 'shall', 'must'), entitlements/rights ('được quyền', 'có quyền', 'may', 'entitled to'), and prohibitions ('không được', 'nghiêm cấm', 'shall not', 'prohibited')."
-      : "Clearly distinguish between obligations ('shall', 'must', 'required to'), entitlements/rights ('may', 'entitled to', 'permitted'), and prohibitions ('shall not', 'prohibited', 'must not').";
+  return isSpecialistMode(domainMode)
+    ? pro.domainDirectives(domainMode, lang)
+    : [];
+}
 
-    return [
-      "SPECIALIST ROLE: You are a specialized Legal and Contract AI assistant operating under strict statutory and contractual grounding.",
-      `LEGAL CITATION REQUIREMENT: Whenever referencing laws, regulations, or agreements, you must explicitly cite specific articles, clauses, and points ${citationExamples} if present in the source passages.`,
-      `STRICT LEGAL GROUNDING: ${distinction}`,
-      "ZERO EXTRAPOLATION: If the source passages do not explicitly specify a legal term, obligation, or consequence, state that the documents do not specify it. Do not infer or assume legal intent.",
-    ];
+function isSpecialistMode(domainMode?: DomainMode): domainMode is DomainMode {
+  return domainMode === "legal" || domainMode === "medical";
+}
+
+/** 248: bản build không có module Pro ⇒ chế độ chuyên gia bị từ chối TRƯỚC truy xuất / gọi AI. */
+export function assertDomainModeAvailable(
+  domainMode: DomainMode | undefined,
+  lang: LanguageCode,
+): void {
+  if (isSpecialistMode(domainMode) && !pro.available()) {
+    throw pro.unavailable(lang);
   }
-
-  if (domainMode === "medical") {
-    // Disclaimer do app gắn cố định sau khi nhận câu trả lời (withMedicalDisclaimer) — không phó mặc cho model.
-    return [
-      "SPECIALIST ROLE: You are a specialized Medical and Clinical Knowledge AI assistant operating under evidence-based clinical grounding.",
-      "CLINICAL GROUNDING: Rigorously cite source passages for clinical facts, symptoms, contraindications, dosages, and treatment guidelines. Never fabricate medical advice or extrapolate beyond documented evidence.",
-      "Do NOT write a medical disclaimer yourself — the application appends one to your answer.",
-    ];
-  }
-
-  return [];
 }
 
 /** Chế độ Theo nguồn: chỉ dùng context, chèn [n], thiếu căn cứ ⇒ nói ngắn là nguồn không có, cấm bịa. */

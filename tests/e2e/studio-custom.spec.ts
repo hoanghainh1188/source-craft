@@ -5,7 +5,15 @@ import { createServer, type Server } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import type { Page } from "@playwright/test";
-import { launchFresh, dismissOnboarding, sizedWindow } from "./helper";
+import {
+  launchFresh,
+  dismissOnboarding,
+  isProBuild,
+  sizedWindow,
+} from "./helper";
+
+// 248 (đợt 2): Studio "custom" cần module Pro — repo public (stub) bỏ qua spec này; unit test core dùng module Pro giả.
+test.skip(!isProBuild(), "Cần module Pro (src/main/pro/ là stub)");
 
 // 178 (T048, US3): yêu cầu tuỳ chỉnh end-to-end với "Ollama" giả HTTP ghi lại messages — yêu cầu CHỈ ở tin user (khối
 // <request>), không ở system; rỗng / 501 ký tự ⇒ không có request AI; yêu cầu B thay A đang chạy ⇒ chỉ B thành phiên bản;

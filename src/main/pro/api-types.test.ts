@@ -3,6 +3,7 @@
 // Chỉ ghim export giá trị (hàm); export kiểu (type/interface) không có trong `typeof pro`.
 import { describe, expect, it } from "vitest";
 import type { LanguageCode } from "@shared/i18n";
+import type { DomainMode, StudioKind } from "@shared/ipc/types";
 import type { ProUnavailableError } from "../services/pro-bridge/pro-unavailable";
 import * as pro from "./index";
 
@@ -20,6 +21,26 @@ const PINNED: { readonly [K in keyof typeof pro]: unknown } = {
   unavailable: pro.unavailable satisfies Exact<
     typeof pro.unavailable,
     (lang: LanguageCode) => ProUnavailableError
+  >,
+  studioTask: pro.studioTask satisfies Exact<
+    typeof pro.studioTask,
+    (kind: StudioKind, lang: LanguageCode) => string
+  >,
+  studioDiffMapPrompt: pro.studioDiffMapPrompt satisfies Exact<
+    typeof pro.studioDiffMapPrompt,
+    (lang: LanguageCode) => string
+  >,
+  studioDiffCondensePrompt: pro.studioDiffCondensePrompt satisfies Exact<
+    typeof pro.studioDiffCondensePrompt,
+    (lang: LanguageCode) => string
+  >,
+  pickDiffBatches: pro.pickDiffBatches satisfies Exact<
+    typeof pro.pickDiffBatches,
+    <T>(base: T[], revised: T[], max: number) => [T[], T[]]
+  >,
+  domainDirectives: pro.domainDirectives satisfies Exact<
+    typeof pro.domainDirectives,
+    (mode: DomainMode, lang?: LanguageCode) => string[]
   >,
 };
 

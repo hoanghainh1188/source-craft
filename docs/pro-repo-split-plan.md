@@ -116,8 +116,21 @@ pro.studioTask`); lệch chữ ký ⇒ `tsc` đỏ ở repo tương ứng.
 | 4. Audit    | Dời lõi audit + CLI audit (#253)                                                                                                                                                                                                                                                                 | Bản stub: audit báo không có, fail-closed vẫn đúng                                       |
 | 5. Tài liệu | ADR tech-stack, `CLAUDE.md`, `TEAM-WORKFLOW.md`, README/OVERVIEW                                                                                                                                                                                                                                 | Thông điệp khớp mô hình                                                                  |
 
-Mỗi đợt: một PR ở repo public (stub + chỗ gọi, xoá mã đã dời) và một PR ở repo Pro (mã dời sang), **cùng tên branch**, merge
-repo Pro trước rồi đến repo public.
+Mỗi đợt: một PR ở repo public (stub + chỗ gọi, xoá mã đã dời) và một PR ở repo Pro (mã dời sang), **cùng tên branch**.
+Đợt nào đổi chữ ký (`api-types.test.ts`) thì merge **repo public trước** (CI `master` của repo Pro so với `main` public).
+
+**Đợt 2 (thực tế, branch `248-pro-prompts`):**
+
+- API Pro: `studioTask(kind, lang)`, `studioDiffMapPrompt(lang)`, `studioDiffCondensePrompt(lang)`, `pickDiffBatches`,
+  `domainDirectives(mode, lang)`. Core giữ khung chung (chỉ đoạn đánh số, `[n]`, không bịa, ngôn ngữ đầu ra), `summary`,
+  `keyPoints`, quy tắc ghi chú map-reduce, khối `<request>`/`<pair>`, nhãn vai trò diff và disclaimer y khoa.
+- Prompt sau khi chép đè bản Pro **giống từng byte** bản trước khi tách (so mọi loại × ngôn ngữ, mọi chế độ hỏi đáp, toàn
+  bộ chuỗi tin nhắn map-reduce).
+- Bản stub: loại Studio Pro và chế độ chuyên gia bị từ chối bằng `ProUnavailableError` **trước** khi đọc nguồn / gọi AI
+  (`assertStudioKindAvailable`, `assertDomainModeAvailable`); cổng bản quyền giữ nguyên, chạy trước.
+- Test repo public dùng module Pro giả `tests/unit/helpers/fake-pro.ts` (chuỗi đánh dấu, không nội dung Pro) để kiểm điều
+  phối của core; test nội dung prompt + `pickDiffBatches` ở repo Pro. E2E luồng chung đổi sang `summary`/`keyPoints`;
+  e2e Studio `custom` bỏ qua khi `src/main/pro/` là stub (`isProBuild()` trong `tests/e2e/helper.ts`).
 
 ## 7. Quy trình nhóm
 
