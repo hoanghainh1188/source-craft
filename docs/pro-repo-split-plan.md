@@ -95,15 +95,15 @@ pro.studioTask`); lệch chữ ký ⇒ `tsc` đỏ ở repo tương ứng.
 
 ## 5. Phân loại chức năng
 
-| Chức năng                                            | Sang repo Pro                                                                                                                                | Đợt       |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| Studio Pro (7 loại + `custom` + `documentDiff`)      | Có: `studioTask(kind, lang)`, prompt map/condense diff, `pickDiffBatches`; core giữ `summary`, `keyPoints` (Q4) và phần điều phối map-reduce | 2         |
-| Chế độ chuyên gia                                    | Có: `domainDirectives(mode, lang)`                                                                                                           | 2         |
-| Xuất DOCX/PDF                                        | Có: `docx-generator`, `pdf-generator` (thuần, nhận nội dung trả bytes)                                                                       | 3         |
-| Audit log (#236)                                     | Có: định dạng bản ghi, chuỗi băm, ký, mã hoá câu hỏi; I/O qua `AuditFs`/keystore do core truyền vào. PR B (CLI) làm thẳng ở repo Pro (Q7)    | 4         |
-| LAN AI, tìm kiếm toàn cục, đa phương tiện, IT policy | **Ở lại public** (mã nối, giá trị giấu thấp, cần mạng/tiến trình); chỉ giữ cổng bản quyền. Xem lại nếu sau này có logic riêng                | —         |
-| Ghi cuộc họp, bản quyền, upsell                      | Ở lại public                                                                                                                                 | —         |
-| Chức năng Pro mới (shared notebooks, …)              | Viết thẳng ở repo Pro theo quy tắc 4.1                                                                                                       | sau đợt 1 |
+| Chức năng                                            | Sang repo Pro                                                                                                                                            | Đợt       |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Studio Pro (7 loại + `custom` + `documentDiff`)      | Có: `studioTask(kind, lang)`, prompt map/condense diff, `pickDiffBatches`; core giữ `summary`, `keyPoints` (Q4) và phần điều phối map-reduce             | 2         |
+| Chế độ chuyên gia                                    | Có: `domainDirectives(mode, lang)`                                                                                                                       | 2         |
+| Xuất DOCX/PDF                                        | Có: `docx-generator`, `pdf-generator` (thuần, nhận nội dung trả bytes)                                                                                   | 3         |
+| Audit log (#236)                                     | Có: định dạng bản ghi, chuỗi băm, ký, mã hoá câu hỏi; I/O qua `AuditFs`/keystore do core truyền vào. CLI audit (đã lỡ merge public ở #253) dời cùng (Q7) | 4         |
+| LAN AI, tìm kiếm toàn cục, đa phương tiện, IT policy | **Ở lại public** (mã nối, giá trị giấu thấp, cần mạng/tiến trình); chỉ giữ cổng bản quyền. Xem lại nếu sau này có logic riêng                            | —         |
+| Ghi cuộc họp, bản quyền, upsell                      | Ở lại public                                                                                                                                             | —         |
+| Chức năng Pro mới (shared notebooks, …)              | Viết thẳng ở repo Pro theo quy tắc 4.1                                                                                                                   | sau đợt 1 |
 
 ## 6. Lộ trình
 
@@ -113,7 +113,7 @@ pro.studioTask`); lệch chữ ký ⇒ `tsc` đỏ ở repo tương ứng.
 | 1. Khung    | Chủ dự án tạo repo private + deploy key. Repo public: `src/main/pro/` stub (`available`, `unavailable`), `api-types.test.ts`, `deps.json`, job `pro` trong `release.yml`, `bytecodePlugin` cho phần Pro, kiểm tra "stub không phải bản Pro". Repo Pro: bản đầu cùng chữ ký, `check-stub.mjs`, CI | Chạy tay `release.yml` có key ⇒ build dùng bản Pro; không key ⇒ dùng stub; mọi test xanh |
 | 2. Prompt   | Dời prompt Studio Pro + chế độ chuyên gia sang `pro`; core gọi qua `pro.*`, giữ cổng                                                                                                                                                                                                             | Bản stub: chỉ `summary`/`keyPoints`, chế độ chung                                        |
 | 3. Xuất     | Dời `docx-generator`, `pdf-generator`                                                                                                                                                                                                                                                            | Bản stub báo `unavailable` khi xuất                                                      |
-| 4. Audit    | Dời lõi audit; làm PR B ở repo Pro                                                                                                                                                                                                                                                               | Bản stub: audit báo không có, fail-closed vẫn đúng                                       |
+| 4. Audit    | Dời lõi audit + CLI audit (#253)                                                                                                                                                                                                                                                                 | Bản stub: audit báo không có, fail-closed vẫn đúng                                       |
 | 5. Tài liệu | ADR tech-stack, `CLAUDE.md`, `TEAM-WORKFLOW.md`, README/OVERVIEW                                                                                                                                                                                                                                 | Thông điệp khớp mô hình                                                                  |
 
 Mỗi đợt: một PR ở repo public (stub + chỗ gọi, xoá mã đã dời) và một PR ở repo Pro (mã dời sang), **cùng tên branch**, merge
@@ -149,4 +149,4 @@ Chi tiết: [`docs/04-decisions/2026-10-25-pro-repo-split.md`](04-decisions/2026
 | Q4 — Studio bản stub   | Chỉ `summary`, `keyPoints`; `custom` và các loại khác ở repo Pro                                                   |
 | Q5 — Phát hành         | (sửa lại) Build và phát hành ở repo public; bản phát hành chính thức luôn có Pro (thiếu bản quyền ⇒ chạy như Free) |
 | Q6 — Issue & branch    | (sửa lại) Issue ở repo public; branch `NNN-slug` cùng tên ở cả hai repo                                            |
-| Q7 — Audit log #236    | PR A đã merge ⇒ tạm ở public, dời lõi sang repo Pro ở đợt 4; PR B làm ở repo Pro                                   |
+| Q7 — Audit log #236    | PR A, B đã merge ⇒ tạm ở public; dời lõi + CLI audit sang repo Pro ở đợt 4                                         |

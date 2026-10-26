@@ -1,5 +1,20 @@
 <!--
-SYNC IMPACT REPORT
+SYNC IMPACT REPORT (1.1.0 — 2026-10-25, #236 T080)
+- Version change: 1.0.0 → 1.1.0 (MINOR — mở rộng 2 nguyên tắc, không định nghĩa lại)
+- Modified principles:
+    I.   Local-first & No Default Egress — thêm: tổ chức bật nhật ký kiểm toán ⇒ MUST hiển thị thường trực
+         cho người dùng; nhật ký không tự gửi qua mạng
+    III. Desktop Security Boundary — thêm: ngoại lệ có kiểm soát cho nhật ký kiểm toán do tổ chức bật
+         (câu hỏi mã hoá, không câu trả lời/nội dung tài liệu, tách khỏi log chẩn đoán/báo lỗi/sao lưu)
+- Added / removed sections: none
+- Templates reviewed for alignment:
+    ✅ .specify/templates/plan-template.md  (Constitution Check chỉ trỏ tới file này — không cần đổi)
+    ✅ .specify/templates/spec-template.md  (không đổi)
+    ✅ .specify/templates/tasks-template.md (không đổi)
+- Đã tuân thủ sẵn: #236 (PR A–C) — xem specs/20261025-081207-enterprise-audit-log/plan.md › Complexity Tracking
+- Deferred TODOs: none
+
+SYNC IMPACT REPORT (1.0.0)
 - Version change: (template/unversioned) → 1.0.0
 - Ratification: initial adoption 2026-07-10
 - Modified principles: N/A (initial creation)
@@ -42,6 +57,10 @@ Dữ liệu người dùng **KHÔNG rời máy ở chế độ mặc định** �
   request (câu hỏi + đoạn nguồn liên quan) mới được gửi tới provider người dùng đã chọn.
 - **Privacy indicator** MUST luôn phản ánh đúng trạng thái hiện tại (đang chạy cục bộ ↔ đang gửi
   dữ liệu ra ngoài). Không được để trạng thái hiển thị lệch với hành vi thực.
+- Khi **tổ chức** bật ghi lại hoạt động của người dùng (VD nhật ký kiểm toán), app MUST hiển thị điều đó
+  **thường trực** cho người dùng (chỉ báo trên giao diện chính + mục Cài đặt chỉ đọc), nêu rõ gì được ghi
+  và gì không. Bản ghi chỉ nằm ở máy trạm hoặc thư mục do tổ chức chỉ định; app MUST NOT tự gửi chúng qua
+  mạng — việc thu thập thuộc về bộ phận IT.
 
 *Rationale:* người dùng mục tiêu (luật sư, nhà báo, nhà nghiên cứu) xử lý dữ liệu nhạy cảm; đánh mất
 tính local-first là đánh mất sản phẩm.
@@ -71,6 +90,12 @@ Cách ly tiến trình đúng chuẩn Electron.
   đi qua renderer dưới dạng nội dung đầy đủ.
 - API key online MUST lưu bằng OS keychain (keytar) — **không plaintext**, không nằm trong SQLite/JSON.
 - MUST NOT log nội dung tài liệu người dùng.
+- **Ngoại lệ có kiểm soát — nhật ký kiểm toán do tổ chức bật:** chỉ khi chính sách **cấp hệ thống** bật và
+  bản quyền cho phép, app được ghi câu hỏi người dùng gửi AI, tên nguồn được trích dẫn và siêu dữ liệu của
+  lượt (thời điểm, tài khoản OS, mô hình). Điều kiện bắt buộc: câu hỏi MUST được mã hoá bằng khoá công khai
+  của tổ chức (máy trạm không đọc lại được); MUST NOT ghi câu trả lời hay nội dung tài liệu; nhật ký MUST
+  tách khỏi log chẩn đoán, báo lỗi và bản sao lưu; khoá ký nằm trong OS keychain; renderer chỉ đọc
+  **trạng thái**, không đọc/ghi/bật/tắt nhật ký. Ngoài ngoại lệ này, cấm log nội dung vẫn áp dụng nguyên vẹn.
 
 *Rationale:* app xử lý dữ liệu nhạy cảm cục bộ; một renderer bị XSS không được phép chạm tới ổ đĩa/khoá.
 
@@ -131,4 +156,4 @@ Cách ly tiến trình đúng chuẩn Electron.
 - **Compliance:** mọi PR MUST verify tuân thủ các nguyên tắc trên; `/speckit-analyze` và `code-reviewer`
   dùng file này làm chuẩn đối chiếu. Vi phạm NON-NEGOTIABLE là điều kiện **Block** merge.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-10 | **Last Amended**: 2026-07-10
+**Version**: 1.1.0 | **Ratified**: 2026-07-10 | **Last Amended**: 2026-10-25
