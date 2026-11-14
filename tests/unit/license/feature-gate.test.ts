@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// 261: các test này kiểm khung freemium (hạn mức gói Free) ⇒ bật lại FREEMIUM_ENABLED trong phạm vi file.
+vi.mock("@shared/license-mode", () => ({ FREEMIUM_ENABLED: true }));
 import { UserFacingError } from "@shared/codes/user-error";
 import {
   assertCanAddSource,
@@ -9,7 +12,10 @@ import {
   FREE_MAX_MEETING_SECONDS,
   FREE_MAX_NOTEBOOKS,
   FREE_MAX_SOURCES_PER_NOTEBOOK,
+  DEFAULT_ENTERPRISE_FEATURES,
+  PRO_ALLOWED_SOURCE_KINDS,
 } from "../../../src/main/services/license/feature-gate";
+import { STUDIO_ALL_KINDS } from "../../../src/main/services/studio/constants";
 import { feed, harness, startSession } from "../helpers/meeting-harness";
 
 describe("feature-gate & entitlements matrix", () => {
@@ -178,5 +184,18 @@ describe("feature-gate & entitlements matrix", () => {
     expect(h.repo.get(sourceId)?.phase).toBe("done");
     expect(h.ingested).toHaveLength(1);
     expect(h.ingested[0]?.sourceId).toBe(sourceId);
+  });
+});
+
+describe("261 — freemium tắt: gói Free có mọi chức năng", () => {
+  it("entitlementsFor('free', undefined, false) không hạn mức, mọi loại nguồn/Studio, mọi cờ", () => {
+    const e = entitlementsFor("free", undefined, false);
+    expect(e.tier).toBe("free");
+    expect(e.maxNotebooks).toBeNull();
+    expect(e.maxSourcesPerNotebook).toBeNull();
+    expect(e.maxMeetingSeconds).toBeNull();
+    expect(e.allowedSourceKinds).toEqual([...PRO_ALLOWED_SOURCE_KINDS]);
+    expect(e.allowedStudioKinds).toEqual([...STUDIO_ALL_KINDS]);
+    expect(e.features).toEqual([...DEFAULT_ENTERPRISE_FEATURES]);
   });
 });

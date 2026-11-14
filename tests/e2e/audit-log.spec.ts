@@ -1,3 +1,4 @@
+import { FREEMIUM_ENABLED } from "../../src/shared/license-mode";
 import {
   test,
   expect,
@@ -337,6 +338,8 @@ test("236 — thư mục không ghi được ⇒ chặn (fail-closed), 0 request
 });
 
 test("236 — bản quyền free ⇒ AI chạy, không có tệp audit", async () => {
+  // 261: freemium tắt ⇒ gói Free có audit như Enterprise; kịch bản này chỉ đúng khi bật lại freemium.
+  test.skip(!FREEMIUM_ENABLED, "Freemium đang tắt");
   test.setTimeout(90_000);
   const fake = await fakeOllama();
   const run = await launchAudit({
@@ -516,17 +519,20 @@ test("236 — chip + Cài đặt: active hiện chip, vị trí theo nhãn, khô
 
 test("236 — chip + Cài đặt: free ⇒ không chip, báo cần Enterprise; policy hỏng ⇒ không chip, báo lý do", async () => {
   test.setTimeout(120_000);
-  const free = await launchAudit({ IV_E2E_LICENSE_TIER: "free" });
-  try {
-    const win = await readyWindow(free.app);
-    await dismissOnboarding(win);
-    await openSettings(win);
-    await expect(win.getByTestId("settings-audit-state")).toContainText(
-      "cần bản quyền Enterprise",
-    );
-    await expect(win.getByTestId("audit-status-chip")).toHaveCount(0);
-  } finally {
-    await free.app.close().catch(() => {});
+  // 261: freemium tắt ⇒ bỏ nửa đầu (free + policy hợp lệ giờ bật audit như Enterprise).
+  if (FREEMIUM_ENABLED) {
+    const free = await launchAudit({ IV_E2E_LICENSE_TIER: "free" });
+    try {
+      const win = await readyWindow(free.app);
+      await dismissOnboarding(win);
+      await openSettings(win);
+      await expect(win.getByTestId("settings-audit-state")).toContainText(
+        "cần bản quyền Enterprise",
+      );
+      await expect(win.getByTestId("audit-status-chip")).toHaveCount(0);
+    } finally {
+      await free.app.close().catch(() => {});
+    }
   }
 
   const broken = await launchAudit({}, { brokenPolicy: true });

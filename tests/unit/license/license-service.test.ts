@@ -1,5 +1,8 @@
 import { generateKeyPairSync } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// 261: các test này kiểm khung freemium (hạn mức gói Free) ⇒ bật lại FREEMIUM_ENABLED trong phạm vi file.
+vi.mock("@shared/license-mode", () => ({ FREEMIUM_ENABLED: true }));
 import type { LicensePayload, LicenseStatus } from "@shared/ipc/types";
 import { signLicensePayload } from "../../../src/main/services/license/license-verifier";
 import {

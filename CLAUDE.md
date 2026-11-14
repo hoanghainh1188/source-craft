@@ -24,10 +24,10 @@ cuộn tới đúng đoạn highlight). Có tùy chọn dùng AI online bằng A
 
 **Hệ thống Repository & Quản trị Task:**
 
-- **Repo Public (Core / App):** https://github.com/hoanghainh1188/source-craft (app chính, UI, cổng bản quyền, build/release, stub Pro)
-- **Repo Private (Pro Modules):** https://github.com/hoanghainh1188/source-craft-pro (chỉ chứa phần cài đặt các module Pro)
-- **GitHub Project Board (quản lý chung cả 2 repo):** https://github.com/users/hoanghainh1188/projects/8
-- Kế hoạch chi tiết & quy tắc ranh giới: [`docs/pro-repo-split-plan.md`](docs/pro-repo-split-plan.md) và ADR [`docs/04-decisions/2026-10-25-pro-repo-split.md`](docs/04-decisions/2026-10-25-pro-repo-split.md).
+- **Repo:** https://github.com/hoanghainh1188/source-craft (toàn bộ app, MIT — mọi chức năng miễn phí cho gói Free)
+- **GitHub Project Board:** https://github.com/users/hoanghainh1188/projects/8
+- Repo private `source-craft-pro` đã gộp về đây và được archive (#261) — xem ADR [`docs/04-decisions/2026-11-14-merge-pro-into-free.md`](docs/04-decisions/2026-11-14-merge-pro-into-free.md).
+  Khung bản quyền vẫn giữ; freemium tắt bằng `FREEMIUM_ENABLED` trong `src/shared/license-mode.ts`.
 
 ## Tech stack
 

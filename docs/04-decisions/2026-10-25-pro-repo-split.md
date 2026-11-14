@@ -1,5 +1,8 @@
 # Tách chức năng Pro sang repo riêng (mô hình stub như Sheafly)
 
+> **Đã bị thay thế** ngày 2026-11-14 bởi [`2026-11-14-merge-pro-into-free.md`](2026-11-14-merge-pro-into-free.md) (#261): mã Pro gộp
+> về repo public dưới MIT, repo `source-craft-pro` được archive. Giữ file này làm lịch sử.
+
 - Ngày: 2026-10-25
 - Feature liên quan: `248-pro-repo-split` (issue #248). Kế hoạch chi tiết: [`docs/pro-repo-split-plan.md`](../pro-repo-split-plan.md).
 - Trạng thái: **Đã chấp nhận** — chủ dự án (Harry Nguyen) trả lời Q1–Q7 qua bảng câu hỏi ngày 2026-10-25. Sửa lại cùng ngày:
