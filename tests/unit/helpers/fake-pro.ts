@@ -1,8 +1,8 @@
 // 248 (đợt 2) — module Pro GIẢ cho test của repo public. KHÔNG chứa nội dung Pro: mỗi hàm trả chuỗi đánh dấu tất định để
-// test kiểm phần ĐIỀU PHỐI của core (map-reduce, khối <request>/<pair>, cổng stub) mà không cần bản Pro thật.
-// Nội dung prompt Pro được test ở repo source-craft-pro. Dùng:
+// test kiểm phần ĐIỀU PHỐI của core (map-reduce, khối <request>/<pair>, cổng stub) mà không phụ thuộc nội dung prompt thật.
+// Nội dung prompt Pro được test ở src/main/pro/tests/. Dùng:
 //   vi.mock("../../src/main/pro", () => import("./helpers/fake-pro"));
-// `setFakeProAvailable(false)` ⇒ hành xử như stub (available() = false, mọi hàm Pro ném ProUnavailableError).
+// `setFakeProAvailable(false)` ⇒ mô phỏng bản thiếu module (available() = false, mọi hàm Pro ném ProUnavailableError).
 import type { LanguageCode } from "@shared/i18n";
 import type { DomainMode, StudioKind } from "@shared/ipc/types";
 import { ProUnavailableError } from "../../../src/main/services/pro-bridge/pro-unavailable";
@@ -42,7 +42,7 @@ export function studioDiffCondensePrompt(lang: LanguageCode): string {
 
 /**
  * Chia đơn giản: mỗi bản tối đa nửa trần (bản gốc lấy phần lẻ), mỗi bản ≥ 1 lô. KHÁC bản thật: không nhường phần một bản
- * dùng không hết ⇒ test core chỉ được kiểm điều phối, không kiểm phép chia (phép chia test ở repo source-craft-pro).
+ * dùng không hết ⇒ test core chỉ được kiểm điều phối, không kiểm phép chia (phép chia test ở src/main/pro/tests/).
  */
 export function pickDiffBatches<T>(
   base: T[],

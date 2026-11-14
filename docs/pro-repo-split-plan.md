@@ -1,5 +1,8 @@
 # Kế hoạch tách chức năng Pro sang repo riêng
 
+> **Lỗi thời** từ 2026-11-14: đã gộp toàn bộ chức năng Pro về repo public và bỏ mô hình 2 repo — xem ADR
+> [`2026-11-14-merge-pro-into-free.md`](04-decisions/2026-11-14-merge-pro-into-free.md) (#261). Giữ file này làm lịch sử.
+
 - Ngày: 2026-10-25 · Trạng thái: **Đã chốt hướng đi (mục 9)** · Issue: #248.
 - **Repo Pro (private):** https://github.com/hoanghainh1188/source-craft-pro
 - **GitHub Project (quản lý task cả 2 repo):** https://github.com/users/hoanghainh1188/projects/8

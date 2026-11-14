@@ -6,6 +6,7 @@ import type {
   SourceKind,
   StudioKind,
 } from "@shared/ipc/types";
+import { FREEMIUM_ENABLED } from "@shared/license-mode";
 import { STUDIO_ALL_KINDS } from "../studio/constants";
 
 // 226 — Pure tier -> Entitlements calculation and main-process enforcement guards.
@@ -62,11 +63,25 @@ export const DEFAULT_ENTERPRISE_FEATURES: readonly LicenseFeature[] = [
 
 /**
  * Computes the effective Entitlements for a given LicenseTier and optional explicit feature list.
+ * 261: while `freemium` is off (default `FREEMIUM_ENABLED = false`), the free tier gets every feature with no limits;
+ * the FREE_* limits above only apply when freemium is turned back on.
  */
 export function entitlementsFor(
   tier: LicenseTier,
   explicitFeatures?: readonly LicenseFeature[],
+  freemium: boolean = FREEMIUM_ENABLED,
 ): Entitlements {
+  if (tier === "free" && !freemium) {
+    return {
+      tier: "free",
+      maxNotebooks: null,
+      maxSourcesPerNotebook: null,
+      maxMeetingSeconds: null,
+      allowedSourceKinds: [...PRO_ALLOWED_SOURCE_KINDS],
+      allowedStudioKinds: [...STUDIO_ALL_KINDS],
+      features: [...DEFAULT_ENTERPRISE_FEATURES],
+    };
+  }
   if (tier === "free") {
     return {
       tier: "free",

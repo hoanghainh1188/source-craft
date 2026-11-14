@@ -1,6 +1,10 @@
 import { test, expect, type ElectronApplication } from "@playwright/test";
 import { join } from "node:path";
+import { FREEMIUM_ENABLED } from "../../src/shared/license-mode";
 import { dismissOnboarding, launchFresh, sizedWindow } from "./helper";
+
+// 261: freemium đang tắt (gói Free có mọi chức năng, ẩn mục Bản quyền) ⇒ bỏ qua cho tới khi bật lại.
+test.skip(!FREEMIUM_ENABLED, "Freemium đang tắt (FREEMIUM_ENABLED = false)");
 
 // 237: gói Free chạm hạn mức 3 notebook ⇒ lời mời nâng cấp dưới câu lỗi; Cài đặt › Bản quyền có nút Mua.
 // openExternal được thay bằng hàm ghi lại URL (không bật trình duyệt thật trong e2e).

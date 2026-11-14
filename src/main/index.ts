@@ -69,6 +69,7 @@ import { resolveLegacyUserDataPath } from "./services/app-shell/user-data-path";
 import { buildAboutPanelOptions } from "./services/app-shell/about-panel";
 import { loadLibraries } from "./services/app-shell/about-licenses";
 import { registerIpc } from "./ipc/register";
+import { FREEMIUM_ENABLED } from "@shared/license-mode";
 import * as pro from "./pro";
 import { openDatabase } from "./db/database";
 import { runMigrations } from "./db/migrations";
@@ -625,7 +626,9 @@ app
       randomId: randomUUID,
       policy: () => policyService.getAuditPolicy(),
       license: () => ({
-        valid: licenseService.getStatus().state === "valid",
+        // 261: freemium tắt ⇒ gói Free cũng đủ điều kiện; tổ chức vẫn phải bật audit bằng policy hệ thống.
+        valid:
+          !FREEMIUM_ENABLED || licenseService.getStatus().state === "valid",
         itPolicy: licenseService.gate.hasFeature("itPolicy"),
       }),
       identity: () =>

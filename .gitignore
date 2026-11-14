@@ -37,6 +37,3 @@ keys/
 .keys/
 *.pem
 
-# 248: bản checkout repo Pro (release.yml / làm việc local) và thư mục tạm của scripts/pro-overlay.mjs — KHÔNG commit
-.pro/
-src/main/.pro-staging-*/

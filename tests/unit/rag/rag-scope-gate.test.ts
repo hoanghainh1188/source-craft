@@ -1,4 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// 261: các test này kiểm khung freemium (hạn mức gói Free) ⇒ bật lại FREEMIUM_ENABLED trong phạm vi file.
+vi.mock("@shared/license-mode", () => ({ FREEMIUM_ENABLED: true }));
 import { UserFacingError } from "@shared/codes/user-error";
 import {
   createFeatureGate,

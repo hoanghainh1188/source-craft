@@ -9,8 +9,7 @@ export default defineConfig({
   resolve: { alias: { "@shared": resolve("src/shared") } },
   test: {
     environment: "node",
-    // 248: test của module Pro nằm cạnh mã trong src/main/pro/ (stub: api-types + stub; bản Pro: thêm tests/) vì cả
-    // thư mục được chép đè lúc build release.
+    // 261: test module chức năng nâng cao nằm cạnh mã trong src/main/pro/tests/.
     include: ["tests/unit/**/*.test.ts", "src/main/pro/**/*.test.ts"],
     coverage: {
       provider: "v8",
@@ -19,7 +18,6 @@ export default defineConfig({
         "src/main/services/**/*.ts",
         "src/main/db/**/*.ts",
         "src/main/pro/**/*.ts",
-        "scripts/pro-chunk.ts",
         "src/main/logging.ts",
         "src/shared/ipc/**/*.ts",
         "src/shared/i18n/**/*.ts",

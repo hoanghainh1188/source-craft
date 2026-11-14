@@ -4,10 +4,9 @@ Tài liệu này cung cấp ngữ cảnh cốt lõi để các AI agent (Antigra
 
 ## 1. Hệ thống Repository & Quản trị Task
 
-- **Repo Public (Core & App):** [source-craft](https://github.com/hoanghainh1188/source-craft) (chứa app chính Electron, UI, IPC, build/release, cổng bản quyền và stub cho bản Pro).
-- **Repo Private (Pro Modules):** [source-craft-pro](https://github.com/hoanghainh1188/source-craft-pro) (chỉ chứa mã cài đặt thuần cho các tính năng Pro, không có UI/build).
-- **GitHub Project Board (Quản lý chung cả 2 repo):** [SourceCraft Project #8](https://github.com/users/hoanghainh1188/projects/8).
-- **Mô hình kiến trúc 2 repo:** Chi tiết xem tại [`docs/pro-repo-split-plan.md`](docs/pro-repo-split-plan.md) và ADR [`docs/04-decisions/2026-10-25-pro-repo-split.md`](docs/04-decisions/2026-10-25-pro-repo-split.md).
+- **Repo:** [source-craft](https://github.com/hoanghainh1188/source-craft) (toàn bộ app Electron, MIT — mọi chức năng miễn phí cho gói Free).
+- **GitHub Project Board:** [SourceCraft Project #8](https://github.com/users/hoanghainh1188/projects/8).
+- Repo private `source-craft-pro` đã gộp về đây và được archive (#261) — xem ADR [`docs/04-decisions/2026-11-14-merge-pro-into-free.md`](docs/04-decisions/2026-11-14-merge-pro-into-free.md).
 
 ## 2. Điểm khác biệt bất biến (Inviolable Principles)
 
@@ -15,11 +14,11 @@ Tài liệu này cung cấp ngữ cảnh cốt lõi để các AI agent (Antigra
 2. **Kiểm chứng được (Verifiable):** Mọi câu trả lời của AI trích dẫn nguồn qua chip `[n]`, click vào sẽ mở văn bản và highlight đúng đoạn nguồn gốc.
 3. **Offline & Tự chủ:** Hoạt động hoàn toàn không cần Internet với local LLM (Ollama).
 
-## 3. Ranh giới kiến trúc & Module Pro
+## 3. Ranh giới kiến trúc & Module chức năng nâng cao
 
-- **Quy tắc ranh giới Pro:** Các module ở repo Pro là các hàm thuần chạy ở Main Process, nhận dữ liệu và trả kết quả, không import trực tiếp Electron, không gọi IPC, không gọi mạng.
-- **Stub ở repo public:** `src/main/pro/` đóng vai trò stub (MIT), cùng chữ ký hàm nhưng `available() = false`.
-- **Feature ID & Branch:** Feature ID lấy theo số issue GitHub ở repo public. Branch đặt tên `NNN-<slug>` (VD: `042-user-reservation`), dùng chung tên branch ở cả hai repo.
+- **`src/main/pro/`:** hàm thuần chạy ở Main Process (prompt Studio nâng cao, chế độ chuyên gia), không import Electron, không IPC, không gọi mạng. `available()` luôn `true`.
+- **Freemium:** tắt bằng `FREEMIUM_ENABLED = false` (`src/shared/license-mode.ts`) — gói Free có mọi chức năng; khung bản quyền giữ để bật lại sau.
+- **Feature ID & Branch:** Feature ID lấy theo số issue GitHub. Branch đặt tên `NNN-<slug>` (VD: `042-user-reservation`).
 
 ## 4. Tài liệu chi tiết & Quy chuẩn
 
